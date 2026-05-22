@@ -118,9 +118,11 @@
   .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; width: 100%; max-width: 460px; padding: 24px; }
   .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
   
-  /* Login */
+  /* Login & Auth */
   #login-page { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .login-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 36px; width: 360px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 36px; width: 360px; transition: 0.3s; }
+  .auth-toggle { font-size: 12px; color: var(--accent); text-align: center; margin-top: 16px; cursor: pointer; text-decoration: underline; }
+  .auth-toggle:hover { color: var(--accent2); }
   
   /* Import zone */
   .drop-zone { border: 2px dashed var(--border2); border-radius: 8px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.15s; }
@@ -174,22 +176,44 @@
   <div class="login-card">
     <div style="margin-bottom:24px; text-align:center;">
       <div style="font-size:28px;margin-bottom:8px;">📦</div>
-      <div style="font-size:18px;font-weight:700;color:var(--text);">Stock Manager</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text);" id="auth-title">เข้าสู่ระบบ Stock Manager</div>
       <div style="font-size:12px;color:var(--accent);margin-top:4px;font-weight:500;">CHONBURI HQ SYSTEM</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
+
+    <div id="form-login" style="display:flex;flex-direction:column;gap:12px;">
       <div>
         <label class="field-label">Username</label>
-        <input type="text" id="username" placeholder="admin" onkeypress="if(event.key==='Enter')login()">
+        <input type="text" id="username" placeholder="กรอกชื่อผู้ใช้งาน" onkeypress="if(event.key==='Enter')login()">
       </div>
       <div>
         <label class="field-label">Password</label>
-        <input type="password" id="password" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
+        <input type="password" id="password" placeholder="กรอกรหัสผ่าน" onkeypress="if(event.key==='Enter')login()">
       </div>
       <button onclick="login()" class="btn btn-primary btn-full" style="margin-top:4px;">เข้าสู่ระบบ</button>
+      
+      <div class="auth-toggle" onclick="toggleAuthMode('register')">ยังไม่มีบัญชี? สร้างบัญชีใหม่</div>
+      
+      <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:6px;font-size:11px;color:var(--text3);text-align:center;">
+        บัญชีเริ่มต้น (หากยังไม่สมัคร):<br> User: <b>admin</b> / Pass: <b>1234</b>
+      </div>
     </div>
-    <div style="margin-top:16px;padding:10px;background:rgba(79,142,247,0.06);border-radius:6px;font-size:11px;color:var(--text3);text-align:center;">
-      Demo: พิมพ์ username ใดก็ได้แล้วกด เข้าสู่ระบบ
+
+    <div id="form-register" style="display:none;flex-direction:column;gap:12px;">
+      <div>
+        <label class="field-label">ตั้งชื่อผู้ใช้งาน (Username)</label>
+        <input type="text" id="reg_username" placeholder="ภาษาอังกฤษหรือตัวเลข">
+      </div>
+      <div>
+        <label class="field-label">ตั้งรหัสผ่าน (Password)</label>
+        <input type="password" id="reg_password" placeholder="อย่างน้อย 4 ตัวอักษร">
+      </div>
+      <div>
+        <label class="field-label">ยืนยันรหัสผ่านอีกครั้ง</label>
+        <input type="password" id="reg_confirm" placeholder="พิมพ์ให้ตรงกับด้านบน">
+      </div>
+      <button onclick="registerAccount()" class="btn btn-success btn-full" style="margin-top:4px;">สร้างบัญชีผู้ใช้</button>
+      
+      <div class="auth-toggle" onclick="toggleAuthMode('login')" style="color:var(--text2);">กลับไปหน้าเข้าสู่ระบบ</div>
     </div>
   </div>
 </div>
@@ -619,7 +643,7 @@
 
 <script>
 // ============================================================
-// STATE
+// STATE & AUTHENTICATION
 // ============================================================
 let stockData = [];
 let transactions = [];
@@ -628,7 +652,76 @@ let customers = ['TOPS Supermarket', 'โครงการ A', 'ลูกค้
 let importRawData = [];
 let importHeaders = [];
 let fieldMap = {};
-let gpoRunningCounter = 1; // ระบบรันเลข DO เริ่ม 0001
+let gpoRunningCounter = 1;
+
+// โหลดข้อมูลบัญชีจาก LocalStorage หรือสร้างบัญชีเริ่มต้น
+let registeredUsers = JSON.parse(localStorage.getItem('stockManagerUsers')) || { 'admin': '1234' };
+
+function toggleAuthMode(mode) {
+  if (mode === 'register') {
+    document.getElementById('form-login').style.display = 'none';
+    document.getElementById('form-register').style.display = 'flex';
+    document.getElementById('auth-title').textContent = 'สร้างบัญชีผู้ใช้ใหม่';
+  } else {
+    document.getElementById('form-register').style.display = 'none';
+    document.getElementById('form-login').style.display = 'flex';
+    document.getElementById('auth-title').textContent = 'เข้าสู่ระบบ Stock Manager';
+  }
+}
+
+function registerAccount() {
+  const u = document.getElementById('reg_username').value.trim();
+  const p = document.getElementById('reg_password').value;
+  const c = document.getElementById('reg_confirm').value;
+
+  if (!u || !p || !c) return toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+  if (p !== c) return toast('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน', 'error');
+  if (p.length < 4) return toast('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร', 'error');
+  if (registeredUsers[u]) return toast('มีชื่อผู้ใช้นี้ในระบบแล้ว กรุณาใช้ชื่ออื่น', 'error');
+
+  // บันทึกเข้า LocalStorage
+  registeredUsers[u] = p;
+  localStorage.setItem('stockManagerUsers', JSON.stringify(registeredUsers));
+  
+  // เคลียร์ฟอร์ม
+  document.getElementById('reg_username').value = '';
+  document.getElementById('reg_password').value = '';
+  document.getElementById('reg_confirm').value = '';
+  
+  toast('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', 'success');
+  toggleAuthMode('login');
+}
+
+function login() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  
+  if (!u || !p) return toast('กรุณากรอก Username และ Password', 'error');
+  
+  // ตรวจสอบข้อมูลใน LocalStorage
+  if (registeredUsers[u] && registeredUsers[u] === p) {
+    document.getElementById('display-user').textContent = '👤 ' + u;
+    document.getElementById('login-page').style.display = 'none';
+    const app = document.getElementById('app');
+    app.style.display = 'flex';
+    
+    refreshCustomerSelects();
+    renderMasterProducts();
+    renderCustomerList();
+    tab('overview');
+    document.getElementById('password').value = ''; // เคลียร์รหัสผ่านทิ้งเพื่อความปลอดภัย
+  } else {
+    toast('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง', 'error');
+  }
+}
+
+function logout() {
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  toggleAuthMode('login');
+}
 
 // ============================================================
 // SEED DATA
@@ -665,7 +758,7 @@ function generateGPONumber() {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
   const datePart = `${yy}${mm}${dd}`;
-  const runStr = String(gpoRunningCounter).padStart(4, '0'); // รัน 4 หลัก
+  const runStr = String(gpoRunningCounter).padStart(4, '0');
   return `DO-${datePart}-${runStr}`;
 }
 
@@ -706,31 +799,13 @@ function openGpoModal() {
 }
 
 function printGPO() {
-  gpoRunningCounter++; // เพิ่มเลขหลังปริ้น
+  gpoRunningCounter++;
   window.print();
 }
 
 // ============================================================
-// LOGIN / LOGOUT & UI
+// UI & ROUTING
 // ============================================================
-function login() {
-  const u = document.getElementById('username').value.trim();
-  if (!u) { toast('กรุณากรอก Username', 'error'); return; }
-  document.getElementById('display-user').textContent = '👤 ' + u;
-  document.getElementById('login-page').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = 'flex';
-  refreshCustomerSelects();
-  renderMasterProducts();
-  renderCustomerList();
-  tab('overview');
-}
-function logout() {
-  document.getElementById('login-page').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('username').value = '';
-}
-
 function tab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
