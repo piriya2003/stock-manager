@@ -1,169 +1,1857 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการสต็อกสินค้า (HQ Full System)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>tailwind.config = { darkMode: 'class', }</script>
-    <style>
-        body { font-family: 'Prompt', sans-serif; }
-        .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #374151; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockHQ — Chonburi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── DARK THEME (default) ── */
+[data-theme="dark"] {
+  --bg: #0b0d11;
+  --s1: #111318;
+  --s2: #181b22;
+  --s3: #1f232e;
+  --b1: #252a38;
+  --b2: #2e3448;
+  --b3: #3a4058;
+  --t1: #e8edf5;
+  --t2: #9aa3b5;
+  --t3: #5a6378;
+  --shadow: 0 4px 20px rgba(0,0,0,.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+}
+
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg: #f0f2f7;
+  --s1: #ffffff;
+  --s2: #f5f7fb;
+  --s3: #eaecf4;
+  --b1: #dde1ee;
+  --b2: #c8cde0;
+  --b3: #b0b7d0;
+  --t1: #1a1f2e;
+  --t2: #4a5168;
+  --t3: #8a92aa;
+  --shadow: 0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 6px 24px rgba(0,0,0,.12);
+}
+
+:root {
+  --blue: #4f8ef7;
+  --blue2: #3b6fd4;
+  --blue-dim: rgba(79,142,247,.12);
+  --green: #2dd4a0;
+  --green-dim: rgba(45,212,160,.1);
+  --orange: #f59e0b;
+  --orange-dim: rgba(245,158,11,.1);
+  --red: #f06060;
+  --red-dim: rgba(240,96,96,.1);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,.1);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34,211,238,.1);
+  --r: 8px;
+  --r2: 12px;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sarabun', sans-serif;
+  --sidebar-w: 220px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px;transition:background .25s,color .25s}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:9px}
+.mono{font-family:var(--mono)}
+
+/* ── THEME TOGGLE ── */
+.theme-toggle{
+  width:36px;height:36px;border-radius:var(--r);border:1px solid var(--b2);
+  background:var(--s2);color:var(--t2);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:.15s;flex-shrink:0;
+}
+.theme-toggle:hover{border-color:var(--b3);color:var(--t1);background:var(--s3)}
+
+/* ── LOGIN ── */
+#login-page{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;background-image:radial-gradient(ellipse at 20% 50%,rgba(79,142,247,.05) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(45,212,160,.04) 0%,transparent 50%);transition:background .25s}
+.login-wrap{width:380px}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-icon{width:56px;height:56px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.25);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px}
+.login-title{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.login-sub{font-size:12px;color:var(--blue);margin-top:4px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.login-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:28px;box-shadow:var(--shadow)}
+.login-tabs{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:24px;gap:2px}
+.login-tab{flex:1;padding:7px;text-align:center;font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--t3);transition:.15s}
+.login-tab.active{background:var(--s3);color:var(--t1);border:1px solid var(--b1)}
+.hint-box{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--t3);text-align:center;margin-top:16px}
+.hint-box b{color:var(--t2)}
+.login-theme-btn{position:absolute;top:16px;right:16px}
+
+/* ── APP SHELL ── */
+#app{display:none;height:100vh;overflow:hidden}
+.shell{display:flex;height:100%;width:100%}
+
+/* ── SIDEBAR ── */
+#sidebar{width:var(--sidebar-w);background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;transition:.25s;box-shadow:var(--shadow)}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:-.2px}
+.logo-badge{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.06em}
+.nav-group-label{font-size:10px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:14px 14px 5px}
+.nav-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;font-size:13px;font-weight:500;color:var(--t2);background:none;border:none;border-radius:var(--r);cursor:pointer;margin:1px 6px;width:calc(100% - 12px);transition:.12s;position:relative}
+.nav-item:hover{background:var(--s3);color:var(--t1)}
+.nav-item.active{background:var(--blue-dim);color:var(--blue)}
+.nav-item .ni-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;min-width:18px;text-align:center}
+.nav-badge.orange{background:var(--orange)}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--b1)}
+.user-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s2);border-radius:var(--r);margin-bottom:8px}
+.user-avatar{width:28px;height:28px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
+.user-name{font-size:12px;font-weight:600;color:var(--t1)}
+.user-role{font-size:10px;color:var(--t3)}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;gap:12px;box-shadow:var(--shadow)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.location-badge{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(79,142,247,.2);padding:4px 12px;border-radius:99px;font-size:11px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.clock-badge{font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+/* ── ALERT BAR ── */
+#alert-bar{background:rgba(245,158,11,.08);border-bottom:1px solid rgba(245,158,11,.2);padding:6px 20px;font-size:12px;color:var(--orange);display:none;align-items:center;gap:8px;cursor:pointer}
+#alert-bar:hover{background:rgba(245,158,11,.12)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:24px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:18px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+
+/* ── SUB TABS ── */
+.sub-tabs{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;gap:2px;margin-bottom:20px;width:fit-content}
+.sub-tab{padding:7px 16px;font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--t3);transition:.15s;border:none;background:none;font-family:var(--sans)}
+.sub-tab:hover{color:var(--t2)}
+.sub-tab.active{background:var(--s3);color:var(--t1);border:1px solid var(--b1)}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden;transition:.2s;box-shadow:var(--shadow)}
+.stat-card:hover{border-color:var(--b2);transform:translateY(-1px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.gray::before{background:var(--t3)}
+.stat-card.orange::before{background:var(--orange)}
+.stat-card.red::before{background:var(--red)}
+.stat-card.cyan::before{background:var(--cyan)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:700;line-height:1;font-family:var(--mono)}
+.stat-sub{font-size:11px;color:var(--t3);margin-top:6px}
+.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.1}
+
+/* ── CARD ── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);box-shadow:var(--shadow)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600;color:var(--t2)}
+.card-body{padding:18px}
+
+/* ── TABLE ── */
+.tbl-wrap{border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl-wrap thead{background:var(--s2);position:sticky;top:0;z-index:5}
+.tbl-wrap th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);white-space:nowrap;border-bottom:1px solid var(--b1)}
+.tbl-wrap td{padding:10px 14px;color:var(--t2);border-top:1px solid rgba(128,128,128,.06)}
+.tbl-wrap tr:hover td{background:rgba(128,128,128,.04)}
+.sn-cell{font-family:var(--mono);font-size:11px;color:var(--t1);letter-spacing:.03em}
+.code-cell{font-family:var(--mono);font-size:10px;color:var(--t3)}
+.tbl-empty{text-align:center;padding:40px!important;color:var(--t3)!important;font-size:13px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.b-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(45,212,160,.2)}
+.b-gray{background:rgba(128,128,128,.08);color:var(--t3);border:1px solid var(--b1)}
+.b-orange{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(245,158,11,.2)}
+.b-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,96,96,.2)}
+.b-blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(79,142,247,.2)}
+.b-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.b-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+
+/* ── INPUTS ── */
+.field-label{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=date],input[type=password],input[type=number],select,textarea{
+  width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);
+  color:var(--t1);padding:9px 11px;font-size:13px;font-family:var(--sans);
+  outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,142,247,.1)}
+input:disabled{opacity:.4;cursor:not-allowed}
+select option{background:var(--s2);color:var(--t1)}
+.scan-field{border:2px solid var(--blue)!important;padding:13px 14px!important;font-size:16px!important;font-family:var(--mono)!important;font-weight:600;letter-spacing:.05em;background:rgba(79,142,247,.03)!important}
+.scan-field:focus{box-shadow:0 0 0 4px rgba(79,142,247,.12)!important}
+.scan-field.s-orange{border-color:var(--orange)!important;background:rgba(245,158,11,.03)!important}
+.scan-field.s-red{border-color:var(--red)!important;background:rgba(240,96,96,.03)!important}
+input[type=file]{display:none}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-size:12px;font-weight:600;border:none;cursor:pointer;transition:.15s;font-family:var(--sans);white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2)}
+.btn-success{background:var(--green-dim);color:var(--green);border:1px solid rgba(45,212,160,.25)}
+.btn-success:hover{background:rgba(45,212,160,.18)}
+.btn-orange{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(245,158,11,.25)}
+.btn-orange:hover{background:rgba(245,158,11,.18)}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,96,96,.25)}
+.btn-red:hover{background:rgba(240,96,96,.18)}
+.btn-ghost{background:var(--s2);color:var(--t2);border:1px solid var(--b2)}
+.btn-ghost:hover{border-color:var(--b3);color:var(--t1)}
+.btn-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(34,211,238,.25)}
+.btn-cyan:hover{background:rgba(34,211,238,.18)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-full{width:100%;justify-content:center;padding:11px}
+.btn-lg{padding:11px 18px;font-size:14px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;flex-shrink:0}
+
+/* ── FORM GROUPS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.col-span-2{grid-column:1/-1}
+.form-row{display:flex;flex-direction:column;gap:5px}
+.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
+.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.flex-wrap{flex-wrap:wrap}
+.w-full{width:100%}.text-right{text-align:right}.text-center{text-align:center}
+.text-xs{font-size:11px}.text-sm{font-size:12px}.font-bold{font-weight:700}.font-mono{font-family:var(--mono)}
+.text-blue{color:var(--blue)}.text-green{color:var(--green)}.text-orange{color:var(--orange)}.text-red{color:var(--red)}.text-muted{color:var(--t3)}.text-primary{color:var(--t1)}.text-cyan{color:var(--cyan)}
+
+/* ── TOAST ── */
+#toast-area{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:11px 15px;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-lg);max-width:320px;animation:toastIn .2s ease}
+.toast.success{border-color:rgba(45,212,160,.35);color:var(--green)}
+.toast.error{border-color:rgba(240,96,96,.35);color:var(--red)}
+.toast.info{border-color:rgba(79,142,247,.35);color:var(--blue)}
+.toast.warning{border-color:rgba(245,158,11,.35);color:var(--orange)}
+@keyframes toastIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:16px;width:100%;max-width:480px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal-lg{max-width:640px}
+.modal-xl{max-width:760px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--b1)}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:var(--s2);border:1px solid var(--b1);color:var(--t2);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.modal-close:hover{color:var(--t1);border-color:var(--b3)}
+
+/* ── INBOUND / OUTBOUND ── */
+.scan-hint{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--r);padding:10px 14px;font-size:11.5px;color:var(--t2);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.scan-result{display:flex;justify-content:space-between;align-items:center;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px}
+.scan-result .sn{font-family:var(--mono);font-size:11px;color:var(--blue)}
+.inline-msg{min-height:22px;font-size:12.5px;font-weight:600;text-align:center;margin-top:8px;transition:.15s}
+
+/* ── BALANCE BOX ── */
+.balance-display{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 14px}
+.balance-num{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--blue)}
+.balance-label{font-size:11px;color:var(--t3)}
+
+/* ── IMPORT ── */
+.drop-zone{border:2px dashed var(--b2);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:.15s}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:rgba(79,142,247,.03)}
+.drop-zone-icon{font-size:32px;margin-bottom:8px}
+.drop-zone-label{font-size:13px;font-weight:600;color:var(--t2)}
+.drop-zone-sub{font-size:11px;color:var(--t3);margin-top:4px}
+.mapping-row{display:grid;grid-template-columns:1fr 1fr}
+.field-tag{display:inline-block;background:var(--s3);border:1px solid var(--b2);border-radius:4px;padding:2px 7px;font-size:11px;font-family:var(--mono);color:var(--t2)}
+
+/* ── REPAIR CARD ── */
+.repair-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r2);padding:14px 16px;cursor:pointer;transition:.15s;display:flex;gap:12px;align-items:flex-start}
+.repair-card:hover{border-color:var(--b3);background:var(--s3)}
+.repair-card.status-wip{border-left:3px solid var(--cyan)}
+.repair-card.status-done{border-left:3px solid var(--green);opacity:.75}
+.repair-icon{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.repair-icon.wip{background:var(--cyan-dim)}
+.repair-icon.done{background:var(--green-dim)}
+.repair-info{flex:1;min-width:0}
+.repair-sn{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:600}
+.repair-name{font-size:13px;font-weight:600;color:var(--t1);margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.repair-symptom{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.repair-meta{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+
+/* ── STATUS FLOW (2 steps) ── */
+.status-flow{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.status-step{flex:1;text-align:center;position:relative}
+.status-step-dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--b2);background:var(--s2);display:inline-flex;align-items:center;justify-content:center;font-size:14px;position:relative;z-index:2;transition:.3s}
+.status-step-label{font-size:11px;color:var(--t3);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.status-step.active .status-step-dot{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.12)}
+.status-step.active .status-step-label{color:var(--cyan)}
+.status-step.done .status-step-dot{border-color:var(--green);background:var(--green-dim);color:var(--green);box-shadow:0 0 0 4px rgba(45,212,160,.12)}
+.status-step.done .status-step-label{color:var(--green)}
+.status-line{flex:1;height:2px;background:var(--b1);margin-top:-20px;position:relative;z-index:1}
+.status-line.filled{background:var(--green)}
+
+/* ── REPAIR DETAIL ── */
+.detail-section{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.detail-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.detail-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.detail-row .lbl{color:var(--t3)}
+.detail-row .val{color:var(--t1);font-weight:500;text-align:right;max-width:60%}
+
+/* ── DO RECEIPT ── */
+#printArea{background:#fff;color:#000;padding:20px}
+#printArea *{color:#000!important;font-family:'Sarabun',sans-serif}
+.do-header-edit{padding:10px;border-radius:6px;text-align:center;cursor:text;transition:.15s;font-weight:600;font-size:13px;line-height:1.5;outline:none;border:1px dashed transparent}
+.do-header-edit:hover,.do-header-edit:focus{border-color:#aaa;background:#f9f9f9}
+.do-input{border:none;border-bottom:1px solid #999;background:transparent;padding:2px 4px;font-size:13px;color:#000;outline:none;width:auto}
+.do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
+  .no-print{display:none!important}
+  .do-header-edit{border:none!important;background:transparent!important}
+}
+
+/* ── MISC ── */
+.kbd{display:inline-flex;align-items:center;justify-content:center;background:var(--s3);border:1px solid var(--b2);border-radius:4px;padding:1px 5px;font-size:10px;font-family:var(--mono);color:var(--t3);min-width:20px}
+@media(max-width:900px){#sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}}
+hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 dark:bg-[#121212] dark:text-gray-200 transition-colors duration-300">
+<body>
 
-    <div id="login-page" class="min-h-screen flex items-center justify-center bg-gray-900 dark:bg-black">
-        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-96">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">เข้าสู่ระบบสต็อก</h2>
-                <p class="text-sm text-gray-500">📍 Chonburi HQ</p>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="username" class="mt-1 block w-full border rounded-md py-2 px-3 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500" placeholder="admin">
-                <input type="password" id="password" class="mt-1 block w-full border rounded-md py-2 px-3 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                <button onclick="login()" class="w-full py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-bold transition">เข้าสู่ระบบ</button>
-            </div>
+<!-- LOGIN -->
+<div id="login-page" style="position:relative">
+  <!-- Theme toggle on login page -->
+  <div style="position:absolute;top:16px;right:16px">
+    <button class="theme-toggle" onclick="toggleTheme()" id="login-theme-btn" title="สลับธีม">🌙</button>
+  </div>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">📦</div>
+      <div class="login-title">StockHQ System</div>
+      <div class="login-sub">Chonburi Headquarters</div>
+    </div>
+    <div class="login-card">
+      <div class="login-tabs">
+        <div class="login-tab active" id="ltab-login" onclick="setLoginTab('login')">เข้าสู่ระบบ</div>
+        <div class="login-tab" id="ltab-reg" onclick="setLoginTab('register')">สมัครสมาชิก</div>
+      </div>
+      <div id="form-login" style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-row"><label class="field-label">Username</label><input type="text" id="f-user" placeholder="ชื่อผู้ใช้" onkeypress="if(event.key==='Enter')doLogin()"></div>
+        <div class="form-row"><label class="field-label">Password</label><input type="password" id="f-pass" placeholder="รหัสผ่าน" onkeypress="if(event.key==='Enter')doLogin()"></div>
+        <button onclick="doLogin()" class="btn btn-primary btn-full btn-lg mt-2">เข้าสู่ระบบ</button>
+        <div class="hint-box">ค่าเริ่มต้น: <b>admin</b> / <b>1234</b></div>
+      </div>
+      <div id="form-reg" style="display:none;flex-direction:column;gap:12px">
+        <div class="form-row"><label class="field-label">Username</label><input type="text" id="r-user" placeholder="ตั้งชื่อผู้ใช้"></div>
+        <div class="form-row"><label class="field-label">Password</label><input type="password" id="r-pass" placeholder="อย่างน้อย 4 ตัวอักษร"></div>
+        <div class="form-row"><label class="field-label">ยืนยัน Password</label><input type="password" id="r-conf" placeholder="พิมพ์ซ้ำ"></div>
+        <button onclick="doRegister()" class="btn btn-success btn-full btn-lg mt-2">สร้างบัญชี</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">📦</div>
+    <div><div class="logo-text">StockHQ</div><div class="logo-badge">📍 ชลบุรี</div></div>
+  </div>
+  <nav style="flex:1;overflow-y:auto;padding:6px 0">
+    <div class="nav-group-label">ภาพรวม</div>
+    <button class="nav-item active" id="nav-overview" onclick="tab('overview')"><span class="ni-icon">📈</span>แดชบอร์ด</button>
+    <div class="nav-group-label">ข้อมูลหลัก</div>
+    <button class="nav-item" id="nav-master" onclick="tab('master')"><span class="ni-icon">⚙️</span>สินค้า & ลูกค้า</button>
+    <button class="nav-item" id="nav-import" onclick="tab('import')"><span class="ni-icon">📂</span>Import Excel/CSV</button>
+    <div class="nav-group-label">จัดการสต็อก</div>
+    <button class="nav-item" id="nav-stock" onclick="tab('stock')"><span class="ni-icon">📋</span>สินค้าคงคลัง</button>
+    <button class="nav-item" id="nav-inbound" onclick="tab('inbound')"><span class="ni-icon">📥</span>รับเข้าสินค้า</button>
+    <button class="nav-item" id="nav-outbound" onclick="tab('outbound')"><span class="ni-icon">📤</span>โอน / ขาย</button>
+    <button class="nav-item" id="nav-maintenance" onclick="tab('maintenance')">
+      <span class="ni-icon">🔧</span>ซ่อมสินค้า
+      <span class="nav-badge orange" id="badge-repair" style="display:none">0</span>
+    </button>
+    <div class="nav-group-label">รายงาน & ระบบ</div>
+    <button class="nav-item" id="nav-report" onclick="tab('report')"><span class="ni-icon">📊</span>ประวัติการเคลื่อนไหว</button>
+    <button class="nav-item" id="nav-backup" onclick="tab('backup')"><span class="ni-icon">💾</span>Backup / Restore</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div><div class="user-name" id="user-name-display">admin</div><div class="user-role" id="user-role-display">Administrator</div></div>
+    </div>
+    <button onclick="doLogout()" class="btn btn-ghost w-full" style="font-size:12px">🚪 ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-left">
+      <span class="location-badge">📍 Chonburi HQ</span>
+      <span style="font-size:11px;color:var(--t3)" id="shortcut-hint"><span class="kbd">F2</span> รับเข้า &nbsp;<span class="kbd">F3</span> โอน/ขาย &nbsp;<span class="kbd">F4</span> ซ่อมสินค้า</span>
+    </div>
+    <div class="topbar-right">
+      <span class="clock-badge" id="clock"></span>
+      <!-- Theme toggle in topbar -->
+      <button class="theme-toggle" onclick="toggleTheme()" id="app-theme-btn" title="สลับธีม มืด/สว่าง">🌙</button>
+    </div>
+  </div>
+
+  <div id="alert-bar" onclick="tab('maintenance')">
+    ⚠️ <span id="alert-text"></span> — <u>คลิกเพื่อดูรายการ</u>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ OVERVIEW ══ -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="page-header">
+        <div class="page-title">📈 แดชบอร์ด</div>
+        <button onclick="renderDashboard()" class="btn btn-ghost btn-sm">🔄 รีเฟรช</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card blue">
+          <div class="stat-label">สินค้าทั้งหมด</div>
+          <div class="stat-value text-blue" id="d-total">0</div>
+          <div class="stat-sub" id="d-total-sub">ในระบบ</div>
+          <div class="stat-icon">📦</div>
         </div>
+        <div class="stat-card green">
+          <div class="stat-label">พร้อมใช้งาน</div>
+          <div class="stat-value text-green" id="d-avail">0</div>
+          <div class="stat-sub" id="d-avail-pct">0%</div>
+          <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-card gray">
+          <div class="stat-label">โอน / ขายออก</div>
+          <div class="stat-value" style="color:var(--t3)" id="d-sold">0</div>
+          <div class="stat-sub" id="d-sold-pct">0%</div>
+          <div class="stat-icon">📤</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">กำลังซ่อมสินค้า</div>
+          <div class="stat-value text-orange" id="d-repair">0</div>
+          <div class="stat-sub" id="d-repair-pct">0%</div>
+          <div class="stat-icon">🔧</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">สัดส่วนสถานะ</span></div>
+          <div class="card-body" id="status-chart-wrap"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">สินค้าตามหมวดหมู่</span>
+            <span id="cat-count-badge" class="badge b-blue" style="font-size:10px"></span>
+          </div>
+          <div style="max-height:220px;overflow-y:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">หมวดหมู่</th>
+                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">จำนวน</th>
+                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">พร้อม</th>
+              </tr></thead>
+              <tbody id="cat-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">รายการเคลื่อนไหวล่าสุด</span>
+          <button onclick="tab('report')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button>
+        </div>
+        <div class="tbl-wrap" style="border:none;border-radius:0">
+          <table>
+            <thead><tr><th>วันที่</th><th>ประเภท</th><th>สินค้า</th><th>SN</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="recent-tx"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <div id="dashboard-page" class="hidden flex h-screen overflow-hidden">
-        <div class="w-64 bg-gray-800 dark:bg-[#1e1e1e] border-r border-gray-700 dark:border-gray-800 text-white flex flex-col z-20">
-            <div class="h-16 flex items-center px-4 font-bold text-xl border-b border-gray-700">
-                Stock Manager
-                <div class="text-xs font-normal text-green-400 block w-full mt-1">📍 ออฟฟิศชลบุรี HQ</div>
-            </div>
-            <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-                <button onclick="switchTab('overview-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md bg-gray-900 border-l-4 border-blue-500">📈 แดชบอร์ด (Dashboard)</button>
-                <button onclick="switchTab('master-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">⚙️ สร้างสินค้า & ลูกค้า</button>
-                <button onclick="switchTab('stock-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">📋 สินค้าคงคลังทั้งหมด</button>
-                <button onclick="switchTab('inbound-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">📦 รับเข้าสินค้า (Inbound)</button>
-                <button onclick="switchTab('outbound-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">📤 โอน/ขาย (Transfer)</button>
-                <button onclick="switchTab('maintenance-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">🔧 แจ้งซ่อม / Turn</button>
-                <button onclick="switchTab('report-tab', this)" class="nav-btn w-full text-left text-gray-300 hover:bg-gray-700 flex items-center px-2 py-2 text-sm font-medium rounded-md">📊 Report เคลื่อนไหว</button>
-            </nav>
+    <!-- ══ STOCK ══ -->
+    <div id="tab-stock" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">📋 สินค้าคงคลัง</div>
+        <div class="flex gap-2 flex-wrap">
+          <input type="text" id="s-q" oninput="filterStock()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
+          <select id="s-cat" onchange="filterStock()" style="width:180px">
+            <option value="">— ทุกหมวดหมู่ —</option>
+          </select>
+          <select id="s-status" onchange="filterStock()" style="width:150px">
+            <option value="">— ทุกสถานะ —</option>
+            <option value="Available">พร้อมใช้งาน</option>
+            <option value="Sold">โอน/ขายแล้ว</option>
+            <option value="Repair">กำลังซ่อมสินค้า</option>
+          </select>
+          <button onclick="exportStockCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
-
-        <div class="flex-1 flex flex-col bg-gray-50 dark:bg-[#121212]">
-            <header class="h-16 bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 shadow-sm z-10">
-                <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-bold border border-blue-200 dark:border-blue-800">📍 โลเคชั่นออฟฟิศชลบุรี HQ</span>
-                <div class="flex items-center space-x-4">
-                    <span id="display-user" class="text-sm font-medium"></span>
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">🌙</button>
-                    <button onclick="logout()" class="text-sm bg-red-100 text-red-600 px-3 py-1 rounded font-medium hover:bg-red-200 transition">Logout</button>
-                </div>
-            </header>
-
-            <main class="flex-1 overflow-y-auto p-6 relative">
-                <div id="overview-tab" class="tab-content max-w-6xl mx-auto space-y-6">
-                    <h1 class="text-2xl font-bold">📈 แดชบอร์ดภาพรวม</h1>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-white dark:bg-[#1e1e1e] p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 text-center">
-                            <span class="text-xs text-gray-500 uppercase font-bold">ทั้งหมด</span>
-                            <div id="dash-total" class="text-4xl font-bold text-blue-600 mt-2">0</div>
-                        </div>
-                        <div class="bg-white dark:bg-[#1e1e1e] p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 text-center">
-                            <span class="text-xs text-gray-500 uppercase font-bold">พร้อมใช้งาน</span>
-                            <div id="dash-avail" class="text-4xl font-bold text-green-500 mt-2">0</div>
-                        </div>
-                        <div class="bg-white dark:bg-[#1e1e1e] p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 text-center">
-                            <span class="text-xs text-gray-500 uppercase font-bold">ขาย/โอนออก</span>
-                            <div id="dash-sold" class="text-4xl font-bold text-gray-500 mt-2">0</div>
-                        </div>
-                        <div class="bg-white dark:bg-[#1e1e1e] p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 text-center">
-                            <span class="text-xs text-gray-500 uppercase font-bold">แจ้งซ่อม</span>
-                            <div id="dash-repair" class="text-4xl font-bold text-orange-500 mt-2">0</div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white dark:bg-[#1e1e1e] p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800">
-                        <h2 class="text-lg font-bold mb-4">ตารางสรุปจำนวนสต็อกปัจจุบัน</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead class="bg-gray-100 dark:bg-gray-800">
-                                    <tr>
-                                        <th class="p-3">หมวดหมู่</th>
-                                        <th class="p-3 text-center">พร้อมใช้</th>
-                                        <th class="p-3 text-center">ขาย/โอน</th>
-                                        <th class="p-3 text-center">ส่งซ่อม</th>
-                                        <th class="p-3 text-center">รวม</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="summaryTableBody" class="divide-y dark:divide-gray-700"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                </main>
-        </div>
+      </div>
+      <div class="tbl-wrap" style="max-height:calc(100vh - 220px);overflow-y:auto">
+        <table>
+          <thead><tr><th>หมวดหมู่</th><th>ชื่อสินค้า</th><th>รหัส</th><th>Serial Number</th><th>สถานะ</th><th style="text-align:center">จัดการ</th></tr></thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--t3);text-align:right">แสดง <span id="rec-count" style="color:var(--blue);font-weight:700">0</span> รายการ</div>
     </div>
 
-    <script>
-        let stockData = [...]; // (ข้อมูลสต็อกเดิมของคุณ)
-        let transactions = [];
+    <!-- ══ MASTER ══ -->
+    <div id="tab-master" class="tab-content">
+      <div class="page-title mb-4">⚙️ ข้อมูลหลัก</div>
+      <div class="grid-2" style="align-items:start">
+        <div class="card">
+          <div class="card-header" style="border-color:rgba(79,142,247,.2)"><span class="card-title text-blue">📦 เพิ่มต้นแบบสินค้า</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-row"><label class="field-label">หมวดหมู่</label><input type="text" id="m-cat" placeholder="เช่น POS, ปริ้นเตอร์"></div>
+            <div class="form-row"><label class="field-label">ชื่อสินค้า *</label><input type="text" id="m-name" placeholder="ชื่อสินค้า"></div>
+            <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="m-code" placeholder="เช่น POS-001"></div>
+            <button onclick="saveMasterProduct()" class="btn btn-primary btn-full mt-1">+ บันทึกต้นแบบ</button>
+          </div>
+          <hr class="divider" style="margin:0">
+          <div class="card-body" style="max-height:240px;overflow-y:auto">
+            <div id="master-product-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" style="border-color:rgba(45,212,160,.2)"><span class="card-title text-green">👥 ลูกค้า / สาขา</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-row"><label class="field-label">ชื่อลูกค้า / สาขา *</label><input type="text" id="m-cust" placeholder="เช่น TOPS สาขาชลบุรี" onkeypress="if(event.key==='Enter')saveCustomer()"></div>
+            <button onclick="saveCustomer()" class="btn btn-success btn-full">+ เพิ่มลูกค้า</button>
+          </div>
+          <hr class="divider" style="margin:0">
+          <div class="card-body" style="max-height:280px;overflow-y:auto">
+            <div id="customer-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        function renderDashboard() {
-            // คำนวณสรุป
-            const avail = stockData.filter(i => i.status === 'Available').length;
-            const sold = stockData.filter(i => i.status === 'Sold').length;
-            const repair = stockData.filter(i => i.status === 'Repair').length;
-            
-            document.getElementById('dash-total').innerText = stockData.length;
-            document.getElementById('dash-avail').innerText = avail;
-            document.getElementById('dash-sold').innerText = sold;
-            document.getElementById('dash-repair').innerText = repair;
+    <!-- ══ IMPORT ══ -->
+    <div id="tab-import" class="tab-content">
+      <div class="page-title mb-4">📂 Import ข้อมูล Excel / CSV</div>
+      <div class="card">
+        <div class="card-body">
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+               ondragover="event.preventDefault();this.classList.add('dragover')"
+               ondragleave="this.classList.remove('dragover')"
+               ondrop="onFileDrop(event)">
+            <div class="drop-zone-icon">📄</div>
+            <div class="drop-zone-label">คลิกหรือลากไฟล์มาวาง</div>
+            <div class="drop-zone-sub">รองรับ .xlsx .xls .csv — สูงสุด 10MB</div>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="onFileSelect(event)">
+          <hr class="divider">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div style="font-size:13px;font-weight:600">📋 คอลัมน์ที่รองรับ</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:4px">
+                <span class="field-tag">category</span> <span class="field-tag">name</span> <span class="field-tag">code</span> <span class="field-tag">sn</span> <span class="field-tag">status</span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="dlTemplate('xlsx')" class="btn btn-ghost btn-sm">⬇ Template .xlsx</button>
+              <button onclick="dlTemplate('csv')" class="btn btn-ghost btn-sm">⬇ Template .csv</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="import-preview" style="display:none" class="mt-4">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div style="font-size:13px;font-weight:600">ตัวอย่างข้อมูล (Preview)</div>
+              <div id="import-summary" class="text-muted text-sm mt-1"></div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="clearImport()" class="btn btn-ghost btn-sm">✕ ยกเลิก</button>
+              <button onclick="confirmImport()" class="btn btn-primary btn-sm">✅ นำเข้าข้อมูล</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="background:var(--s2);border-radius:var(--r);padding:14px;margin-bottom:14px">
+              <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">🗂 Field Mapping</div>
+              <div id="mapping-grid" class="mapping-row" style="gap:10px"></div>
+            </div>
+            <div style="max-height:240px;overflow-y:auto;border:1px solid var(--b1);border-radius:var(--r)">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead><tr id="preview-thead" style="background:var(--s2)"></tr></thead>
+                <tbody id="preview-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="import-log" style="display:none" class="mt-4">
+        <div class="card"><div class="card-body" id="import-log-inner"></div></div>
+      </div>
+    </div>
 
-            renderSummaryTable();
-        }
+    <!-- ══ INBOUND ══ -->
+    <div id="tab-inbound" class="tab-content">
+      <div class="page-title mb-4">📥 รับเข้าสินค้า</div>
+      <div style="max-width:640px">
+        <div class="scan-hint mb-4">💡 ตั้งค่าชื่อสินค้าไว้ครั้งเดียว แล้วสแกน SN ต่อเนื่องได้เลย ระบบบันทึกอัตโนมัติเมื่อกด Enter</div>
+        <div class="card">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="grid-2">
+              <div class="form-row"><label class="field-label">วันที่รับ</label><input type="date" id="i-date"></div>
+              <div class="form-row"><label class="field-label">หมวดหมู่</label><input type="text" id="i-cat" placeholder="เช่น POS, ปริ้นเตอร์" list="cat-dl"></div>
+            </div>
+            <div class="form-row col-span-2"><label class="field-label" style="color:var(--blue)">ชื่อสินค้า *</label><input type="text" id="i-name" placeholder="ชื่อสินค้า" list="product-dl"></div>
+            <div class="grid-2">
+              <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="i-code" oninput="updateBalance()" placeholder="รหัส (ถ้ามี)" list="code-dl"></div>
+              <div>
+                <label class="field-label">คงเหลือ (Available)</label>
+                <div class="balance-display mt-1">
+                  <div class="balance-num" id="i-balance">0</div>
+                  <div class="balance-label">ชิ้นพร้อมใช้งาน</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="field-label" style="color:var(--blue)">สแกน Serial Number <span class="kbd">Enter</span> เพื่อบันทึก</label>
+              <input type="text" id="i-sn" class="scan-field" placeholder="คลิกที่นี่แล้วยิงบาร์โค้ด..." onkeypress="if(event.key==='Enter')doInbound()">
+            </div>
+            <button onclick="doInbound()" class="btn btn-primary btn-full">📥 บันทึกรับเข้า</button>
+            <div class="inline-msg" id="i-msg"></div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">รายการที่รับเข้าในเซสชั่นนี้ (<span id="i-session-count">0</span> รายการ)</div>
+          <div id="i-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
+        </div>
+      </div>
+      <datalist id="cat-dl"></datalist>
+      <datalist id="product-dl"></datalist>
+      <datalist id="code-dl"></datalist>
+    </div>
 
-        function renderSummaryTable() {
-            const tbody = document.getElementById('summaryTableBody');
-            tbody.innerHTML = '';
-            const categories = [...new Set(stockData.map(i => i.category))];
-            let tAvail = 0, tSold = 0, tRepair = 0, tGrand = 0;
+    <!-- ══ OUTBOUND ══ -->
+    <div id="tab-outbound" class="tab-content">
+      <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
+      <div style="max-width:640px">
+        <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
+        <div class="card">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="grid-2">
+              <div class="form-row"><label class="field-label">วันที่</label><input type="date" id="o-date"></div>
+              <div class="form-row"><label class="field-label">ประเภท</label>
+                <select id="o-type"><option value="โอนสินค้า">📤 โอนสินค้า (Transfer)</option><option value="ขายสินค้า">💰 ขายสินค้า (Sell)</option></select>
+              </div>
+            </div>
+            <div class="form-row"><label class="field-label" style="color:var(--orange)">ลูกค้า / สาขาปลายทาง *</label><select id="o-cust"></select></div>
+            <div class="form-row">
+              <label class="field-label" style="color:var(--orange)">สแกน SN เพื่อตัดสต็อก <span class="kbd">Enter</span></label>
+              <input type="text" id="o-sn" class="scan-field s-orange" placeholder="ยิงบาร์โค้ดตรงนี้..." onkeypress="if(event.key==='Enter')doOutbound()">
+            </div>
+            <div class="flex gap-2">
+              <button onclick="doOutbound()" class="btn btn-orange btn-full">📤 ตัดสต็อก</button>
+              <button onclick="openDOModal()" class="btn btn-primary" style="flex-shrink:0">📄 DO</button>
+            </div>
+            <div class="inline-msg" id="o-msg"></div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">รายการโอน/ขายในเซสชั่นนี้ (<span id="o-session-count">0</span> รายการ)</div>
+          <div id="o-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
 
-            categories.forEach(cat => {
-                const items = stockData.filter(i => i.category === cat);
-                const a = items.filter(i => i.status === 'Available').length;
-                const s = items.filter(i => i.status === 'Sold').length;
-                const r = items.filter(i => i.status === 'Repair').length;
-                tAvail += a; tSold += s; tRepair += r; tGrand += items.length;
+    <!-- ══ MAINTENANCE (ซ่อมสินค้า) ══ -->
+    <div id="tab-maintenance" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">🔧 ซ่อมสินค้า</div>
+        <div class="flex gap-2 items-center">
+          <span class="badge b-cyan" id="badge-wip">0 กำลังซ่อม</span>
+          <span class="badge b-green" id="badge-done-today">0 เสร็จวันนี้</span>
+        </div>
+      </div>
 
-                tbody.innerHTML += `<tr>
-                    <td class="p-3 font-bold text-blue-600">${cat}</td>
-                    <td class="p-3 text-center">${a}</td>
-                    <td class="p-3 text-center">${s}</td>
-                    <td class="p-3 text-center">${r}</td>
-                    <td class="p-3 text-center font-bold">${items.length}</td>
-                </tr>`;
-            });
+      <div class="sub-tabs">
+        <button class="sub-tab active" id="stab-intake" onclick="repairSubTab('intake')">📥 รับเครื่องซ่อม</button>
+        <button class="sub-tab" id="stab-list" onclick="repairSubTab('list')">📋 รายการซ่อมสินค้า</button>
+      </div>
 
-            tbody.innerHTML += `
-                <tr class="bg-gray-100 dark:bg-gray-900 font-bold border-t-2">
-                    <td class="p-3 text-right">รวมทั้งหมด</td>
-                    <td class="p-3 text-center text-green-600">${tAvail}</td>
-                    <td class="p-3 text-center text-gray-500">${tSold}</td>
-                    <td class="p-3 text-center text-orange-500">${tRepair}</td>
-                    <td class="p-3 text-center text-blue-600 text-lg">${tGrand}</td>
-                </tr>`;
-        }
+      <!-- Sub: รับเครื่องซ่อม -->
+      <div id="rsub-intake" style="max-width:640px">
+        <div class="scan-hint mb-4" style="background:rgba(240,96,96,.06);border-color:rgba(240,96,96,.15);color:var(--t2)">
+          💡 สแกน SN เครื่องที่ต้องการส่งซ่อม กรอกอาการเสีย แล้วกด บันทึก — เครื่องจะอยู่ในสถานะ <b style="color:var(--cyan)">กำลังซ่อม</b>
+        </div>
+        <div class="card">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="form-row">
+              <label class="field-label" style="color:var(--red)">สแกน SN เครื่องที่มีปัญหา *</label>
+              <input type="text" id="r-sn" class="scan-field s-red" placeholder="ยิงบาร์โค้ดหรือพิมพ์ SN..." onkeypress="if(event.key==='Enter')document.getElementById('r-sym').focus()">
+            </div>
+            <div id="r-lookup-result" style="display:none" class="detail-section">
+              <div style="display:flex;gap:12px;align-items:center">
+                <div style="font-size:24px">📦</div>
+                <div>
+                  <div id="r-lookup-name" style="font-size:13px;font-weight:600;color:var(--t1)"></div>
+                  <div id="r-lookup-code" style="font-size:11px;color:var(--t3);font-family:var(--mono)"></div>
+                  <div id="r-lookup-status" style="margin-top:4px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row">
+                <label class="field-label">ลูกค้า / โปรเจกต์</label>
+                <select id="r-cust"></select>
+              </div>
+              <div class="form-row">
+                <label class="field-label">ช่างซ่อม / ผู้รับผิดชอบ</label>
+                <input type="text" id="r-tech" placeholder="ชื่อช่าง (ถ้ามี)">
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="field-label" style="color:var(--red)">อาการเสีย / สาเหตุ *</label>
+              <textarea id="r-sym" rows="3" placeholder="เช่น บอร์ดพัง, เปิดไม่ติด, จอดับ, สายไฟขาด..." style="resize:vertical"></textarea>
+            </div>
+            <button onclick="doRepair()" class="btn btn-red btn-full">🔧 บันทึกรับซ่อมสินค้า</button>
+            <div class="inline-msg" id="r-msg"></div>
+          </div>
+        </div>
+      </div>
 
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-            if(tabId === 'overview-tab') renderDashboard();
-        }
+      <!-- Sub: รายการซ่อมสินค้า -->
+      <div id="rsub-list" style="display:none">
+        <div class="flex gap-2 mb-4 flex-wrap items-center">
+          <input type="text" id="rep-q" oninput="renderRepairList()" placeholder="🔍 ค้นหา SN / ชื่อสินค้า..." style="width:220px">
+          <select id="rep-status-filter" onchange="renderRepairList()" style="width:180px">
+            <option value="">— ทุกสถานะ —</option>
+            <option value="กำลังซ่อม">🔵 กำลังซ่อม</option>
+            <option value="ซ่อมเสร็จแล้ว">🟢 ซ่อมเสร็จแล้ว</option>
+          </select>
+          <button onclick="exportRepairCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
+        </div>
+        <div id="repair-list-grid" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow-y:auto"></div>
+      </div>
+    </div>
 
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
-        function login() { document.getElementById('login-page').classList.add('hidden'); document.getElementById('dashboard-page').classList.remove('hidden'); renderDashboard(); }
-        function logout() { location.reload(); }
-    </script>
+    <!-- ══ REPORT ══ -->
+    <div id="tab-report" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">📊 ประวัติการเคลื่อนไหว</div>
+        <div class="flex gap-2 flex-wrap">
+          <input type="text" id="rp-q" oninput="renderReport()" placeholder="🔍 ค้นหา..." style="width:220px">
+          <select id="rp-type" onchange="renderReport()" style="width:170px">
+            <option value="">— ทุกประเภท —</option>
+            <option value="รับเข้า">📥 รับเข้า</option>
+            <option value="โอนสินค้า">📤 โอน</option>
+            <option value="ขายสินค้า">💰 ขาย</option>
+            <option value="ซ่อม">🔧 รับซ่อม</option>
+            <option value="คืนสต็อก">♻️ คืนสต็อก</option>
+          </select>
+          <button onclick="exportReportCSV()" class="btn btn-ghost btn-sm">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap" style="max-height:calc(100vh - 210px);overflow-y:auto">
+        <table>
+          <thead><tr><th>วันที่</th><th>ประเภท</th><th>ชื่อสินค้า</th><th>รหัส</th><th>SN</th><th>Balance</th><th>หมายเหตุ</th></tr></thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ BACKUP ══ -->
+    <div id="tab-backup" class="tab-content">
+      <div class="page-title mb-4">💾 Backup & Restore</div>
+      <div class="grid-2" style="align-items:start;max-width:800px">
+        <div class="card">
+          <div class="card-header" style="border-color:rgba(79,142,247,.2)"><span class="card-title text-blue">📤 Export Backup</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:var(--s2);border-radius:var(--r);padding:12px;font-size:12px;color:var(--t2);line-height:1.7">
+              <b style="color:var(--t1)">ข้อมูลที่จะ Export:</b><br>
+              ✅ สินค้าคงคลังทั้งหมด<br>✅ ประวัติการเคลื่อนไหว<br>
+              ✅ ต้นแบบสินค้า<br>✅ รายชื่อลูกค้า<br>
+              ✅ ประวัติซ่อมสินค้าทั้งหมด<br>✅ เลขที่ DO ปัจจุบัน
+            </div>
+            <button onclick="exportBackup()" class="btn btn-primary btn-full">📤 Export JSON Backup</button>
+            <button onclick="exportAllCSV()" class="btn btn-ghost btn-full">📊 Export ทั้งหมดเป็น CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" style="border-color:rgba(240,96,96,.2)"><span class="card-title text-red">📥 Import Backup</span></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:rgba(240,96,96,.06);border:1px solid rgba(240,96,96,.15);border-radius:var(--r);padding:12px;font-size:12px;color:var(--t2)">
+              ⚠️ <b style="color:var(--red)">คำเตือน:</b> การ Restore จะ <b>แทนที่ข้อมูลทั้งหมด</b> ในระบบ
+            </div>
+            <div class="drop-zone" onclick="document.getElementById('backup-input').click()">
+              <div class="drop-zone-icon">📁</div>
+              <div class="drop-zone-label">คลิกเพื่อเลือกไฟล์ Backup (.json)</div>
+            </div>
+            <input type="file" id="backup-input" accept=".json" onchange="importBackup(event)">
+          </div>
+        </div>
+      </div>
+      <div class="card mt-4" style="max-width:800px">
+        <div class="card-header"><span class="card-title">📋 สถิติข้อมูลปัจจุบัน</span></div>
+        <div class="card-body"><div class="grid-3" id="backup-stats"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+</div>
+
+<!-- DO MODAL -->
+<div class="modal-bg" id="do-modal">
+  <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
+    <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+      <span style="font-weight:700;font-size:14px;color:#111">📄 ใบส่งของ (DO)</span>
+      <button onclick="closeDOModal()" class="modal-close" style="color:#666;background:#fff;border-color:#e5e7eb">✕</button>
+    </div>
+    <div id="printArea" style="padding:20px;background:#fff;color:#000">
+      <div class="do-header-edit" contenteditable="true">
+        <div>องค์การเภสัชกรรม</div>
+        <div>The Government Pharmaceutical Organization</div>
+        <div>แผนกร้านค้า 5 สาขารังสิต (สาขาที่ 00005)</div>
+        <div>โทร 02-536-3526, 02-536-4086</div>
+        <div>ใบเสร็จรับเงิน / ใบกำกับภาษีอย่างย่อ</div>
+        <div>หมายเลขผู้เสียภาษี : 099-4-000165315</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin:12px 0">
+        <div>เลขที่: <input id="do-no" class="do-input do-number-input"></div>
+        <div>วันที่: <span id="do-date" style="font-weight:600"></span></div>
+      </div>
+      <div style="border-bottom:1px dashed #ccc;padding-bottom:12px;margin-bottom:14px;font-size:13px;display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">ลูกค้า:</label><input class="do-input" id="do-cust" style="flex:1;border:1px solid #f06060;padding:4px 8px"></div>
+        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">พนักงานขาย:</label><input class="do-input" style="flex:1;border:1px solid #f06060;padding:4px 8px" value="กองกษาปณ์ สาขาที่00001"></div>
+        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">เครื่องขาย:</label><input class="do-input" style="flex:1;border:1px solid #f06060;padding:4px 8px" value="1000"></div>
+      </div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead style="border-bottom:1px solid #000"><tr>
+          <th style="text-align:left;padding:5px 8px">#รายการสินค้า</th>
+          <th style="text-align:center;padding:5px 8px;width:80px">จำนวน</th>
+        </tr></thead>
+        <tbody id="do-items"></tbody>
+      </table>
+    </div>
+    <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeDOModal()" style="background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)">ปิด</button>
+      <button onclick="printDO()" style="background:#4f8ef7;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">🖨️ พิมพ์</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ แก้ไขสินค้า</span>
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+    <input type="hidden" id="edit-idx">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-row"><label class="field-label">หมวดหมู่</label><input type="text" id="edit-cat"></div>
+      <div class="form-row"><label class="field-label">ชื่อสินค้า</label><input type="text" id="edit-name"></div>
+      <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="edit-code"></div>
+      <div class="form-row"><label class="field-label">Serial Number</label><input type="text" id="edit-sn" class="mono"></div>
+      <div class="form-row"><label class="field-label">สถานะ</label>
+        <select id="edit-status">
+          <option value="Available">✅ พร้อมใช้งาน</option>
+          <option value="Sold">📤 โอน/ขายออกแล้ว</option>
+          <option value="Repair">🔧 กำลังซ่อมสินค้า</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button onclick="closeModal('edit-modal')" class="btn btn-ghost">ยกเลิก</button>
+      <button onclick="saveEdit()" class="btn btn-primary">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPAIR DETAIL MODAL -->
+<div class="modal-bg" id="repair-detail-modal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔧 รายละเอียดการซ่อมสินค้า</div>
+        <div id="rd-sn" style="font-family:var(--mono);font-size:11px;color:var(--blue);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('repair-detail-modal')">✕</button>
+    </div>
+
+    <!-- Status flow — 2 steps only -->
+    <div class="status-flow mb-4" id="rd-flow" style="max-width:400px;margin-left:auto;margin-right:auto">
+      <div class="status-step" id="rdflow-0">
+        <div class="status-step-dot">🔧</div>
+        <div class="status-step-label">กำลังซ่อม</div>
+      </div>
+      <div class="status-line" id="rdline-1"></div>
+      <div class="status-step" id="rdflow-1">
+        <div class="status-step-dot">✅</div>
+        <div class="status-step-label">ซ่อมเสร็จแล้ว</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="gap:12px">
+      <div>
+        <div class="detail-section">
+          <div class="detail-section-title">📦 ข้อมูลสินค้า</div>
+          <div class="detail-row"><span class="lbl">ชื่อสินค้า</span><span class="val" id="rd-name">—</span></div>
+          <div class="detail-row"><span class="lbl">หมวดหมู่</span><span class="val" id="rd-cat">—</span></div>
+          <div class="detail-row"><span class="lbl">รหัส</span><span class="val mono" id="rd-code">—</span></div>
+          <div class="detail-row"><span class="lbl">Serial No.</span><span class="val mono" id="rd-sn2">—</span></div>
+          <div class="detail-row"><span class="lbl">ลูกค้า</span><span class="val" id="rd-cust">—</span></div>
+          <div class="detail-row"><span class="lbl">ช่างซ่อม</span><span class="val" id="rd-tech">—</span></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">⏱ เวลา</div>
+          <div class="detail-row"><span class="lbl">รับเครื่อง</span><span class="val mono" style="font-size:11px" id="rd-created">—</span></div>
+          <div class="detail-row"><span class="lbl">เริ่มซ่อม</span><span class="val mono" style="font-size:11px" id="rd-started">—</span></div>
+          <div class="detail-row"><span class="lbl">ซ่อมเสร็จ</span><span class="val mono" style="font-size:11px" id="rd-finished">—</span></div>
+          <div class="detail-row"><span class="lbl">ระยะเวลา</span><span class="val" id="rd-duration" style="color:var(--cyan)">—</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="detail-section" style="flex:1">
+          <div class="detail-section-title">🚨 อาการเสีย / สาเหตุ</div>
+          <div id="rd-symptom-display" style="font-size:13px;color:var(--t1);line-height:1.6;white-space:pre-wrap"></div>
+        </div>
+        <div class="detail-section" style="flex:2">
+          <div class="detail-section-title">🔩 บันทึกการซ่อม / เปลี่ยนอะไหล่</div>
+          <textarea id="rd-notes" rows="6" placeholder="บันทึกสิ่งที่ซ่อม เปลี่ยนอะไหล่ วิธีแก้ไข...&#10;เช่น:&#10;- เปลี่ยนแบตเตอรี่ 3.7V&#10;- บัดกรีสาย VCC ที่ขาด&#10;- อัพเดต firmware v2.1.3" style="resize:vertical;min-height:130px"></textarea>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">บันทึกรายละเอียดการซ่อม อะไหล่ที่เปลี่ยน และวิธีแก้ไข</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px;flex-wrap:wrap" id="rd-actions">
+    </div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════════
+function getTheme(){return localStorage.getItem('shq_theme')||'dark'}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const icon=t==='dark'?'🌙':'☀️';
+  const appBtn=document.getElementById('app-theme-btn');
+  const loginBtn=document.getElementById('login-theme-btn');
+  if(appBtn)appBtn.textContent=icon;
+  if(loginBtn)loginBtn.textContent=icon;
+  localStorage.setItem('shq_theme',t);
+}
+function toggleTheme(){
+  const cur=getTheme();
+  const next=cur==='dark'?'light':'dark';
+  applyTheme(next);
+  toast(next==='light'?'🌤 เปลี่ยนเป็นธีมสว่าง':'🌙 เปลี่ยนเป็นธีมมืด','info');
+}
+// Apply on load
+applyTheme(getTheme());
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const LS = {
+  get(k,d=null){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('พื้นที่ localStorage เต็ม','warning')}},
+};
+
+let stock       = LS.get('shq_stock',[]);
+let txns        = LS.get('shq_txns',[]);
+let masterProds = LS.get('shq_mprods',[]);
+let customers   = LS.get('shq_custs',['TOPS Supermarket','โครงการ A','ลูกค้า Walk-in']);
+let doCounter   = LS.get('shq_do_counter',1);
+let users       = LS.get('shq_users',{'admin':'1234'});
+// repairJobs: {id, sn, name, code, category, customer, techName, symptom, repairStatus, repairNotes, createdAt, startedAt, finishedAt}
+// repairStatus: 'กำลังซ่อม' | 'ซ่อมเสร็จแล้ว'
+let repairJobs  = LS.get('shq_repair_jobs',[]);
+let currentUser = null;
+let inSession   = [];
+let outSession  = [];
+let currentRepairJobId = null;
+
+function save(){
+  LS.set('shq_stock',stock);
+  LS.set('shq_txns',txns);
+  LS.set('shq_mprods',masterProds);
+  LS.set('shq_custs',customers);
+  LS.set('shq_do_counter',doCounter);
+  LS.set('shq_repair_jobs',repairJobs);
+}
+
+// Migrate old 'รอซ่อม' status to 'กำลังซ่อม'
+function migrateRepairStatus(){
+  let changed=false;
+  repairJobs.forEach(j=>{
+    if(j.repairStatus==='รอซ่อม'){j.repairStatus='กำลังซ่อม';changed=true}
+    if(j.repairStatus==='ซ่อมเสร็จ'){j.repairStatus='ซ่อมเสร็จแล้ว';changed=true}
+  });
+  if(changed)save();
+}
+
+// seed if empty
+if(!stock.length){
+  const cats=[
+    {cat:'POS (แนวนอน)',name:'SgDataPOS-P-W12 แนวนอน',code:'POS-H',n:10},
+    {cat:'POS (แนวตั้ง)',name:'SgDataPOS-P-W12 แนวตั้ง',code:'POS-V',n:10},
+    {cat:'Cash Drawer',name:'Cash Drawer ลิ้นชักเก็บเงิน',code:'CD-410',n:15},
+    {cat:'ปริ้นเตอร์',name:'Epson เครื่องพิมพ์ใบเสร็จ',code:'PRN-EPS-82',n:15},
+    {cat:'สแกนเนอร์',name:'Zebra เครื่องสแกนบาร์โค้ด',code:'SCN-ZB-2208',n:15},
+    {cat:'คีย์บอร์ด',name:'คีย์บอร์ดมาตรฐาน USB',code:'KB-STD',n:10},
+    {cat:'โปรแกรมเมอร์คีย์',name:'Programmable POS Keyboard',code:'KB-PROG',n:10},
+  ];
+  const statuses=['Available','Available','Available','Sold','Repair','Available','Available','Available','Sold','Available','Available','Available','Available','Sold','Available'];
+  let c=1;
+  cats.forEach(({cat,name,code,n})=>{
+    for(let i=0;i<n;i++){
+      stock.push({category:cat,name,code,sn:'SN'+String(c++).padStart(8,'0'),status:statuses[i%15]});
+    }
+  });
+  masterProds=[
+    {category:'POS (แนวนอน)',name:'SgDataPOS-P-W12 แนวนอน',code:'POS-H'},
+    {category:'ปริ้นเตอร์',name:'Epson เครื่องพิมพ์ใบเสร็จ',code:'PRN-EPS-82'},
+    {category:'สแกนเนอร์',name:'Zebra เครื่องสแกนบาร์โค้ด',code:'SCN-ZB-2208'},
+  ];
+  const repairStock = stock.filter(i=>i.status==='Repair').slice(0,3);
+  repairStock.forEach((item,idx)=>{
+    repairJobs.push({
+      id:'RJ-'+Date.now()+idx,
+      sn:item.sn,name:item.name,code:item.code,category:item.category,
+      customer:customers[0],techName:'',
+      symptom:['บอร์ดพัง เปิดไม่ติด','จอแสดงผลดับ ไม่มีภาพ','สายไฟขาด เปิดไม่ขึ้น'][idx],
+      repairStatus:'กำลังซ่อม',
+      repairNotes:'',
+      createdAt:nowISO(),startedAt:nowISO(),finishedAt:null
+    });
+  });
+  save();
+}
+migrateRepairStatus();
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+function setLoginTab(t){
+  document.getElementById('form-login').style.display=t==='login'?'flex':'none';
+  document.getElementById('form-reg').style.display=t==='register'?'flex':'none';
+  document.getElementById('ltab-login').classList.toggle('active',t==='login');
+  document.getElementById('ltab-reg').classList.toggle('active',t==='register');
+}
+function doLogin(){
+  const u=document.getElementById('f-user').value.trim();
+  const p=document.getElementById('f-pass').value;
+  if(!u||!p)return toast('กรุณากรอก username และ password','error');
+  if(users[u]===p){
+    currentUser=u;
+    document.getElementById('login-page').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('user-name-display').textContent=u;
+    document.getElementById('user-avatar').textContent=u.charAt(0).toUpperCase();
+    document.getElementById('user-role-display').textContent=u==='admin'?'Administrator':'ผู้ใช้งาน';
+    document.getElementById('f-pass').value='';
+    refreshCustomerSelects();
+    renderMasterProducts();
+    renderCustomerList();
+    updateDataLists();
+    tab('overview');
+    checkAlerts();
+  }else{toast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','error')}
+}
+function doRegister(){
+  const u=document.getElementById('r-user').value.trim();
+  const p=document.getElementById('r-pass').value;
+  const c=document.getElementById('r-conf').value;
+  if(!u||!p||!c)return toast('กรุณากรอกข้อมูลให้ครบ','error');
+  if(p!==c)return toast('รหัสผ่านไม่ตรงกัน','error');
+  if(p.length<4)return toast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
+  if(users[u])return toast('มีชื่อผู้ใช้นี้แล้ว','error');
+  users[u]=p;LS.set('shq_users',users);
+  toast('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ','success');
+  setLoginTab('login');
+  document.getElementById('r-user').value='';document.getElementById('r-pass').value='';document.getElementById('r-conf').value='';
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('f-user').value='';
+  document.getElementById('f-pass').value='';
+  inSession=[];outSession=[];
+  setLoginTab('login');
+}
+
+// ══════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  el.textContent=(icons[type]||'')+ ' '+msg;
+  const c=document.getElementById('toast-area');
+  c.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},3200);
+}
+function tab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');
+  if(name==='overview')renderDashboard();
+  if(name==='stock'){populateCatFilter();filterStock()}
+  if(name==='report')renderReport();
+  if(name==='maintenance'){renderRepairList();updateRepairBadges()}
+  if(name==='backup')renderBackupStats();
+  if(name==='inbound')setTimeout(()=>document.getElementById('i-sn').focus(),80);
+  if(name==='outbound')setTimeout(()=>document.getElementById('o-sn').focus(),80);
+  if(name==='maintenance')setTimeout(()=>document.getElementById('r-sn').focus(),80);
+}
+function repairSubTab(name){
+  document.getElementById('rsub-intake').style.display = name==='intake'?'block':'none';
+  document.getElementById('rsub-list').style.display = name==='list'?'block':'none';
+  document.getElementById('stab-intake').classList.toggle('active', name==='intake');
+  document.getElementById('stab-list').classList.toggle('active', name==='list');
+  if(name==='list') renderRepairList();
+  if(name==='intake') setTimeout(()=>document.getElementById('r-sn').focus(),80);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function inlineMsg(id,msg,ok){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.style.color=ok?'var(--green)':'var(--red)';
+  setTimeout(()=>{if(el.textContent===msg)el.textContent=''},3000);
+}
+function today(){return new Date().toISOString().split('T')[0]}
+function nowISO(){return new Date().toISOString()}
+function nowStr(){
+  const n=new Date();
+  return `${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+function fmtISO(iso){
+  if(!iso)return'—';
+  const d=new Date(iso);
+  return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function durationStr(start,end){
+  if(!start)return'—';
+  const ms=(end?new Date(end):new Date())-new Date(start);
+  const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
+  if(h>=24){const d=Math.floor(h/24);return`${d} วัน ${h%24} ชม.`}
+  return`${h} ชม. ${m} นาที`;
+}
+function statusBadge(s){
+  if(s==='Available')return'<span class="badge b-green">● พร้อมใช้</span>';
+  if(s==='Sold')return'<span class="badge b-gray">● โอน/ขาย</span>';
+  return'<span class="badge b-cyan">● กำลังซ่อม</span>';
+}
+function repairStatusBadge(s){
+  if(s==='กำลังซ่อม')return'<span class="badge b-cyan">🔵 กำลังซ่อม</span>';
+  return'<span class="badge b-green">🟢 ซ่อมเสร็จแล้ว</span>';
+}
+function typeBadge(t){
+  if(t.includes('รับเข้า'))return'<span class="badge b-green">📥 รับเข้า</span>';
+  if(t.includes('ซ่อม'))return'<span class="badge b-cyan">🔧 ซ่อม</span>';
+  if(t.includes('ขาย'))return'<span class="badge b-blue">💰 ขาย</span>';
+  if(t.includes('คืน'))return'<span class="badge b-purple">♻️ คืน</span>';
+  return'<span class="badge b-gray">📤 '+t.replace('โอนสินค้า','โอน')+'</span>';
+}
+
+// ══════════════════════════════════════════════
+//  ALERTS & BADGES
+// ══════════════════════════════════════════════
+function checkAlerts(){
+  const active=repairJobs.filter(j=>j.repairStatus!=='ซ่อมเสร็จแล้ว').length;
+  const bar=document.getElementById('alert-bar');
+  const badge=document.getElementById('badge-repair');
+  if(active>0){
+    bar.style.display='flex';
+    document.getElementById('alert-text').textContent=`มีงานซ่อมสินค้าค้างอยู่ ${active} รายการ`;
+    badge.style.display='inline-flex';badge.textContent=active;
+  }else{bar.style.display='none';badge.style.display='none'}
+}
+function updateRepairBadges(){
+  const wip=repairJobs.filter(j=>j.repairStatus==='กำลังซ่อม').length;
+  const t=today();
+  const doneToday=repairJobs.filter(j=>j.repairStatus==='ซ่อมเสร็จแล้ว'&&j.finishedAt&&j.finishedAt.startsWith(t)).length;
+  document.getElementById('badge-wip').textContent=wip+' กำลังซ่อม';
+  document.getElementById('badge-done-today').textContent=doneToday+' เสร็จวันนี้';
+}
+
+// ══════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleDateString('th-TH')+' '+n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ══════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard(){
+  const total=stock.length,avail=stock.filter(i=>i.status==='Available').length;
+  const sold=stock.filter(i=>i.status==='Sold').length,repair=stock.filter(i=>i.status==='Repair').length;
+  const pct=n=>total?Math.round(n/total*100)+'%':'0%';
+  document.getElementById('d-total').textContent=total;
+  document.getElementById('d-avail').textContent=avail;
+  document.getElementById('d-sold').textContent=sold;
+  document.getElementById('d-repair').textContent=repair;
+  document.getElementById('d-avail-pct').textContent=pct(avail)+' ของทั้งหมด';
+  document.getElementById('d-sold-pct').textContent=pct(sold)+' ของทั้งหมด';
+  document.getElementById('d-repair-pct').textContent=pct(repair)+' ของทั้งหมด';
+  const w=document.getElementById('status-chart-wrap');
+  const rows=[
+    {label:'พร้อมใช้งาน',count:avail,cls:'b-green',color:'var(--green)'},
+    {label:'โอน/ขายแล้ว',count:sold,cls:'b-gray',color:'var(--t3)'},
+    {label:'กำลังซ่อม',count:repair,cls:'b-cyan',color:'var(--cyan)'},
+  ];
+  w.innerHTML=rows.map(r=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span class="badge ${r.cls}" style="width:90px;justify-content:center">${r.label}</span>
+      <div style="flex:1;background:var(--s3);border-radius:3px;height:6px;overflow:hidden">
+        <div style="width:${total?Math.round(r.count/total*100):0}%;height:100%;background:${r.color};border-radius:3px;transition:width .5s"></div>
+      </div>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:${r.color};width:36px;text-align:right">${r.count}</span>
+    </div>`).join('');
+  const catMap={};
+  stock.forEach(i=>{if(!catMap[i.category])catMap[i.category]={total:0,avail:0};catMap[i.category].total++;if(i.status==='Available')catMap[i.category].avail++});
+  const sorted=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
+  document.getElementById('cat-count-badge').textContent=sorted.length+' หมวดหมู่';
+  document.getElementById('cat-tbody').innerHTML=sorted.map(([cat,v])=>`
+    <tr>
+      <td style="padding:8px 14px;border-top:1px solid rgba(128,128,128,.06);color:var(--blue)">${cat}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--t1)">${v.total}</td>
+      <td style="padding:8px 14px;text-align:right;font-family:var(--mono);color:var(--green)">${v.avail}</td>
+    </tr>`).join('');
+  const tbody=document.getElementById('recent-tx');
+  const recent=txns.slice(0,10);
+  if(!recent.length){tbody.innerHTML='<tr><td colspan="5" class="tbl-empty">ยังไม่มีประวัติ</td></tr>';return}
+  tbody.innerHTML=recent.map(t=>`
+    <tr>
+      <td class="mono" style="font-size:11px">${t.date}</td>
+      <td>${typeBadge(t.type)}</td>
+      <td style="color:var(--t1);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td>
+      <td class="sn-cell">${t.sn}</td>
+      <td style="font-size:11px;color:var(--t3)">${t.note}</td>
+    </tr>`).join('');
+  checkAlerts();
+}
+
+// ══════════════════════════════════════════════
+//  STOCK
+// ══════════════════════════════════════════════
+function populateCatFilter(){
+  const sel=document.getElementById('s-cat');
+  const cats=[...new Set(stock.map(i=>i.category))].sort();
+  sel.innerHTML='<option value="">— ทุกหมวดหมู่ —</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+}
+function filterStock(){
+  const q=(document.getElementById('s-q').value||'').toLowerCase();
+  const st=document.getElementById('s-status').value;
+  const cat=document.getElementById('s-cat').value;
+  const data=stock.filter(i=>(!st||i.status===st)&&(!cat||i.category===cat)&&(!q||i.name.toLowerCase().includes(q)||i.sn.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)||i.code.toLowerCase().includes(q)));
+  const tbody=document.getElementById('stock-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>';document.getElementById('rec-count').textContent=0;return}
+  tbody.innerHTML=data.map(item=>{
+    const idx=stock.findIndex(p=>p.sn===item.sn);
+    return`<tr>
+      <td style="color:var(--blue);font-weight:500">${item.category}</td>
+      <td style="color:var(--t1)">${item.name}</td>
+      <td class="code-cell">${item.code}</td>
+      <td class="sn-cell">${item.sn}</td>
+      <td>${statusBadge(item.status)}</td>
+      <td style="text-align:center">
+        <div style="display:flex;gap:5px;justify-content:center">
+          ${item.status==='Sold'?`<button onclick="returnToStock(${idx})" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>`:''}
+          ${item.status==='Repair'?`<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-cyan btn-sm" title="ดูรายการซ่อม">🔧</button>`:''}
+          <button onclick="openEdit(${idx})" class="btn btn-ghost btn-sm">✏️</button>
+          <button onclick="delItem(${idx})" class="btn btn-red btn-sm">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('rec-count').textContent=data.length;
+}
+function returnToStock(idx){
+  const old=stock[idx].status;
+  stock[idx].status='Available';
+  txns.unshift({date:today(),type:'♻️ คืนสต็อก',name:stock[idx].name,code:stock[idx].code,sn:stock[idx].sn,balance:getBalance(stock[idx].code),note:`คืนจากสถานะ: ${old}`});
+  save();filterStock();checkAlerts();toast(`คืนสต็อก SN: ${stock[idx].sn} สำเร็จ`,'success');
+}
+function openEdit(idx){
+  const i=stock[idx];
+  document.getElementById('edit-idx').value=idx;
+  document.getElementById('edit-cat').value=i.category;
+  document.getElementById('edit-name').value=i.name;
+  document.getElementById('edit-code').value=i.code;
+  document.getElementById('edit-sn').value=i.sn;
+  document.getElementById('edit-status').value=i.status;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function saveEdit(){
+  const idx=parseInt(document.getElementById('edit-idx').value);
+  stock[idx]={category:document.getElementById('edit-cat').value,name:document.getElementById('edit-name').value,code:document.getElementById('edit-code').value,sn:document.getElementById('edit-sn').value,status:document.getElementById('edit-status').value};
+  save();closeModal('edit-modal');filterStock();checkAlerts();toast('แก้ไขสำเร็จ','success');
+}
+function delItem(idx){
+  const sn=stock[idx].sn;
+  if(!confirm(`ลบสินค้า SN: ${sn}?\n(ไม่สามารถกู้คืนได้)`))return;
+  stock.splice(idx,1);save();filterStock();checkAlerts();toast(`ลบ SN: ${sn} สำเร็จ`,'success');
+}
+
+// ══════════════════════════════════════════════
+//  MASTER DATA
+// ══════════════════════════════════════════════
+function saveMasterProduct(){
+  const cat=document.getElementById('m-cat').value.trim();
+  const name=document.getElementById('m-name').value.trim();
+  const code=document.getElementById('m-code').value.trim();
+  if(!name)return toast('กรุณาใส่ชื่อสินค้า','error');
+  masterProds.push({category:cat,name,code});save();renderMasterProducts();updateDataLists();
+  document.getElementById('m-cat').value='';document.getElementById('m-name').value='';document.getElementById('m-code').value='';
+  toast('บันทึกต้นแบบสำเร็จ','success');
+}
+function renderMasterProducts(){
+  const el=document.getElementById('master-product-list');
+  el.innerHTML=masterProds.length?masterProds.map((p,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
+      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category||'—'}</span><b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code}</span></span>
+      <button onclick="masterProds.splice(${i},1);save();renderMasterProducts();updateDataLists()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+    </div>`).join(''):'<div style="text-align:center;color:var(--t3);font-size:12px;padding:12px">ยังไม่มีต้นแบบ</div>';
+}
+function saveCustomer(){
+  const name=document.getElementById('m-cust').value.trim();
+  if(!name)return toast('กรุณาใส่ชื่อลูกค้า','error');
+  if(customers.includes(name))return toast('มีชื่อนี้แล้ว','error');
+  customers.push(name);save();refreshCustomerSelects();renderCustomerList();
+  document.getElementById('m-cust').value='';toast('เพิ่มลูกค้าสำเร็จ','success');
+}
+function renderCustomerList(){
+  const el=document.getElementById('customer-list');
+  el.innerHTML=customers.map((c,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
+      <span style="color:var(--t1)">👤 ${c}</span>
+      <button onclick="customers.splice(${i},1);save();refreshCustomerSelects();renderCustomerList()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+    </div>`).join('');
+}
+function refreshCustomerSelects(){
+  ['o-cust','r-cust'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    const prev=s.value;
+    s.innerHTML=customers.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(customers.includes(prev))s.value=prev;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  DATALISTS
+// ══════════════════════════════════════════════
+function updateDataLists(){
+  const cats=[...new Set([...stock.map(i=>i.category),...masterProds.map(p=>p.category)])].filter(Boolean);
+  const names=[...new Set([...stock.map(i=>i.name),...masterProds.map(p=>p.name)])];
+  const codes=[...new Set([...stock.map(i=>i.code),...masterProds.map(p=>p.code)])].filter(c=>c&&c!=='-');
+  const catDl=document.getElementById('cat-dl');
+  const prodDl=document.getElementById('product-dl');
+  const codeDl=document.getElementById('code-dl');
+  if(catDl)catDl.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
+  if(prodDl)prodDl.innerHTML=names.map(n=>`<option value="${n}">`).join('');
+  if(codeDl)codeDl.innerHTML=codes.map(c=>`<option value="${c}">`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  INBOUND
+// ══════════════════════════════════════════════
+function getBalance(code){return stock.filter(i=>i.code===code&&i.status==='Available').length}
+function updateBalance(){
+  const code=document.getElementById('i-code').value;
+  document.getElementById('i-balance').textContent=getBalance(code);
+  const mp=masterProds.find(p=>p.code===code);
+  if(mp){
+    if(!document.getElementById('i-name').value)document.getElementById('i-name').value=mp.name;
+    if(!document.getElementById('i-cat').value)document.getElementById('i-cat').value=mp.category;
+  }
+}
+function doInbound(){
+  const dt=document.getElementById('i-date').value||today();
+  const cat=document.getElementById('i-cat').value.trim()||'ไม่ระบุ';
+  const nm=document.getElementById('i-name').value.trim();
+  const cd=document.getElementById('i-code').value.trim()||'-';
+  const sn=document.getElementById('i-sn').value.trim();
+  if(!nm)return inlineMsg('i-msg','❌ กรุณาระบุชื่อสินค้า',false);
+  if(!sn)return inlineMsg('i-msg','❌ กรุณาสแกน SN',false);
+  if(stock.find(i=>i.sn===sn)){inlineMsg('i-msg',`❌ SN: ${sn} มีในระบบแล้ว!`,false);document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();return}
+  const item={category:cat,name:nm,code:cd,sn,status:'Available'};
+  stock.unshift(item);inSession.push(item);
+  txns.unshift({date:dt,type:'📥 รับเข้า',name:nm,code:cd,sn,balance:getBalance(cd),note:'รับเข้าคลัง HQ'});
+  save();document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();
+  updateBalance();
+  inlineMsg('i-msg',`✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(cd)} ชิ้น)`,true);
+  renderInSession();checkAlerts();
+}
+function renderInSession(){
+  document.getElementById('i-session-count').textContent=inSession.length;
+  document.getElementById('i-session').innerHTML=inSession.slice().reverse().map(i=>`
+    <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-green" style="font-size:9px">📥 IN</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  OUTBOUND
+// ══════════════════════════════════════════════
+function doOutbound(){
+  const dt=document.getElementById('o-date').value||today();
+  const typ=document.getElementById('o-type').value;
+  const cust=document.getElementById('o-cust').value;
+  const sn=document.getElementById('o-sn').value.trim();
+  if(!sn)return inlineMsg('o-msg','❌ กรุณาสแกน SN',false);
+  const idx=stock.findIndex(i=>i.sn===sn&&i.status==='Available');
+  if(idx===-1){inlineMsg('o-msg',`❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`,false);document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();return}
+  stock[idx].status='Sold';
+  const item=stock[idx];
+  outSession.push(item);
+  txns.unshift({date:dt,type:typ,name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`→ ${cust}`});
+  save();document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();
+  inlineMsg('o-msg',`✅ ตัด: ${sn} → ${cust} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`,true);
+  renderOutSession();checkAlerts();
+}
+function renderOutSession(){
+  document.getElementById('o-session-count').textContent=outSession.length;
+  document.getElementById('o-session').innerHTML=outSession.slice().reverse().map(i=>`
+    <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  REPAIR — INTAKE
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  const snField=document.getElementById('r-sn');
+  if(snField){
+    snField.addEventListener('input',()=>{
+      const sn=snField.value.trim();
+      const res=document.getElementById('r-lookup-result');
+      if(!sn){res.style.display='none';return}
+      const item=stock.find(i=>i.sn===sn);
+      if(item){
+        res.style.display='block';
+        document.getElementById('r-lookup-name').textContent=item.name;
+        document.getElementById('r-lookup-code').textContent=item.code+' / '+item.category;
+        document.getElementById('r-lookup-status').innerHTML=statusBadge(item.status);
+      }else{
+        res.style.display='block';
+        document.getElementById('r-lookup-name').textContent='ไม่พบ SN นี้ในระบบ';
+        document.getElementById('r-lookup-code').textContent='';
+        document.getElementById('r-lookup-status').innerHTML='<span class="badge b-red">❌ ไม่พบ</span>';
+      }
+    });
+  }
+});
+
+function doRepair(){
+  const sn=document.getElementById('r-sn').value.trim();
+  const sym=document.getElementById('r-sym').value.trim();
+  const cust=document.getElementById('r-cust').value;
+  const tech=document.getElementById('r-tech').value.trim();
+  if(!sn)return inlineMsg('r-msg','❌ กรุณาสแกน SN',false);
+  if(!sym)return inlineMsg('r-msg','❌ กรุณาระบุอาการเสีย',false);
+  const idx=stock.findIndex(i=>i.sn===sn);
+  if(idx===-1)return inlineMsg('r-msg',`❌ ไม่พบ SN: ${sn} ในระบบ`,false);
+
+  const item=stock[idx];
+  stock[idx].status='Repair';
+
+  const job={
+    id:'RJ-'+Date.now(),
+    sn,name:item.name,code:item.code,category:item.category,
+    customer:cust,techName:tech,
+    symptom:sym,
+    repairStatus:'กำลังซ่อม',
+    repairNotes:'',
+    createdAt:nowISO(),startedAt:nowISO(),finishedAt:null
+  };
+  repairJobs.unshift(job);
+
+  txns.unshift({date:today(),type:'🔧 รับซ่อม',name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`[${cust}] ${sym}`});
+  save();
+  updateRepairBadges();checkAlerts();
+  document.getElementById('r-sn').value='';document.getElementById('r-sym').value='';document.getElementById('r-tech').value='';
+  document.getElementById('r-lookup-result').style.display='none';
+  document.getElementById('r-sn').focus();
+  inlineMsg('r-msg',`✅ บันทึกซ่อมสินค้า SN: ${sn} — สถานะ: กำลังซ่อม`,true);
+  toast(`ซ่อมสินค้า SN: ${sn} — กำลังซ่อม`,'info');
+}
+
+// ══════════════════════════════════════════════
+//  REPAIR — LIST
+// ══════════════════════════════════════════════
+function renderRepairList(){
+  updateRepairBadges();
+  const q=(document.getElementById('rep-q')?.value||'').toLowerCase();
+  const sf=document.getElementById('rep-status-filter')?.value||'';
+  let data=[...repairJobs];
+  if(sf)data=data.filter(j=>j.repairStatus===sf);
+  if(q)data=data.filter(j=>j.sn.toLowerCase().includes(q)||j.name.toLowerCase().includes(q)||j.symptom.toLowerCase().includes(q));
+  // sort: active first
+  data.sort((a,b)=>{
+    const ord={'กำลังซ่อม':0,'ซ่อมเสร็จแล้ว':1};
+    return(ord[a.repairStatus]||0)-(ord[b.repairStatus]||0);
+  });
+  const el=document.getElementById('repair-list-grid');
+  if(!data.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--t3)">ไม่มีรายการซ่อมสินค้า</div>';return}
+  el.innerHTML=data.map(job=>{
+    const sc={'กำลังซ่อม':'wip','ซ่อมเสร็จแล้ว':'done'}[job.repairStatus]||'wip';
+    const icons={'กำลังซ่อม':'🔵','ซ่อมเสร็จแล้ว':'🟢'};
+    return`<div class="repair-card status-${sc}" onclick="openRepairDetail('${job.id}')">
+      <div class="repair-icon ${sc}">${icons[job.repairStatus]||'🔧'}</div>
+      <div class="repair-info">
+        <div class="repair-sn">${job.sn}</div>
+        <div class="repair-name">${job.name}</div>
+        <div class="repair-symptom">🚨 ${job.symptom||'ไม่ระบุอาการ'}</div>
+        <div class="repair-meta">
+          ${repairStatusBadge(job.repairStatus)}
+          <span style="font-size:10px;color:var(--t3)">👤 ${job.customer||'—'}</span>
+          ${job.techName?`<span style="font-size:10px;color:var(--t3)">🔧 ${job.techName}</span>`:''}
+          <span style="font-size:10px;color:var(--t3)">📅 ${fmtISO(job.createdAt)}</span>
+          ${job.repairStatus==='กำลังซ่อม'?`<span style="font-size:10px;color:var(--cyan)">⏱ ${durationStr(job.startedAt,null)}</span>`:''}
+          ${job.repairStatus==='ซ่อมเสร็จแล้ว'?`<span style="font-size:10px;color:var(--green)">✅ ใช้เวลา ${durationStr(job.startedAt,job.finishedAt)}</span>`:''}
+        </div>
+        ${job.repairNotes?`<div style="font-size:11px;color:var(--purple);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${job.repairNotes.split('\n')[0]}</div>`:''}
+      </div>
+      <div style="flex-shrink:0;color:var(--t3);font-size:18px">›</div>
+    </div>`;
+  }).join('');
+}
+
+function openRepairDetailBySN(sn){
+  const job=repairJobs.find(j=>j.sn===sn&&j.repairStatus==='กำลังซ่อม') || repairJobs.find(j=>j.sn===sn);
+  if(job)openRepairDetail(job.id);
+  else toast('ไม่พบรายการซ่อมสำหรับ SN นี้','warning');
+}
+
+function openRepairDetail(id){
+  const job=repairJobs.find(j=>j.id===id);
+  if(!job)return;
+  currentRepairJobId=id;
+
+  document.getElementById('rd-sn').textContent='SN: '+job.sn;
+  document.getElementById('rd-name').textContent=job.name;
+  document.getElementById('rd-cat').textContent=job.category||'—';
+  document.getElementById('rd-code').textContent=job.code||'—';
+  document.getElementById('rd-sn2').textContent=job.sn;
+  document.getElementById('rd-cust').textContent=job.customer||'—';
+  document.getElementById('rd-tech').textContent=job.techName||'—';
+  document.getElementById('rd-created').textContent=fmtISO(job.createdAt);
+  document.getElementById('rd-started').textContent=fmtISO(job.startedAt);
+  document.getElementById('rd-finished').textContent=fmtISO(job.finishedAt);
+  document.getElementById('rd-duration').textContent=
+    job.repairStatus==='ซ่อมเสร็จแล้ว' ? durationStr(job.startedAt,job.finishedAt) :
+    job.repairStatus==='กำลังซ่อม' ? '⏱ '+durationStr(job.startedAt,null)+' (กำลังซ่อม)' : '—';
+  document.getElementById('rd-symptom-display').textContent=job.symptom||'ไม่ระบุ';
+  document.getElementById('rd-notes').value=job.repairNotes||'';
+
+  // Status flow — 2 steps
+  // step 0 = กำลังซ่อม, step 1 = ซ่อมเสร็จแล้ว
+  const isWip = job.repairStatus==='กำลังซ่อม';
+  const isDone = job.repairStatus==='ซ่อมเสร็จแล้ว';
+
+  const s0=document.getElementById('rdflow-0');
+  const s1=document.getElementById('rdflow-1');
+  const line=document.getElementById('rdline-1');
+
+  s0.className='status-step'+(isWip?' active':' done');
+  s1.className='status-step'+(isDone?' done':'');
+  line.className='status-line'+(isDone?' filled':'');
+
+  // actions
+  const acts=document.getElementById('rd-actions');
+  let btns='';
+  if(job.repairStatus==='กำลังซ่อม'){
+    btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึกหมายเหตุ</button>`;
+    btns+=`<button onclick="advanceRepairStatus('ซ่อมเสร็จแล้ว')" class="btn btn-success">✅ ซ่อมเสร็จแล้ว</button>`;
+  } else {
+    btns+=`<span class="badge b-green" style="font-size:12px;padding:8px 14px">✅ ซ่อมเสร็จแล้ว</span>`;
+    btns+=`<div style="display:flex;gap:8px">`;
+    btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost btn-sm">💾 แก้ไขหมายเหตุ</button>`;
+    btns+=`<button onclick="advanceRepairStatus('กำลังซ่อม')" class="btn btn-cyan btn-sm">🔄 เปิดซ่อมใหม่</button>`;
+    btns+=`</div>`;
+  }
+  acts.innerHTML=btns;
+
+  document.getElementById('repair-detail-modal').classList.add('open');
+}
+
+function saveRepairNotes(){
+  const job=repairJobs.find(j=>j.id===currentRepairJobId);
+  if(!job)return;
+  job.repairNotes=document.getElementById('rd-notes').value;
+  save();
+  toast('บันทึกหมายเหตุสำเร็จ','success');
+}
+
+function advanceRepairStatus(newStatus){
+  const job=repairJobs.find(j=>j.id===currentRepairJobId);
+  if(!job)return;
+  job.repairNotes=document.getElementById('rd-notes').value;
+  job.repairStatus=newStatus;
+  if(newStatus==='ซ่อมเสร็จแล้ว'){
+    job.finishedAt=nowISO();
+    if(!job.startedAt) job.startedAt=job.finishedAt;
+    const idx=stock.findIndex(i=>i.sn===job.sn);
+    if(idx!==-1){
+      stock[idx].status='Available';
+      txns.unshift({date:today(),type:'✅ ซ่อมเสร็จ',name:job.name,code:job.code,sn:job.sn,balance:getBalance(job.code),note:`ซ่อมเสร็จแล้ว ใช้เวลา ${durationStr(job.startedAt,job.finishedAt)} | ${job.repairNotes||'ไม่มีหมายเหตุ'}`});
+    }
+    toast(`✅ ซ่อมเสร็จแล้ว SN: ${job.sn} คืนสต็อกแล้ว`,'success');
+  }
+  if(newStatus==='กำลังซ่อม'){
+    job.finishedAt=null;
+    if(!job.startedAt)job.startedAt=nowISO();
+    toast(`อัพเดตสถานะเป็น: กำลังซ่อม`,'info');
+  }
+  save();
+  openRepairDetail(currentRepairJobId);
+  renderRepairList();
+  checkAlerts();
+}
+
+function exportRepairCSV(){
+  const rows=repairJobs.map(j=>({
+    id:j.id,sn:j.sn,name:j.name,code:j.code,category:j.category,
+    customer:j.customer,techName:j.techName,symptom:j.symptom,
+    repairStatus:j.repairStatus,repairNotes:j.repairNotes,
+    createdAt:fmtISO(j.createdAt),startedAt:fmtISO(j.startedAt),finishedAt:fmtISO(j.finishedAt),
+    duration:durationStr(j.startedAt,j.finishedAt)
+  }));
+  dlCSV(toCSV(rows,['id','sn','name','code','category','customer','techName','symptom','repairStatus','repairNotes','createdAt','startedAt','finishedAt','duration']),'repair_export.csv');
+  toast('Export รายการซ่อมสำเร็จ','success');
+}
+
+// ══════════════════════════════════════════════
+//  DO / RECEIPT
+// ══════════════════════════════════════════════
+function genDONo(){
+  const n=new Date(),yy=String(n.getFullYear()).slice(-2),mm=String(n.getMonth()+1).padStart(2,'0'),dd=String(n.getDate()).padStart(2,'0');
+  return`DO-${yy}${mm}${dd}-${String(doCounter).padStart(4,'0')}`;
+}
+function openDOModal(){
+  document.getElementById('do-modal').classList.add('open');
+  document.getElementById('do-no').value=genDONo();
+  document.getElementById('do-date').textContent=nowStr();
+  document.getElementById('do-cust').value=document.getElementById('o-cust').value||'';
+  const items=document.getElementById('do-items');
+  if(!outSession.length){items.innerHTML='<tr><td colspan="2" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';return}
+  const grp={};outSession.forEach(i=>{grp[i.name]=(grp[i.name]||0)+1});
+  items.innerHTML=Object.entries(grp).map(([name,qty],i)=>`
+    <tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px 8px">${i+1}. ${name}<div style="font-size:10px;color:#888">PCS / EXPIRED: —</div></td>
+      <td style="text-align:center;padding:6px 8px">${qty}</td>
+    </tr>`).join('');
+}
+function closeDOModal(){document.getElementById('do-modal').classList.remove('open')}
+function printDO(){doCounter++;LS.set('shq_do_counter',doCounter);window.print()}
+
+// ══════════════════════════════════════════════
+//  IMPORT
+// ══════════════════════════════════════════════
+let impHeaders=[],impRows=[],impFieldMap={};
+function onFileDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)processFile(f)}
+function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f);e.target.value=''}
+const ALIASES={category:['category','หมวดหมู่','cat','ประเภท'],name:['name','ชื่อสินค้า','product','สินค้า'],code:['code','รหัส','รหัสสินค้า','product_code'],sn:['sn','serial','serial number','serialnumber','barcode'],status:['status','สถานะ']};
+function autoMap(h){const lh=h.toLowerCase().replace(/\s+/g,'');for(const[f,a]of Object.entries(ALIASES))if(a.some(x=>x.replace(/\s+/g,'')===lh))return f;return''}
+function processFile(f){
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext))return toast('รองรับ .xlsx .xls .csv เท่านั้น','error');
+  toast('กำลังอ่านไฟล์...','info');
+  const r=new FileReader();
+  r.onload=ev=>{
+    const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const j=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(j.length<2)return toast('ไฟล์ไม่มีข้อมูล','error');
+    impHeaders=j[0].map(h=>String(h).trim());
+    impRows=j.slice(1).filter(row=>row.some(c=>c!==''));
+    impHeaders.forEach(h=>{impFieldMap[h]=autoMap(h)});
+    showPreview(f.name);
+  };
+  r.readAsArrayBuffer(f);
+}
+function showPreview(fname){
+  document.getElementById('import-preview').style.display='block';
+  document.getElementById('import-log').style.display='none';
+  document.getElementById('import-summary').textContent=`${fname} — ${impRows.length} แถว`;
+  const mg=document.getElementById('mapping-grid');
+  mg.innerHTML='';
+  mg.style.gridTemplateColumns=`repeat(${Math.min(impHeaders.length,4)},1fr)`;
+  impHeaders.forEach(h=>{
+    mg.innerHTML+=`<div style="display:flex;flex-direction:column;gap:4px">
+      <span class="field-tag">${h}</span>
+      <select style="font-size:11px" onchange="impFieldMap['${h}']=this.value">
+        <option value="">— ข้าม —</option>
+        ${['category','name','code','sn','status'].map(f=>`<option value="${f}"${impFieldMap[h]===f?' selected':''}>${f}</option>`).join('')}
+      </select></div>`;
+  });
+  const th=document.getElementById('preview-thead'),tb=document.getElementById('preview-tbody');
+  th.innerHTML=impHeaders.map(h=>`<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3)">${h}</th>`).join('');
+  tb.innerHTML=impRows.slice(0,8).map(row=>'<tr>'+row.map(c=>`<td style="padding:8px 12px;border-top:1px solid rgba(128,128,128,.06);font-size:12px;color:var(--t2)">${c}</td>`).join('')+'</tr>').join('');
+  if(impRows.length>8)tb.innerHTML+=`<tr><td colspan="${impHeaders.length}" style="text-align:center;color:var(--t3);font-size:11px;padding:10px">... อีก ${impRows.length-8} แถว</td></tr>`;
+}
+function clearImport(){document.getElementById('import-preview').style.display='none';document.getElementById('import-log').style.display='none';impRows=[];impHeaders=[];impFieldMap={}}
+function normStatus(r){
+  if(!r)return'Available';const s=String(r).toLowerCase().trim();
+  if(['available','พร้อม','ok','in stock'].some(x=>s.includes(x)))return'Available';
+  if(['sold','โอน','ขาย','out'].some(x=>s.includes(x)))return'Sold';
+  if(['repair','ซ่อม','broken'].some(x=>s.includes(x)))return'Repair';
+  return'Available';
+}
+function confirmImport(){
+  const snH=impHeaders.find(h=>impFieldMap[h]==='sn');
+  if(!snH)return toast('กรุณา map คอลัมน์ SN ก่อน','error');
+  const idx={sn:impHeaders.indexOf(snH),name:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='name')||'x'),cat:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='category')||'x'),code:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='code')||'x'),status:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='status')||'x')};
+  let added=0,skipped=0;const log=[];const sns=new Set(stock.map(i=>i.sn));
+  impRows.forEach((row,ri)=>{
+    const sn=String(row[idx.sn]||'').trim();
+    if(!sn){skipped++;log.push({r:ri+2,sn:'-',ok:false,msg:'SN ว่าง'});return}
+    if(sns.has(sn)){skipped++;log.push({r:ri+2,sn,ok:false,msg:'SN ซ้ำ'});return}
+    stock.unshift({sn,name:idx.name>=0?String(row[idx.name]||'').trim():'ไม่ระบุ',category:idx.cat>=0?String(row[idx.cat]||'').trim():'ไม่ระบุ',code:idx.code>=0?String(row[idx.code]||'').trim():'-',status:idx.status>=0?normStatus(row[idx.status]):'Available'});
+    sns.add(sn);added++;log.push({r:ri+2,sn,ok:true,msg:'สำเร็จ'});
+  });
+  save();
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('import-log').style.display='block';
+  const dups=log.filter(l=>!l.ok&&l.msg==='SN ซ้ำ');
+  const ok=log.filter(l=>l.ok);
+  document.getElementById('import-log-inner').innerHTML=`
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div style="background:var(--green-dim);border:1px solid rgba(45,212,160,.3);border-radius:var(--r);padding:12px 18px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--green)">${added}</div><div style="font-size:11px;color:var(--t3)">นำเข้าสำเร็จ</div></div>
+      <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 18px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--t3)">${skipped}</div><div style="font-size:11px;color:var(--t3)">ข้ามไป</div></div>
+    </div>
+    ${dups.length?`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:6px">⚠️ SN ซ้ำ ${dups.length} รายการ</div><div style="background:var(--s2);border-radius:var(--r);padding:10px;font-size:11px;font-family:var(--mono);color:var(--t3);max-height:100px;overflow-y:auto">${dups.map(l=>`แถว ${l.r}: ${l.sn}`).join('<br>')}</div></div>`:''}
+    ${ok.length?`<div><div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:6px">✅ นำเข้าสำเร็จ ${ok.length} รายการ</div><div style="background:var(--s2);border-radius:var(--r);padding:10px;font-size:11px;font-family:var(--mono);color:var(--t3);max-height:100px;overflow-y:auto">${ok.map(l=>`แถว ${l.r}: ${l.sn}`).join('<br>')}</div></div>`:''}
+    <div style="margin-top:14px;display:flex;gap:8px"><button onclick="tab('stock')" class="btn btn-primary">📋 ดูสต็อก</button><button onclick="clearImport()" class="btn btn-ghost">นำเข้าใหม่</button></div>`;
+  toast(`นำเข้าสำเร็จ ${added} รายการ`,'success');
+  impRows=[];impHeaders=[];impFieldMap={};
+}
+function dlTemplate(fmt){
+  const s=[{category:'POS (แนวนอน)',name:'SgDataPOS-P-W12',code:'POS-H',sn:'SN00000001',status:'Available'},{category:'ปริ้นเตอร์',name:'Epson TM-T82X',code:'PRN-001',sn:'SN00000002',status:'Available'}];
+  if(fmt==='csv'){
+    const h=['category','name','code','sn','status'];
+    const blob=new Blob(['\uFEFF'+[h.join(','),...s.map(r=>h.map(k=>`"${r[k]}"`).join(','))].join('\n')],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='stock_template.csv';a.click();
+  }else{
+    const wb=XLSX.utils.book_new();const ws=XLSX.utils.json_to_sheet(s,{header:['category','name','code','sn','status']});
+    XLSX.utils.book_append_sheet(wb,ws,'Template');XLSX.writeFile(wb,'stock_template.xlsx');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  REPORT
+// ══════════════════════════════════════════════
+function renderReport(){
+  const q=(document.getElementById('rp-q').value||'').toLowerCase();
+  const ft=document.getElementById('rp-type').value;
+  const data=txns.filter(t=>(!ft||t.type.includes(ft))&&(!q||t.sn.toLowerCase().includes(q)||t.name.toLowerCase().includes(q)||t.note.toLowerCase().includes(q)));
+  const tb=document.getElementById('report-tbody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="7" class="tbl-empty">ไม่มีประวัติ</td></tr>';return}
+  tb.innerHTML=data.map(t=>`<tr>
+    <td class="mono" style="font-size:11px">${t.date}</td>
+    <td>${typeBadge(t.type)}</td>
+    <td style="color:var(--t1)">${t.name}</td>
+    <td class="code-cell">${t.code}</td>
+    <td class="sn-cell">${t.sn}</td>
+    <td style="text-align:center;font-family:var(--mono);color:var(--blue);font-weight:600">${t.balance}</td>
+    <td style="font-size:11px;color:var(--t3)">${t.note}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT / BACKUP
+// ══════════════════════════════════════════════
+function toCSV(rows,headers){return[headers.join(','),...rows.map(r=>headers.map(h=>`"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n')}
+function dlCSV(csv,fname){const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;a.click()}
+function exportStockCSV(){dlCSV(toCSV(stock,['category','name','code','sn','status']),'stock_export.csv');toast('Export สต็อกสำเร็จ','success')}
+function exportReportCSV(){dlCSV(toCSV(txns,['date','type','name','code','sn','balance','note']),'report_export.csv');toast('Export รายงานสำเร็จ','success')}
+function exportBackup(){
+  const data={version:3,exportedAt:new Date().toISOString(),stock,txns,masterProds,customers,doCounter,repairJobs};
+  const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`stockhq_backup_${today()}.json`;a.click();
+  toast('Export Backup สำเร็จ','success');
+}
+function exportAllCSV(){exportStockCSV();setTimeout(()=>exportReportCSV(),400);setTimeout(()=>exportRepairCSV(),800)}
+function importBackup(e){
+  const f=e.target.files[0];if(!f)return;e.target.value='';
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.stock)throw new Error('ไฟล์ไม่ใช่ backup ที่ถูกต้อง');
+      if(!confirm(`Restore ข้อมูลจากไฟล์?\nสต็อก: ${d.stock.length} รายการ\nประวัติ: ${d.txns?.length||0} รายการ\nซ่อมสินค้า: ${d.repairJobs?.length||0} รายการ\n\n⚠️ ข้อมูลปัจจุบันจะถูกแทนที่ทั้งหมด`))return;
+      stock=d.stock||[];txns=d.txns||[];masterProds=d.masterProds||[];
+      customers=d.customers||['TOPS Supermarket','โครงการ A','ลูกค้า Walk-in'];
+      doCounter=d.doCounter||1;repairJobs=d.repairJobs||[];
+      migrateRepairStatus();
+      save();refreshCustomerSelects();renderMasterProducts();renderCustomerList();updateDataLists();
+      renderBackupStats();checkAlerts();
+      toast(`Restore สำเร็จ! สต็อก ${stock.length} รายการ`,'success');
+    }catch(err){toast('Restore ล้มเหลว: '+err.message,'error')}
+  };r.readAsText(f);
+}
+function renderBackupStats(){
+  const el=document.getElementById('backup-stats');
+  el.innerHTML=[
+    {label:'สินค้าในระบบ',val:stock.length,cls:'text-blue'},
+    {label:'ประวัติการเคลื่อนไหว',val:txns.length,cls:''},
+    {label:'ต้นแบบสินค้า',val:masterProds.length,cls:''},
+    {label:'รายชื่อลูกค้า',val:customers.length,cls:''},
+    {label:'รายการซ่อมสินค้าทั้งหมด',val:repairJobs.length,cls:'text-cyan'},
+    {label:'เลขที่ DO ถัดไป',val:'DO-…-'+String(doCounter).padStart(4,'0'),cls:'text-muted'},
+  ].map(s=>`
+    <div style="background:var(--s2);border-radius:var(--r);padding:14px">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:4px">${s.label}</div>
+      <div style="font-size:20px;font-weight:700;font-family:var(--mono)" class="${s.cls}">${s.val}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(!currentUser)return;
+  if(e.key==='F2'){e.preventDefault();tab('inbound')}
+  if(e.key==='F3'){e.preventDefault();tab('outbound')}
+  if(e.key==='F4'){e.preventDefault();tab('maintenance')}
+  if(e.key==='Escape'){['edit-modal','do-modal','repair-detail-modal'].forEach(id=>document.getElementById(id).classList.remove('open'))}
+});
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.onload=()=>{
+  const d=today();
+  document.getElementById('i-date').value=d;
+  document.getElementById('o-date').value=d;
+  updateClock();setInterval(updateClock,30000);
+  // sync theme button icon after DOM ready
+  applyTheme(getTheme());
+};
+</script>
 </body>
 </html>
