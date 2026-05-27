@@ -137,6 +137,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .tbl-wrap td{padding:10px 14px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)}
 .tbl-wrap tr:hover td{background:rgba(255,255,255,.015)}
 .sn-cell{font-family:var(--mono);font-size:11px;color:var(--t1);letter-spacing:.03em}
+.sn-arrow-wrap{display:flex;flex-direction:column;gap:2px}
+.sn-old{font-family:var(--mono);font-size:10px;color:var(--t3);text-decoration:line-through;letter-spacing:.03em}
+.sn-arrow{font-size:9px;color:var(--orange);line-height:1}
+.sn-new{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;letter-spacing:.03em}
+.sn-swap-badge{display:inline-block;font-size:9px;background:var(--orange-dim);color:var(--orange);border:1px solid rgba(245,158,11,.25);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;font-weight:700}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--t1)!important;background:var(--s3)}
+th.sortable .sort-icon{margin-left:5px;font-size:10px;opacity:.5}
+th.sortable.asc .sort-icon::after{content:'↑';opacity:1;color:var(--blue)}
+th.sortable.desc .sort-icon::after{content:'↓';opacity:1;color:var(--blue)}
+th.sortable:not(.asc):not(.desc) .sort-icon::after{content:'↕'}
 .code-cell{font-family:var(--mono);font-size:10px;color:var(--t3)}
 .tbl-empty{text-align:center;padding:40px!important;color:var(--t3)!important;font-size:13px}
 .tbl-wrap tr.do-row{cursor:pointer}
@@ -483,13 +494,21 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
             <option value="Available">พร้อมใช้งาน</option>
             <option value="Sold">โอน/ขายแล้ว</option>
             <option value="Repair">รับซ่อม</option>
+            <option value="Claimed">เคลม/ชำรุด</option>
           </select>
           <button onclick="exportStockCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
       </div>
       <div class="tbl-wrap" style="max-height:calc(100vh - 220px);overflow-y:auto">
         <table>
-          <thead><tr><th>หมวดหมู่</th><th>ชื่อสินค้า</th><th>รหัส</th><th>Serial Number</th><th>สถานะ</th><th style="text-align:center">จัดการ</th></tr></thead>
+          <thead><tr>
+            <th class="sortable" id="th-cat" onclick="sortStock('category')">หมวดหมู่<span class="sort-icon"></span></th>
+            <th class="sortable" id="th-name" onclick="sortStock('name')">ชื่อสินค้า<span class="sort-icon"></span></th>
+            <th>รหัส</th>
+            <th class="sortable asc" id="th-sn" onclick="sortStock('sn')">Serial Number<span class="sort-icon"></span></th>
+            <th class="sortable" id="th-status" onclick="sortStock('status')">สถานะ<span class="sort-icon"></span></th>
+            <th style="text-align:center">จัดการ</th>
+          </tr></thead>
           <tbody id="stock-tbody"></tbody>
         </table>
       </div>
@@ -737,6 +756,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
             <option value="รอซ่อม">🟡 รอซ่อม</option>
             <option value="กำลังซ่อม">🔵 กำลังซ่อม</option>
             <option value="ซ่อมเสร็จ">🟢 ซ่อมเสร็จ</option>
+            <option value="เคลมเครื่อง">🔴 เคลมเครื่อง</option>
           </select>
           <button onclick="exportRepairCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
@@ -922,12 +942,52 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <option value="Available">✅ พร้อมใช้งาน</option>
           <option value="Sold">📤 โอน/ขายออกแล้ว</option>
           <option value="Repair">🔧 รับซ่อม</option>
+          <option value="Claimed">🔴 เคลม/ชำรุด</option>
         </select>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
       <button onclick="closeModal('edit-modal')" class="btn btn-ghost">ยกเลิก</button>
       <button onclick="saveEdit()" class="btn btn-primary">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SWAP SN MODAL ══ -->
+<div class="modal-bg" id="swap-sn-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔄 เคลมเครื่อง / สลับ Serial Number</div>
+        <div id="swap-old-sn-label" style="font-family:var(--mono);font-size:11px;color:var(--orange);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('swap-sn-modal')">✕</button>
+    </div>
+    <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--t2);margin-bottom:18px;line-height:1.7">
+      ⚠️ ใช้เมื่อ <b style="color:var(--orange)">ซ่อมไม่ได้</b> และต้องส่งเครื่องใหม่ทดแทน<br>
+      ระบบจะ: นำ <b style="color:var(--red)">SN เดิม</b> ออกจากระบบ (สถานะ "เคลม/ชำรุด") แล้วส่ง <b style="color:var(--green)">SN ใหม่</b> ให้ลูกค้าแทน
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px">
+        <div style="font-size:11px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">📦 เครื่องที่ส่งมาเคลม (SN เดิม)</div>
+        <div id="swap-old-info" style="font-size:13px;color:var(--t1)">—</div>
+      </div>
+      <div class="form-row">
+        <label class="field-label" style="color:var(--green)">สแกน SN เครื่องใหม่ที่จะส่งให้ลูกค้าแทน *</label>
+        <input type="text" id="swap-new-sn" class="scan-field" placeholder="สแกนหรือพิมพ์ SN เครื่องใหม่..." oninput="onSwapNewSNInput()">
+        <div id="swap-new-lookup" style="display:none;margin-top:6px" class="detail-section">
+          <div id="swap-new-info" style="font-size:12px;color:var(--t1)"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="field-label">เหตุผลในการเคลม *</label>
+        <textarea id="swap-reason" rows="3" placeholder="เช่น บอร์ดไหม้ ซ่อมไม่ได้ / เครื่องชำรุดถาวร..." style="resize:vertical"></textarea>
+      </div>
+      <div id="swap-msg" class="inline-msg"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeModal('swap-sn-modal')" class="btn btn-ghost">ยกเลิก</button>
+        <button onclick="confirmSwapSN()" class="btn btn-orange">🔄 ยืนยันสลับ SN</button>
+      </div>
     </div>
   </div>
 </div>
@@ -947,6 +1007,8 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div class="status-step" id="rdflow-1"><div class="status-step-dot">🔧</div><div class="status-step-label">กำลังซ่อม</div></div>
       <div class="status-line" id="rdline-2"></div>
       <div class="status-step" id="rdflow-2"><div class="status-step-dot">✅</div><div class="status-step-label">ซ่อมเสร็จ</div></div>
+      <div class="status-line" id="rdline-3"></div>
+      <div class="status-step" id="rdflow-3"><div class="status-step-dot">🔄</div><div class="status-step-label">เคลมเครื่อง</div></div>
     </div>
     <div class="grid-2" style="gap:12px">
       <div>
@@ -1155,7 +1217,15 @@ function tab(name){
   document.getElementById('tab-'+name).classList.add('active');
   const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');
   if(name==='overview')renderDashboard();
-  if(name==='stock'){populateCatFilter();filterStock()}
+  if(name==='stock'){
+    populateCatFilter();
+    // Ensure sort header reflects current state
+    ['cat','name','sn','status'].forEach(c=>{const th=document.getElementById('th-'+c);if(th)th.classList.remove('asc','desc');});
+    const colMap={category:'cat',name:'name',sn:'sn',status:'status'};
+    const thEl=document.getElementById('th-'+colMap[stockSortCol]);
+    if(thEl)thEl.classList.add(stockSortDir);
+    filterStock();
+  }
   if(name==='report')renderReport();
   if(name==='maintenance'){renderRepairList();updateRepairBadges()}
   if(name==='do-history')renderDOHistory();
@@ -1203,11 +1273,13 @@ function durationStr(start,end){
 function statusBadge(s){
   if(s==='Available')return'<span class="badge b-green">● พร้อมใช้</span>';
   if(s==='Sold')return'<span class="badge b-gray">● โอน/ขาย</span>';
+  if(s==='Claimed')return'<span class="badge b-red">🔴 เคลม/ชำรุด</span>';
   return'<span class="badge b-orange">● รับซ่อม</span>';
 }
 function repairStatusBadge(s){
   if(s==='รอซ่อม')return'<span class="badge b-orange">🟡 รอซ่อม</span>';
   if(s==='กำลังซ่อม')return'<span class="badge b-cyan">🔵 กำลังซ่อม</span>';
+  if(s==='เคลมเครื่อง')return'<span class="badge b-red">🔴 เคลมเครื่อง</span>';
   return'<span class="badge b-green">🟢 ซ่อมเสร็จ</span>';
 }
 function typeBadge(t){
@@ -1334,11 +1406,61 @@ function populateCatFilter(){
   const cats=[...new Set(stock.map(i=>i.category))].sort();
   sel.innerHTML='<option value="">— ทุกหมวดหมู่ —</option>'+cats.map(c=>`<option>${c}</option>`).join('');
 }
+let stockSortCol = 'sn';
+let stockSortDir = 'asc';
+
+function sortStock(col){
+  if(stockSortCol===col){
+    stockSortDir = stockSortDir==='asc'?'desc':'asc';
+  } else {
+    stockSortCol=col; stockSortDir='asc';
+  }
+  // Update header classes
+  ['cat','name','sn','status'].forEach(c=>{
+    const th=document.getElementById('th-'+c);
+    if(!th)return;
+    th.classList.remove('asc','desc');
+  });
+  const colMap={category:'cat',name:'name',sn:'sn',status:'status'};
+  const thEl=document.getElementById('th-'+colMap[col]);
+  if(thEl)thEl.classList.add(stockSortDir);
+  filterStock();
+}
+
+function snCellHTML(item){
+  // If this item had its SN swapped, show old→new arrow
+  if(item.prevSN && item.prevSN!==item.sn){
+    return `<td class="sn-cell">
+      <div class="sn-arrow-wrap">
+        <span class="sn-old">${item.prevSN}</span>
+        <span class="sn-arrow">↓ สลับ SN</span>
+        <span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span>
+      </div>
+    </td>`;
+  }
+  return `<td class="sn-cell">${item.sn}</td>`;
+}
+
 function filterStock(){
   const q=(document.getElementById('s-q').value||'').toLowerCase();
   const st=document.getElementById('s-status').value;
   const cat=document.getElementById('s-cat').value;
-  const data=stock.filter(i=>(!st||i.status===st)&&(!cat||i.category===cat)&&(!q||i.name.toLowerCase().includes(q)||i.sn.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)||i.code.toLowerCase().includes(q)));
+  let data=stock.filter(i=>
+    (!st||i.status===st)&&
+    (!cat||i.category===cat)&&
+    (!q||i.name.toLowerCase().includes(q)||i.sn.toLowerCase().includes(q)||(i.prevSN&&i.prevSN.toLowerCase().includes(q))||i.category.toLowerCase().includes(q)||i.code.toLowerCase().includes(q))
+  );
+  // Sort
+  data.sort((a,b)=>{
+    let va=String(a[stockSortCol]||'').toLowerCase();
+    let vb=String(b[stockSortCol]||'').toLowerCase();
+    // Natural sort for SN (numeric-aware)
+    if(stockSortCol==='sn'){
+      const numA=va.replace(/\D/g,''), numB=vb.replace(/\D/g,'');
+      if(numA&&numB){const diff=Number(numA)-Number(numB);if(diff!==0)return stockSortDir==='asc'?diff:-diff;}
+    }
+    return stockSortDir==='asc'?va.localeCompare(vb,'th'):vb.localeCompare(va,'th');
+  });
   const tbody=document.getElementById('stock-tbody');
   if(!data.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>';document.getElementById('rec-count').textContent=0;return}
   tbody.innerHTML=data.map(item=>{
@@ -1347,7 +1469,7 @@ function filterStock(){
       <td style="color:var(--blue);font-weight:500">${item.category}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
-      <td class="sn-cell">${item.sn}</td>
+      ${snCellHTML(item)}
       <td>${statusBadge(item.status)}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
@@ -1379,7 +1501,20 @@ function openEdit(idx){
 }
 function saveEdit(){
   const idx=parseInt(document.getElementById('edit-idx').value);
-  stock[idx]={category:document.getElementById('edit-cat').value,name:document.getElementById('edit-name').value,code:document.getElementById('edit-code').value,sn:document.getElementById('edit-sn').value,status:document.getElementById('edit-status').value};
+  const oldSN=stock[idx].sn;
+  const newSN=document.getElementById('edit-sn').value;
+  const prevSN = (newSN!==oldSN) ? oldSN : (stock[idx].prevSN||null);
+  stock[idx]={
+    category:document.getElementById('edit-cat').value,
+    name:document.getElementById('edit-name').value,
+    code:document.getElementById('edit-code').value,
+    sn:newSN,
+    status:document.getElementById('edit-status').value,
+    ...(prevSN?{prevSN}:{})
+  };
+  if(newSN!==oldSN){
+    txns.unshift({date:today(),type:'✏️ เปลี่ยน SN',name:stock[idx].name,code:stock[idx].code,sn:newSN,balance:getBalance(stock[idx].code),note:`เปลี่ยน SN: ${oldSN} → ${newSN}`});
+  }
   save();closeModal('edit-modal');filterStock();checkAlerts();toast('แก้ไขสำเร็จ','success');
 }
 function delItem(idx){
@@ -1848,12 +1983,12 @@ function renderRepairList(){
   let data=[...repairJobs];
   if(sf)data=data.filter(j=>j.repairStatus===sf);
   if(q)data=data.filter(j=>j.sn.toLowerCase().includes(q)||j.name.toLowerCase().includes(q)||j.symptom.toLowerCase().includes(q));
-  data.sort((a,b)=>{const ord={'รอซ่อม':0,'กำลังซ่อม':1,'ซ่อมเสร็จ':2};return(ord[a.repairStatus]||0)-(ord[b.repairStatus]||0)});
+  data.sort((a,b)=>{const ord={'รอซ่อม':0,'กำลังซ่อม':1,'ซ่อมเสร็จ':2,'เคลมเครื่อง':3};return(ord[a.repairStatus]||0)-(ord[b.repairStatus]||0)});
   const el=document.getElementById('repair-list-grid');
   if(!data.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--t3)">ไม่มีรายการซ่อม</div>';return}
   el.innerHTML=data.map(job=>{
-    const sc={'รอซ่อม':'wait','กำลังซ่อม':'wip','ซ่อมเสร็จ':'done'}[job.repairStatus]||'wait';
-    const icons={'รอซ่อม':'🟡','กำลังซ่อม':'🔵','ซ่อมเสร็จ':'🟢'};
+    const sc={'รอซ่อม':'wait','กำลังซ่อม':'wip','ซ่อมเสร็จ':'done','เคลมเครื่อง':'done'}[job.repairStatus]||'wait';
+    const icons={'รอซ่อม':'🟡','กำลังซ่อม':'🔵','ซ่อมเสร็จ':'🟢','เคลมเครื่อง':'🔴'};
     return`<div class="repair-card status-${sc}" onclick="openRepairDetail('${job.id}')">
       <div class="repair-icon ${sc}">${icons[job.repairStatus]||'🔧'}</div>
       <div class="repair-info">
@@ -1867,6 +2002,7 @@ function renderRepairList(){
           <span style="font-size:10px;color:var(--t3)">📅 ${fmtISO(job.createdAt)}</span>
           ${job.repairStatus==='กำลังซ่อม'?`<span style="font-size:10px;color:var(--cyan)">⏱ ${durationStr(job.startedAt,null)}</span>`:''}
           ${job.repairStatus==='ซ่อมเสร็จ'?`<span style="font-size:10px;color:var(--green)">✅ ใช้เวลา ${durationStr(job.startedAt,job.finishedAt)}</span>`:''}
+          ${job.repairStatus==='เคลมเครื่อง'?`<span style="font-size:10px;color:var(--red)">🔴 เคลมแล้ว${job.replacedSN?' → SN ใหม่: '+job.replacedSN:''}</span>`:''}
         </div>
         ${job.repairNotes?`<div style="font-size:11px;color:var(--purple);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${job.repairNotes.split('\n')[0]}</div>`:''}
       </div>
@@ -1894,23 +2030,53 @@ function openRepairDetail(id){
   document.getElementById('rd-duration').textContent=job.repairStatus==='ซ่อมเสร็จ'?durationStr(job.startedAt,job.finishedAt):job.repairStatus==='กำลังซ่อม'?'⏱ '+durationStr(job.startedAt,null)+' (กำลังซ่อม)':'—';
   document.getElementById('rd-symptom-display').textContent=job.symptom||'ไม่ระบุ';
   document.getElementById('rd-notes').value=job.repairNotes||'';
-  const steps=['รอซ่อม','กำลังซ่อม','ซ่อมเสร็จ'];
+  const steps=['รอซ่อม','กำลังซ่อม','ซ่อมเสร็จ','เคลมเครื่อง'];
+  // For "เคลมเครื่อง", highlight it separately (branch from กำลังซ่อม)
   const cur=steps.indexOf(job.repairStatus);
-  steps.forEach((s,i)=>{
+  const isClaimed=job.repairStatus==='เคลมเครื่อง';
+  // Normal flow steps: รอซ่อม, กำลังซ่อม, ซ่อมเสร็จ — index 0,1,2
+  // Claimed step: index 3
+  [0,1,2,3].forEach(i=>{
     const el=document.getElementById('rdflow-'+i);
-    el.className='status-step'+(i<cur?' done':i===cur?' active':'');
-    if(i>0){const line=document.getElementById('rdline-'+i);if(line)line.className='status-line'+(i<=cur?' filled':'');}
+    if(!el)return;
+    if(isClaimed){
+      // steps 0 and 1 are "done" (passed through), step 2 is inactive, step 3 is "active"
+      if(i<2)el.className='status-step done';
+      else if(i===3)el.className='status-step active';
+      else el.className='status-step';
+    }else{
+      el.className='status-step'+(i<cur?' done':i===cur?' active':'');
+    }
+    if(i>0){
+      const line=document.getElementById('rdline-'+i);
+      if(line){
+        if(isClaimed)line.className='status-line'+(i<=2?i<2?' filled':' ':' ');
+        else line.className='status-line'+(i<=cur?' filled':'');
+      }
+    }
   });
   const acts=document.getElementById('rd-actions');
   let btns='';
   if(job.repairStatus==='รอซ่อม'){
     btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึกหมายเหตุ</button>`;
+    btns+=`<div style="display:flex;gap:8px">`;
+    btns+=`<button onclick="openSwapSNModal('${job.id}')" class="btn btn-orange btn-sm" title="ซ่อมไม่ได้ สลับ SN ใหม่">🔄 เคลมเครื่อง / สลับ SN</button>`;
     btns+=`<button onclick="advanceRepairStatus('กำลังซ่อม')" class="btn btn-cyan">🔵 เริ่มซ่อม</button>`;
+    btns+=`</div>`;
   }else if(job.repairStatus==='กำลังซ่อม'){
     btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึกหมายเหตุ</button>`;
     btns+=`<div style="display:flex;gap:8px">`;
     btns+=`<button onclick="advanceRepairStatus('รอซ่อม')" class="btn btn-orange btn-sm">⬅ ย้อนกลับ</button>`;
+    btns+=`<button onclick="openSwapSNModal('${job.id}')" class="btn btn-red btn-sm" title="ซ่อมไม่ได้ สลับ SN ใหม่">🔄 เคลมเครื่อง / สลับ SN</button>`;
     btns+=`<button onclick="advanceRepairStatus('ซ่อมเสร็จ')" class="btn btn-success">✅ ซ่อมเสร็จแล้ว</button>`;
+    btns+=`</div>`;
+  }else if(job.repairStatus==='เคลมเครื่อง'){
+    btns+=`<div style="display:flex;flex-direction:column;gap:8px;width:100%">`;
+    btns+=`<div style="background:var(--red-dim);border:1px solid rgba(240,96,96,.2);border-radius:var(--r);padding:10px 14px;font-size:12px">`;
+    btns+=`<span style="color:var(--red);font-weight:700">🔴 เคลมเครื่องแล้ว</span>`;
+    if(job.replacedSN) btns+=` <span style="color:var(--t2);margin-left:8px">→ SN ใหม่ที่ส่งแทน: <span style="font-family:var(--mono);color:var(--green)">${job.replacedSN}</span></span>`;
+    btns+=`</div>`;
+    btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost btn-sm">💾 แก้ไขหมายเหตุ</button>`;
     btns+=`</div>`;
   }else{
     btns+=`<span class="badge b-green" style="font-size:12px;padding:8px 14px">✅ ซ่อมเสร็จแล้ว</span>`;
@@ -1949,6 +2115,125 @@ function exportRepairCSV(){
 }
 
 // ══════════════════════════════════════════════
+//  REPAIR — SWAP / CLAIM SN
+// ══════════════════════════════════════════════
+let currentSwapJobId = null;
+
+function openSwapSNModal(jobId) {
+  const job = repairJobs.find(j => j.id === jobId);
+  if (!job) return;
+  currentSwapJobId = jobId;
+
+  document.getElementById('swap-old-sn-label').textContent = 'SN เดิม: ' + job.sn;
+  document.getElementById('swap-old-info').innerHTML =
+    `<span style="font-family:var(--mono);color:var(--red);font-weight:700">${job.sn}</span>
+     <span style="color:var(--t3);font-size:11px;margin-left:10px">${job.name} / ${job.category || ''}</span>
+     <span style="color:var(--t3);font-size:11px;margin-left:10px">ลูกค้า: ${job.customer || '—'}</span>`;
+  document.getElementById('swap-new-sn').value = '';
+  document.getElementById('swap-new-lookup').style.display = 'none';
+  document.getElementById('swap-reason').value = '';
+  document.getElementById('swap-msg').textContent = '';
+  document.getElementById('swap-msg').style.color = '';
+  document.getElementById('swap-sn-modal').classList.add('open');
+  setTimeout(() => document.getElementById('swap-new-sn').focus(), 100);
+}
+
+function onSwapNewSNInput() {
+  const newSN = document.getElementById('swap-new-sn').value.trim();
+  const lookup = document.getElementById('swap-new-lookup');
+  const info = document.getElementById('swap-new-info');
+  if (!newSN) { lookup.style.display = 'none'; return; }
+
+  const job = repairJobs.find(j => j.id === currentSwapJobId);
+  if (newSN === job?.sn) {
+    lookup.style.display = 'block';
+    info.innerHTML = '<span class="badge b-red">❌ SN ใหม่ต้องไม่ซ้ำกับ SN เดิม</span>';
+    return;
+  }
+  const item = stock.find(i => i.sn === newSN);
+  lookup.style.display = 'block';
+  if (item) {
+    info.innerHTML =
+      `<span style="color:var(--green);font-weight:600">✅ พบในสต็อก:</span>
+       <span style="font-family:var(--mono);color:var(--t1);margin-left:8px">${item.name}</span>
+       <span style="font-size:11px;color:var(--t3);margin-left:8px">[${item.status}]</span>`;
+  } else {
+    info.innerHTML = '<span class="badge b-red">❌ ไม่พบ SN นี้ในสต็อก — ต้องรับเข้าสต็อกก่อน</span>';
+  }
+}
+
+function confirmSwapSN() {
+  const job = repairJobs.find(j => j.id === currentSwapJobId);
+  if (!job) return;
+
+  const newSN = document.getElementById('swap-new-sn').value.trim();
+  const reason = document.getElementById('swap-reason').value.trim();
+  const msgEl = document.getElementById('swap-msg');
+
+  if (!newSN) { msgEl.textContent = '❌ กรุณาสแกน SN เครื่องใหม่'; msgEl.style.color = 'var(--red)'; return; }
+  if (newSN === job.sn) { msgEl.textContent = '❌ SN ใหม่ต้องไม่ซ้ำกับ SN เดิม'; msgEl.style.color = 'var(--red)'; return; }
+  if (!reason) { msgEl.textContent = '❌ กรุณาระบุเหตุผลในการเคลม'; msgEl.style.color = 'var(--red)'; return; }
+
+  const newItem = stock.find(i => i.sn === newSN);
+  if (!newItem) { msgEl.textContent = '❌ ไม่พบ SN ใหม่ในสต็อก กรุณารับเข้าก่อน'; msgEl.style.color = 'var(--red)'; return; }
+  if (newItem.status !== 'Available') {
+    if (!confirm(`SN ใหม่: ${newSN} มีสถานะ "${newItem.status}" — ยืนยันสลับต่อไหม?`)) return;
+  }
+
+  const oldSN = job.sn;
+  const now = nowISO();
+  const dt = today();
+
+  // 1. Mark old SN as "Claimed" (remove from active stock or flag it)
+  const oldIdx = stock.findIndex(i => i.sn === oldSN);
+  if (oldIdx !== -1) {
+    stock[oldIdx].status = 'Claimed';
+    stock[oldIdx].claimedAt = now;
+    stock[oldIdx].claimReason = reason;
+    stock[oldIdx].replacedBySN = newSN;
+  }
+
+  // 2. Mark new SN as Sold (sent to customer) and record prevSN trail
+  const newIdx = stock.findIndex(i => i.sn === newSN);
+  if (newIdx !== -1) {
+    stock[newIdx].status = 'Sold';
+    stock[newIdx].prevSN = oldSN; // show arrow: oldSN → newSN
+  }
+
+  // 3. Update repair job — mark as resolved via swap, record new SN
+  job.repairStatus = 'เคลมเครื่อง';
+  job.finishedAt = now;
+  if (!job.startedAt) job.startedAt = now;
+  job.replacedSN = newSN;
+  job.claimReason = reason;
+  job.repairNotes = (job.repairNotes ? job.repairNotes + '\n' : '') + `[เคลม ${dt}] ${reason} → ส่ง SN ใหม่: ${newSN}`;
+
+  // 4. Record transactions
+  txns.unshift({
+    date: dt, type: '🔄 เคลม/สลับ SN',
+    name: job.name, code: job.code,
+    sn: oldSN,
+    balance: getBalance(job.code),
+    note: `SN เดิมชำรุด → ส่ง SN ใหม่: ${newSN} | เหตุผล: ${reason}`
+  });
+  txns.unshift({
+    date: dt, type: '📤 ส่งเคลม',
+    name: newItem.name, code: newItem.code,
+    sn: newSN,
+    balance: getBalance(newItem.code),
+    note: `ส่งทดแทน SN เดิม: ${oldSN} ให้ลูกค้า: ${job.customer || '—'}`
+  });
+
+  save();
+  closeModal('swap-sn-modal');
+  closeModal('repair-detail-modal');
+  renderRepairList();
+  checkAlerts();
+  updateRepairBadges();
+  toast(`✅ สลับ SN สำเร็จ: ${oldSN} → ${newSN}`, 'success');
+}
+
+// ══════════════════════════════════════════════
 //  IMPORT
 // ══════════════════════════════════════════════
 let impHeaders=[],impRows=[],impFieldMap={};
@@ -1982,7 +2267,7 @@ function showPreview(fname){
   if(impRows.length>8)tb.innerHTML+=`<tr><td colspan="${impHeaders.length}" style="text-align:center;color:var(--t3);font-size:11px;padding:10px">... อีก ${impRows.length-8} แถว</td></tr>`;
 }
 function clearImport(){document.getElementById('import-preview').style.display='none';document.getElementById('import-log').style.display='none';impRows=[];impHeaders=[];impFieldMap={}}
-function normStatus(r){if(!r)return'Available';const s=String(r).toLowerCase().trim();if(['available','พร้อม','ok','in stock'].some(x=>s.includes(x)))return'Available';if(['sold','โอน','ขาย','out'].some(x=>s.includes(x)))return'Sold';if(['repair','ซ่อม','broken'].some(x=>s.includes(x)))return'Repair';return'Available';}
+function normStatus(r){if(!r)return'Available';const s=String(r).toLowerCase().trim();if(['available','พร้อม','ok','in stock'].some(x=>s.includes(x)))return'Available';if(['sold','โอน','ขาย','out'].some(x=>s.includes(x)))return'Sold';if(['repair','ซ่อม','broken'].some(x=>s.includes(x)))return'Repair';if(['claim','เคลม','ชำรุด'].some(x=>s.includes(x)))return'Claimed';return'Available';}
 function confirmImport(){
   const snH=impHeaders.find(h=>impFieldMap[h]==='sn');if(!snH)return toast('กรุณา map คอลัมน์ SN ก่อน','error');
   const idx={sn:impHeaders.indexOf(snH),name:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='name')||'x'),cat:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='category')||'x'),code:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='code')||'x'),status:impHeaders.indexOf(impHeaders.find(h=>impFieldMap[h]==='status')||'x')};
