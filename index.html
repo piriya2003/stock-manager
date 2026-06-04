@@ -461,7 +461,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">รายการเคลื่อนไหวล่าสุด</span>
+            <span class="card-title">รายการเคลื่อนไล้วล่าสุด</span>
             <button onclick="tab('report')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button>
           </div>
           <div class="tbl-wrap" style="border:none;border-radius:0">
@@ -646,7 +646,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
     <div id="tab-outbound" class="tab-content">
       <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
       <div style="max-width:640px">
-        <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
+        <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลเลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
         <div class="card">
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
             <div class="grid-2">
@@ -814,7 +814,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <tbody id="do-history-tbody"></tbody>
         </table>
       </div>
-      <div style="margin-top:8px;font-size:11px;color:var(--t3);text-align:right">แสดง <span id="doh-count" style="color:var(--blue);font-weight:700">0</span> ใบ</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--blue);text-align:right">แสดง <span id="doh-count" style="color:var(--blue);font-weight:700">0</span> ใบ</div>
     </div>
 
     <div id="tab-report" class="tab-content">
@@ -1065,7 +1065,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
       <div class="detail-section" style="margin-bottom:0">
         <div class="detail-section-title">📦 สรุปรายการ</div>
-        <div id="dov-summary" style="display:flex;justify-content:space-between;font-size:12px"></div>
+        <div id="dov-summary" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น)</div>
@@ -1093,10 +1093,8 @@ const LS = {
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('พื้นที่ localStorage เต็ม','warning')}},
 };
 
-// 🔴 ช่องใส่ลิงก์หลังบ้าน Google Sheets 🔴
+// 🔴 วางลิงก์ Web App (URL) ของนัดไว้ที่นี่ 🔴
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG1JTaKAps1aygjtrYmDrU1v8898ygmTBiLJUsdKg2PsNvBex4DPDNIxlxy3RpkMbrfA/exec';
-
-
 
 let stock       = LS.get('shq_stock',[]);
 let txns        = LS.get('shq_txns',[]);
@@ -1123,7 +1121,7 @@ function save(){
   LS.set('shq_do_history',doHistory);
 }
 
-// 🌐 1. ฟังก์ชันโหลดข้อมูลทั้งหมดมาจากแผ่นงาน Google Sheets
+// 🌐 1. ฟังก์ชันดึงข้อมูลจาก Google Sheets
 async function loadDataFromSheets() {
   try {
     let response = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=inventory`);
@@ -1149,7 +1147,7 @@ async function loadDataFromSheets() {
   }
 }
 
-// 🌐 2. ฟังก์ชันส่งข้อมูลชิ้นเดียวเมื่อกดรับเข้าคลัง (Inbound)
+// 🌐 2. ฟังก์ชันส่งข้อมูลเมื่อรับเข้าคลัง (Inbound)
 async function saveInboundToSheets(item) {
   try {
     let payload = {
@@ -1167,7 +1165,7 @@ async function saveInboundToSheets(item) {
   }
 }
 
-// 🌐 3. ฟังก์ชันซิงค์ข้อมูลสต็อกทั้งหมดกลับไปทับหน้าชีต (เมื่อกด ลบ / แก้ไข / คืนสต็อก)
+// 🌐 3. ฟังก์ชันซิงค์อัปเดตแบบล้างโครงสร้าง (คีย์เวิร์ดลบข้อมูลแล้วให้ชีตหายตามจริง)
 async function syncStockToSheets() {
   try {
     let rowsData = stock.map(item => [
@@ -1184,18 +1182,21 @@ async function syncStockToSheets() {
       data: rowsData
     };
     
-    await fetch(GOOGLE_SCRIPT_URL, {
+    let res = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-    toast('ซิงค์โครงสร้างข้อมูลบน Google Sheets สำเร็จ', 'success');
+    let result = await res.json();
+    
+    if(result.status === 'success') {
+      toast('ซิงค์ข้อมูลบน Google Sheets สำเร็จแล้ว', 'success');
+    }
   } catch (err) {
     console.error(err);
-    toast('ซิงค์ปรับโครงสร้างบน Sheets ล้มเหลว', 'error');
+    toast('ซิงค์ข้อมูลปรับตารางลงชีตล้มเหลว', 'error');
   }
 }
 
-// โหลดข้อมูลทดลองถ้าไม่มีการผูกชีตจริง
 if(!stock.length && GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่'){
   const cats=[
     {cat:'POS (แนวนอน)',name:'SgDataPOS-P-W12 แนวนอน',code:'POS-H',n:10},
@@ -1235,7 +1236,6 @@ function doLogin(){
     refreshCustomerSelects();renderMasterProducts();renderCustomerList();updateDataLists();
     tab('overview');checkAlerts();updateDOBadge();
     
-    // ดึงข้อมูลใหม่แกะกล่องจากชีตทันทีเมื่อเข้าสู่ระบบสำเร็จ
     if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
       loadDataFromSheets();
     }
@@ -1538,7 +1538,6 @@ function filterStock(){
   document.getElementById('rec-count').textContent=data.length;
 }
 
-// 🌐 ฟังก์ชันคืนสต็อกสินค้า (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function returnToStock(idx){
   const old=stock[idx].status;
   stock[idx].status='Available';
@@ -1561,7 +1560,6 @@ function openEdit(idx){
   document.getElementById('edit-modal').classList.add('open');
 }
 
-// 🌐 ฟังก์ชันแก้ไขสินค้า (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function saveEdit(){
   const idx=parseInt(document.getElementById('edit-idx').value);
   const oldSN=stock[idx].sn;
@@ -1585,7 +1583,6 @@ function saveEdit(){
   }
 }
 
-// 🌐 ฟังก์ชันลบสินค้าคงคลัง (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function delItem(idx){
   const sn=stock[idx].sn;
   if(!confirm(`ลบสินค้า SN: ${sn}?\n(ไม่สามารถกู้คืนได้)`))return;
@@ -1920,7 +1917,7 @@ function reopenDOForPrint(id){
 function deleteDO(id){
   const d=doHistory.find(x=>x.id===id);if(!d)return;
   if(!confirm(`ลบใบ DO เลขที่: ${d.doNo}?`))return;
-  doHistory=doHistory.filter(x!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
+  doHistory=doHistory.filter(x=>x.id!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
 }
 function exportDOHistoryCSV(){
   const rows=[];
@@ -1969,7 +1966,6 @@ function doRepair(){
   txns.unshift({date:today(),type:'🔧 รับซ่อม',name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`[${cust}] ${sym}`});
   save();updateRepairBadges();checkAlerts();
   
-  // ซิงค์สเตตัสงานซ่อมขึ้นชีต
   if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
     syncStockToSheets();
   }
@@ -2064,7 +2060,6 @@ function advanceRepairStatus(newStatus){
   }
   save();closeModal('repair-detail-modal');renderRepairList();checkAlerts();
   
-  // อัปเดตขึ้นหน้าตารางชีตเมื่อเปลี่ยนสเตตัสซ่อมเสร็จ
   if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
     syncStockToSheets();
   }
