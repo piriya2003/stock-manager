@@ -66,8 +66,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 #sidebar{width:var(--sidebar-w);background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;transition:.25s}
 .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px}
 .logo-mark{width:32px;height:32px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px}
-.logo-mark{width:32px;height:32px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .logo-text{font-size:14px;font-weight:700;letter-spacing:-.2px}
 .logo-badge{font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.06em}
 .nav-group-label{font-size:10px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:14px 14px 5px}
@@ -640,15 +638,15 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <div id="i-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
         </div>
       </div>
-      <transparent datalist id="cat-dl"></datalist>
-      <transparent datalist id="product-dl"></datalist>
-      <transparent datalist id="code-dl"></datalist>
+      <datalist id="cat-dl"></datalist>
+      <datalist id="product-dl"></datalist>
+      <datalist id="code-dl"></datalist>
     </div>
 
     <div id="tab-outbound" class="tab-content">
       <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
       <div style="max-width:640px">
-        <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลเลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
+        <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
         <div class="card">
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
             <div class="grid-2">
@@ -701,7 +699,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           </table>
         </div>
       </div>
-      
     </div>
 
     <div id="tab-maintenance" class="tab-content">
@@ -864,7 +861,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <div class="card-header" style="border-color:rgba(240,96,96,.2)"><span class="card-title text-red">📥 Import Backup</span></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
             <div style="background:rgba(240,96,96,.06);border:1px solid rgba(240,96,96,.15);border-radius:var(--r);padding:12px;font-size:12px;color:var(--t2)">
-              ⚠️ <b style="color:var(--red)">คำเตือน:</b> คำเตือน: การ Restore จะ <b>แทนที่ข้อมูลทั้งหมด</b> ในระบบ
+              ⚠️ <b style="color:var(--red)">คำเตือน:</b> การ Restore จะ <b>แทนที่ข้อมูลทั้งหมด</b> ในระบบ
             </div>
             <div class="drop-zone" onclick="document.getElementById('backup-input').click()">
               <div class="drop-zone-icon">📁</div>
@@ -880,7 +877,9 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-  </div></div></div></div><div class="modal-bg" id="do-modal">
+  </div></div></div></div>
+
+<div class="modal-bg" id="do-modal">
   <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
     <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
       <div>
@@ -1094,9 +1093,8 @@ const LS = {
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('พื้นที่ localStorage เต็ม','warning')}},
 };
 
-// ปรับค่าเริ่มต้นของ URL Google Sheets API ตามที่คุณแนบมา
+// 🔴 ช่องใส่ลิงก์หลังบ้าน Google Sheets 🔴
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG1JTaKAps1aygjtrYmDrU1v8898ygmTBiLJUsdKg2PsNvBex4DPDNIxlxy3RpkMbrfA/exec';
-
 
 
 
@@ -1125,13 +1123,12 @@ function save(){
   LS.set('shq_do_history',doHistory);
 }
 
-// 🌐 ฟังก์ชันเชื่อมต่อเพื่อโหลดข้อมูลจาก Google Sheets (ที่คุณแนบมา)
+// 🌐 1. ฟังก์ชันโหลดข้อมูลทั้งหมดมาจากแผ่นงาน Google Sheets
 async function loadDataFromSheets() {
   try {
     let response = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=inventory`);
     let rows = await response.json();
     
-    // แปลง Array จากชีตกลับมาเป็น Object ในระบบ
     if (rows && rows.length > 1) {
       stock = rows.slice(1).map(row => ({
         category: row[0] || 'ไม่ระบุ',
@@ -1152,11 +1149,12 @@ async function loadDataFromSheets() {
   }
 }
 
-// 🌐 ฟังก์ชันส่งข้อมูลคีย์ Inbound ไปบันทึกลง Google Sheets (ที่คุณแนบมา)
+// 🌐 2. ฟังก์ชันส่งข้อมูลชิ้นเดียวเมื่อกดรับเข้าคลัง (Inbound)
 async function saveInboundToSheets(item) {
   try {
     let payload = {
       sheetName: 'inventory',
+      action: 'insert',
       data: [item.category, item.name, item.code, item.sn, item.status]
     };
     await fetch(GOOGLE_SCRIPT_URL, {
@@ -1169,14 +1167,40 @@ async function saveInboundToSheets(item) {
   }
 }
 
-// โหลดข้อมูลตัวอย่างเมื่อไม่มีข้อมูลใน LocalStorage เท่านั้น
+// 🌐 3. ฟังก์ชันซิงค์ข้อมูลสต็อกทั้งหมดกลับไปทับหน้าชีต (เมื่อกด ลบ / แก้ไข / คืนสต็อก)
+async function syncStockToSheets() {
+  try {
+    let rowsData = stock.map(item => [
+      item.category,
+      item.name,
+      item.code,
+      item.sn,
+      item.status
+    ]);
+    
+    let payload = {
+      sheetName: 'inventory',
+      action: 'update_all',
+      data: rowsData
+    };
+    
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    toast('ซิงค์โครงสร้างข้อมูลบน Google Sheets สำเร็จ', 'success');
+  } catch (err) {
+    console.error(err);
+    toast('ซิงค์ปรับโครงสร้างบน Sheets ล้มเหลว', 'error');
+  }
+}
+
+// โหลดข้อมูลทดลองถ้าไม่มีการผูกชีตจริง
 if(!stock.length && GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่'){
   const cats=[
     {cat:'POS (แนวนอน)',name:'SgDataPOS-P-W12 แนวนอน',code:'POS-H',n:10},
-    {cat:'POS (แนวตั้ง)',name:'SgDataPOS-P-W12 แนวตั้ง',code:'POS-V',n:10},
     {cat:'Cash Drawer',name:'Cash Drawer ลิ้นชักเก็บเงิน',code:'CD-410',n:15},
     {cat:'ปริ้นเตอร์',name:'Epson เครื่องพิมพ์ใบเสร็จ',code:'PRN-EPS-82',n:15},
-    {cat:'สแกนเนอร์',name:'Zebra เครื่องสแกนบาร์কো้ด',code:'SCN-ZB-2208',n:15},
   ];
   let c=1;
   cats.forEach(({cat,name,code,n})=>{
@@ -1211,7 +1235,7 @@ function doLogin(){
     refreshCustomerSelects();renderMasterProducts();renderCustomerList();updateDataLists();
     tab('overview');checkAlerts();updateDOBadge();
     
-    // ถ้ามีการเซ็ตอัป URL Google ชีตไว้จริง ให้ทำการดึงข้อมูลมาแสดงทันทีหลังล็อกอิน
+    // ดึงข้อมูลใหม่แกะกล่องจากชีตทันทีเมื่อเข้าสู่ระบบสำเร็จ
     if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
       loadDataFromSheets();
     }
@@ -1513,12 +1537,19 @@ function filterStock(){
   }).join('');
   document.getElementById('rec-count').textContent=data.length;
 }
+
+// 🌐 ฟังก์ชันคืนสต็อกสินค้า (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function returnToStock(idx){
   const old=stock[idx].status;
   stock[idx].status='Available';
   txns.unshift({date:today(),type:'♻️ คืนสต็อก',name:stock[idx].name,code:stock[idx].code,sn:stock[idx].sn,balance:getBalance(stock[idx].code),note:`คืนจากสถานะ: ${old}`});
   save();filterStock();checkAlerts();toast(`คืนสต็อก SN: ${stock[idx].sn} สำเร็จ`,'success');
+  
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
+
 function openEdit(idx){
   const i=stock[idx];
   document.getElementById('edit-idx').value=idx;
@@ -1529,6 +1560,8 @@ function openEdit(idx){
   document.getElementById('edit-status').value=i.status;
   document.getElementById('edit-modal').classList.add('open');
 }
+
+// 🌐 ฟังก์ชันแก้ไขสินค้า (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function saveEdit(){
   const idx=parseInt(document.getElementById('edit-idx').value);
   const oldSN=stock[idx].sn;
@@ -1546,11 +1579,21 @@ function saveEdit(){
     txns.unshift({date:today(),type:'✏️ เปลี่ยน SN',name:stock[idx].name,code:stock[idx].code,sn:newSN,balance:getBalance(stock[idx].code),note:`เปลี่ยน SN: ${oldSN} → ${newSN}`});
   }
   save();closeModal('edit-modal');filterStock();checkAlerts();toast('แก้ไขสำเร็จ','success');
+  
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
+
+// 🌐 ฟังก์ชันลบสินค้าคงคลัง (ผูกคำสั่ง Sync Sheets เพิ่มเติม)
 function delItem(idx){
   const sn=stock[idx].sn;
   if(!confirm(`ลบสินค้า SN: ${sn}?\n(ไม่สามารถกู้คืนได้)`))return;
   stock.splice(idx,1);save();filterStock();checkAlerts();toast(`ลบ SN: ${sn} สำเร็จ`,'success');
+  
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1611,7 +1654,7 @@ function updateDataLists(){
 }
 
 // ══════════════════════════════════════════════
-//  INBOUND (เชื่อมโยงระบบส่งเข้า Google Sheets)
+//  INBOUND
 // ══════════════════════════════════════════════
 function getBalance(code){return stock.filter(i=>i.code===code&&i.status==='Available').length}
 function updateBalance(){
@@ -1635,7 +1678,6 @@ function doInbound(){
   txns.unshift({date:dt,type:'📥 รับเข้า',name:nm,code:cd,sn,balance:getBalance(cd),note:'รับเข้าคลัง HQ'});
   save();
   
-  // 🌐 เรียกฟังก์ชันส่งข้อมูลขึ้น Google Sheets ที่คุณเพิ่มเข้ามา
   if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
     saveInboundToSheets(item);
   }
@@ -1878,7 +1920,7 @@ function reopenDOForPrint(id){
 function deleteDO(id){
   const d=doHistory.find(x=>x.id===id);if(!d)return;
   if(!confirm(`ลบใบ DO เลขที่: ${d.doNo}?`))return;
-  doHistory=doHistory.filter(x=>x.id!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
+  doHistory=doHistory.filter(x!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
 }
 function exportDOHistoryCSV(){
   const rows=[];
@@ -1926,6 +1968,12 @@ function doRepair(){
   repairJobs.unshift(job);
   txns.unshift({date:today(),type:'🔧 รับซ่อม',name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`[${cust}] ${sym}`});
   save();updateRepairBadges();checkAlerts();
+  
+  // ซิงค์สเตตัสงานซ่อมขึ้นชีต
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
+
   document.getElementById('r-sn').value='';document.getElementById('r-sym').value='';document.getElementById('r-tech').value='';
   document.getElementById('r-lookup-result').style.display='none';document.getElementById('r-sn').focus();
   toast(`รับซ่อม SN: ${sn} สำเร็จ`,'warning');
@@ -2015,6 +2063,11 @@ function advanceRepairStatus(newStatus){
     txns.unshift({date:today(),type:'✅ ซ่อมเสร็จ',name:job.name,code:job.code,sn:job.sn,balance:getBalance(job.code),note:`ซ่อมเสร็จเรียบร้อย`});
   }
   save();closeModal('repair-detail-modal');renderRepairList();checkAlerts();
+  
+  // อัปเดตขึ้นหน้าตารางชีตเมื่อเปลี่ยนสเตตัสซ่อมเสร็จ
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
 function exportRepairCSV(){
   const rows=repairJobs.map(j=>({id:j.id,sn:j.sn,name:j.name,code:j.code,category:j.category,customer:j.customer,repairStatus:j.repairStatus,createdAt:fmtISO(j.createdAt)}));
@@ -2067,6 +2120,10 @@ function confirmSwapSN() {
   
   save();closeModal('swap-sn-modal');closeModal('repair-detail-modal');renderRepairList();checkAlerts();
   toast('สลับเปลี่ยนเครื่องเคลมสำเร็จ','success');
+
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -2098,6 +2155,10 @@ function confirmImport(){
     }
   });
   save();clearImport();filterStock();toast(`นำเข้าสำเร็จ ${added} รายการ`,'success');
+  
+  if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+    syncStockToSheets();
+  }
 }
 function clearImport(){document.getElementById('import-preview').style.display='none';impRows=[]}
 function toCSV(rows,headers){return[headers.join(','),...rows.map(r=>headers.map(h=>`"${r[h]||''}"`).join(','))].join('\n')}
@@ -2115,6 +2176,10 @@ function importBackup(e){
     const d=JSON.parse(ev.target.result);
     stock=d.stock||[];txns=d.txns||[];repairJobs=d.repairJobs||[];doHistory=d.doHistory||[];
     save();toast('Restore ข้อมูลเรียบร้อย','success');tab('overview');
+    
+    if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
+      syncStockToSheets();
+    }
   };r.readAsText(f);
 }
 function renderBackupStats(){
