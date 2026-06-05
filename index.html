@@ -8,33 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0b0d11;
-  --s1: #111318;
-  --s2: #181b22;
-  --s3: #1f232e;
-  --b1: #252a38;
-  --b2: #2e3448;
-  --b3: #3a4058;
-  --t1: #e8edf5;
-  --t2: #9aa3b5;
-  --t3: #5a6378;
-  --blue: #4f8ef7;
-  --blue2: #3b6fd4;
-  --blue-dim: rgba(79,142,247,.12);
-  --green: #2dd4a0;
-  --green-dim: rgba(45,212,160,.1);
-  --orange: #f59e0b;
-  --orange-dim: rgba(245,158,11,.1);
-  --red: #f06060;
-  --red-dim: rgba(240,96,96,.1);
-  --purple: #a78bfa;
-  --purple-dim: rgba(167,139,250,.1);
-  --cyan: #22d3ee;
-  --cyan-dim: rgba(34,211,238,.1);
-  --r: 8px;
-  --r2: 12px;
-  --mono: 'JetBrains Mono', monospace;
-  --sans: 'Sarabun', sans-serif;
+  --bg: #0b0d11; --s1: #111318; --s2: #181b22; --s3: #1f232e;
+  --b1: #252a38; --b2: #2e3448; --b3: #3a4058;
+  --t1: #e8edf5; --t2: #9aa3b5; --t3: #5a6378;
+  --blue: #4f8ef7; --blue2: #3b6fd4; --blue-dim: rgba(79,142,247,.12);
+  --green: #2dd4a0; --green-dim: rgba(45,212,160,.1);
+  --orange: #f59e0b; --orange-dim: rgba(245,158,11,.1);
+  --red: #f06060; --red-dim: rgba(240,96,96,.1);
+  --purple: #a78bfa; --purple-dim: rgba(167,139,250,.1);
+  --cyan: #22d3ee; --cyan-dim: rgba(34,211,238,.1);
+  --r: 8px; --r2: 12px;
+  --mono: 'JetBrains Mono', monospace; --sans: 'Sarabun', sans-serif;
   --sidebar-w: 220px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -52,11 +36,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .login-title{font-size:22px;font-weight:700;letter-spacing:-.3px}
 .login-sub{font-size:12px;color:var(--blue);margin-top:4px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
 .login-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:28px}
-.login-tabs{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:24px;gap:2px}
-.login-tab{flex:1;padding:7px;text-align:center;font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--t3);transition:.15s}
-.login-tab.active{background:var(--s3);color:var(--t1);border:1px solid var(--b1)}
+.login-tabs{display:none;} /* ซ่อนแท็บสมัครชั่วคราวให้ใช้จากชีต */
 .hint-box{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--t3);text-align:center;margin-top:16px}
-.hint-box b{color:var(--t2)}
 
 /* ── APP SHELL ── */
 #app{display:none;height:100vh;overflow:hidden}
@@ -327,21 +308,11 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div class="login-sub">Chonburi Headquarters</div>
     </div>
     <div class="login-card">
-      <div class="login-tabs">
-        <div class="login-tab active" id="ltab-login" onclick="setLoginTab('login')">เข้าสู่ระบบ</div>
-        <div class="login-tab" id="ltab-reg" onclick="setLoginTab('register')">สมัครสมาชิก</div>
-      </div>
       <div id="form-login" style="display:flex;flex-direction:column;gap:12px">
         <div class="form-row"><label class="field-label">Username</label><input type="text" id="f-user" placeholder="ชื่อผู้ใช้" onkeypress="if(event.key==='Enter')doLogin()"></div>
         <div class="form-row"><label class="field-label">Password</label><input type="password" id="f-pass" placeholder="รหัสผ่าน" onkeypress="if(event.key==='Enter')doLogin()"></div>
         <button onclick="doLogin()" class="btn btn-primary btn-full btn-lg mt-2">เข้าสู่ระบบ</button>
-        <div class="hint-box">ค่าเริ่มต้น: <b>admin</b> / <b>1234</b></div>
-      </div>
-      <div id="form-reg" style="display:none;flex-direction:column;gap:12px">
-        <div class="form-row"><label class="field-label">Username</label><input type="text" id="r-user" placeholder="ตั้งชื่อผู้ใช้"></div>
-        <div class="form-row"><label class="field-label">Password</label><input type="password" id="r-pass" placeholder="อย่างน้อย 4 ตัวอักษร"></div>
-        <div class="form-row"><label class="field-label">ยืนยัน Password</label><input type="password" id="r-conf" placeholder="พิมพ์ซ้ำ"></div>
-        <button onclick="doRegister()" class="btn btn-success btn-full btn-lg mt-2">สร้างบัญชี</button>
+        <div class="hint-box">ตรวจสอบสิทธิ์พนักงานผ่าน <b>Google Sheets</b></div>
       </div>
     </div>
   </div>
@@ -505,7 +476,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
             <th class="sortable" id="th-cat" onclick="sortStock('category')">หมวดหมู่<span class="sort-icon"></span></th>
             <th class="sortable" id="th-name" onclick="sortStock('name')">ชื่อสินค้า<span class="sort-icon"></span></th>
             <th>รหัส</th>
-            <th class="sortable asc" id="th-sn" onclick="sortStock('sn')">Serial Number<span class="sort-icon"></span></th>
+            <th class="sortable desc" id="th-sn" onclick="sortStock('sn')">Serial Number<span class="sort-icon"></span></th>
             <th class="sortable" id="th-status" onclick="sortStock('status')">สถานะ<span class="sort-icon"></span></th>
             <th style="text-align:center">จัดการ</th>
           </tr></thead>
@@ -835,7 +806,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
       <div class="tbl-wrap" style="max-height:calc(100vh - 210px);overflow-y:auto">
         <table>
-          <thead><tr><th>วันที่</th><th>ประเภท</th><th>ชื่อสินค้า</th><th>รหัส</th><th>SN</th><th>Balance</th><th>หมายเหตุ</th></tr></thead>
+          <thead><tr><th>วันที่</th><th>ประเภท</th><th>ชื่อสินค้า</th><th>รหัส</th><th>SN</th><th>Balance</th><th>หมายเหตุ</th><th>ผู้ทำรายการ</th></tr></thead>
           <tbody id="report-tbody"></tbody>
         </table>
       </div>
@@ -1086,25 +1057,25 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
 <script>
 // ══════════════════════════════════════════════
-//  STATE
+//  STATE & CONFIG
 // ══════════════════════════════════════════════
+// 🔴 URL Web App ของคุณ
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG1JTaKAps1aygjtrYmDrU1v8898ygmTBiLJUsdKg2PsNvBex4DPDNIxlxy3RpkMbrfA/exec';
+
 const LS = {
   get(k,d=null){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('พื้นที่ localStorage เต็ม','warning')}},
 };
-
-// 🔴 วางลิงก์ Web App (URL) ของนัดไว้ที่นี่ 🔴
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG1JTaKAps1aygjtrYmDrU1v8898ygmTBiLJUsdKg2PsNvBex4DPDNIxlxy3RpkMbrfA/exec';
 
 let stock       = LS.get('shq_stock',[]);
 let txns        = LS.get('shq_txns',[]);
 let masterProds = LS.get('shq_mprods',[]);
 let customers   = LS.get('shq_custs',['TOPS Supermarket','โครงการ A','ลูกค้า Walk-in']);
 let doCounter   = LS.get('shq_do_counter',1);
-let users       = LS.get('shq_users',{'admin':'1234'});
 let repairJobs  = LS.get('shq_repair_jobs',[]);
 let doHistory   = LS.get('shq_do_history',[]);
 let currentUser = null;
+let currentRole = null;
 let inSession   = [];
 let outSession  = [];
 let currentRepairJobId = null;
@@ -1121,163 +1092,129 @@ function save(){
   LS.set('shq_do_history',doHistory);
 }
 
-// 🌐 1. ฟังก์ชันโหลดข้อมูลทั้งหมดมาจากคลาวด์ (ทุกตาราง)
-async function loadDataFromSheets() {
-  try {
-    toast('กำลังซิงค์ข้อมูลจากคลาวด์...', 'info');
-
-    // 1. ดึงข้อมูล Inventory
-    let res1 = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=inventory`);
-    let r1 = await res1.json();
-    if(r1 && r1.length > 1) {
-      stock = r1.slice(1).map(row => ({
-        category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'', status: row[4]||'Available', prevSN: row[5]||null, claimedAt: row[6]||null, claimReason: row[7]||null, replacedBySN: row[8]||null
-      }));
-    }
-
-    // 2. ดึงข้อมูล Repair Jobs
-    let res2 = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=repair_jobs`);
-    let r2 = await res2.json();
-    if(r2 && r2.length > 1) {
-      repairJobs = r2.slice(1).map(row => ({
-        id: row[0], sn: row[1], name: row[2], code: row[3], category: row[4], customer: row[5], techName: row[6], symptom: row[7], repairStatus: row[8], repairNotes: row[9], createdAt: row[10], startedAt: row[11], finishedAt: row[12], replacedSN: row[13], claimReason: row[14]
-      }));
-    }
-
-    // 3. ดึงข้อมูล DO History
-    let res3 = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=do_history`);
-    let r3 = await res3.json();
-    if(r3 && r3.length > 1) {
-      doHistory = r3.slice(1).map(row => ({
-        id: row[0], doNo: row[1], date: row[2], type: row[3], customer: row[4], salesperson: row[5], machine: row[6], headerText: row[7], items: JSON.parse(row[8]||'[]'), createdAt: row[9], createdBy: row[10]
-      }));
-    }
-
-    save();
-    filterStock(); 
-    renderDashboard(); 
-    renderRepairList(); 
-    renderDOHistory(); 
-    updateRepairBadges(); 
-    updateDOBadge();
-    toast('เชื่อมต่อระบบทีมสำเร็จ (อัปเดต 3 ตาราง)', 'success');
-  } catch (err) {
-    console.error(err);
-    toast('ระบบบางส่วนยังไม่ได้เพิ่มในชีต หรือโหลดข้อมูลล้มเหลว', 'error');
+// ══════════════════════════════════════════════
+//  BARCODE FILTER & AUDIT LOGGING
+// ══════════════════════════════════════════════
+function filterBarcode(rawVal, msgElementId) {
+  let cleanVal = rawVal.trim().replace(/^\*+|\*+$/g, ''); 
+  if (cleanVal.length === 12 && cleanVal.startsWith('567')) {
+    inlineMsg(msgElementId, '⚠️ สแกนโดนรหัส SKU กรุณาสแกนบาร์โค้ด Serial No. (ด้านล่าง)', false);
+    return null; 
   }
+  return cleanVal;
 }
 
-// 🌐 2. ฟังก์ชันส่งข้อมูลเมื่อรับเข้าคลัง (Inbound)
-async function saveInboundToSheets(item) {
-  try {
-    let payload = {
-      sheetName: 'inventory',
-      action: 'insert',
-      data: [item.category, item.name, item.code, item.sn, item.status]
-    };
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  } catch (err) {
-    console.error(err);
-    toast('ส่งข้อมูลเข้า Sheets ล้มเหลว', 'error');
-  }
+async function logTransaction(date, type, name, code, sn, balance, note) {
+  txns.unshift({date, type, name, code, sn, balance, note, user: currentUser});
+  
+  let payload = {
+    sheetName: 'transactions',
+    action: 'insert',
+    data: [date, type, name, code, sn, balance, note, currentUser]
+  };
+  fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(console.error);
 }
 
-// 🌐 3. ฟังก์ชันซิงค์อัปเดตแบบล้างโครงสร้างคลังสินค้า (Inventory)
+// ══════════════════════════════════════════════
+//  SYNC FUNCTIONS
+// ══════════════════════════════════════════════
 async function syncStockToSheets() {
   try {
-    if(GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') return;
-    let rowsData = stock.map(item => [item.category, item.name, item.code, item.sn, item.status]);
+    let rowsData = stock.map(item => [item.category, item.name, item.code, item.sn, item.status, item.prevSN||'', item.claimedAt||'', item.claimReason||'', item.replacedBySN||'']);
     let payload = { sheetName: 'inventory', action: 'update_all', data: rowsData };
     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
   } catch (err) { console.error(err); }
 }
 
-// 🌐 4. ฟังก์ชันซิงค์อัปเดตตารางงานซ่อมทั้งหมด (Repair Jobs)
 async function syncRepairToSheets() {
   try {
-    if(GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') return;
-    let rowsData = repairJobs.map(j => [j.id||'', j.sn||'', j.name||'', j.code||'', j.category||'', j.customer||'', j.techName||'', j.symptom||'', j.repairStatus||'', j.repairNotes||'', j.createdAt||'', j.startedAt||'', j.finishedAt||'', j.replacedSN||'', j.claimReason||'']);
+    let rowsData = repairJobs.map(j => [j.id||'', j.sn||'', j.name||'', j.code||'', j.category||'', j.customer||'', j.techName||'', j.symptom||'', j.repairStatus||'', j.repairNotes||'', j.createdAt||'', j.startedAt||'', j.finishedAt||'', j.replacedSN||'', j.claimReason||'', currentUser||'']);
     let payload = { sheetName: 'repair_jobs', action: 'update_all', data: rowsData };
     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
   } catch (err) { console.error(err); }
 }
 
-// 🌐 5. ฟังก์ชันซิงค์อัปเดตตารางประวัติใบ DO (DO History)
 async function syncDOToSheets() {
   try {
-    if(GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') return;
     let rowsData = doHistory.map(d => [d.id||'', d.doNo||'', d.date||'', d.type||'', d.customer||'', d.salesperson||'', d.machine||'', d.headerText||'', JSON.stringify(d.items||[]), d.createdAt||'', d.createdBy||'']);
     let payload = { sheetName: 'do_history', action: 'update_all', data: rowsData };
     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
   } catch (err) { console.error(err); }
 }
 
-
-if(!stock.length && GOOGLE_SCRIPT_URL === 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่'){
-  const cats=[
-    {cat:'POS (แนวนอน)',name:'SgDataPOS-P-W12 แนวนอน',code:'POS-H',n:10},
-    {cat:'Cash Drawer',name:'Cash Drawer ลิ้นชักเก็บเงิน',code:'CD-410',n:15},
-    {cat:'ปริ้นเตอร์',name:'Epson เครื่องพิมพ์ใบเสร็จ',code:'PRN-EPS-82',n:15},
-  ];
-  let c=1;
-  cats.forEach(({cat,name,code,n})=>{
-    for(let i=0;i<n;i++){
-      stock.push({category:cat,name,code,sn:'SN'+String(c++).padStart(8,'0'),status:'Available'});
-    }
-  });
-  save();
-}
-
 // ══════════════════════════════════════════════
-//  AUTH
+//  AUTH (RBAC)
 // ══════════════════════════════════════════════
-function setLoginTab(t){
-  document.getElementById('form-login').style.display=t==='login'?'flex':'none';
-  document.getElementById('form-reg').style.display=t==='register'?'flex':'none';
-  document.getElementById('ltab-login').classList.toggle('active',t==='login');
-  document.getElementById('ltab-reg').classList.toggle('active',t==='register');
-}
-function doLogin(){
-  const u=document.getElementById('f-user').value.trim();
-  const p=document.getElementById('f-pass').value;
-  if(!u||!p)return toast('กรุณากรอก username และ password','error');
-  if(users[u]===p){
-    currentUser=u;
-    document.getElementById('login-page').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('user-name-display').textContent=u;
-    document.getElementById('user-avatar').textContent=u.charAt(0).toUpperCase();
-    document.getElementById('user-role-display').textContent=u==='admin'?'Administrator':'ผู้ใช้งาน';
-    document.getElementById('f-pass').value='';
-    refreshCustomerSelects();renderMasterProducts();renderCustomerList();updateDataLists();
-    tab('overview');checkAlerts();updateDOBadge();
+async function doLogin(){
+  const u = document.getElementById('f-user').value.trim();
+  const p = document.getElementById('f-pass').value;
+  if(!u||!p) return toast('กรุณากรอก username และ password','error');
+  
+  toast('กำลังตรวจสอบข้อมูลผู้ใช้งาน...', 'info');
+  document.getElementById('f-pass').disabled = true;
+
+  try {
+    let res = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=all`);
+    let db = await res.json();
     
-    if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
-      loadDataFromSheets();
+    let validUser = false;
+    let userRole = 'staff';
+    
+    if (db.users && db.users.length > 1) {
+      const userRows = db.users.slice(1);
+      const matched = userRows.find(row => String(row[0]) === u && String(row[1]) === p);
+      if (matched) {
+        validUser = true;
+        userRole = matched[2] || 'staff';
+      }
+    } else {
+      // Fallback
+      if(u === 'admin' && p === '1234') { validUser = true; userRole = 'admin'; }
     }
-  }else{toast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','error')}
+
+    if(validUser) {
+      currentUser = u;
+      currentRole = userRole; 
+      
+      document.getElementById('login-page').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.getElementById('user-name-display').textContent = u;
+      document.getElementById('user-avatar').textContent = u.charAt(0).toUpperCase();
+      document.getElementById('user-role-display').textContent = userRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
+      document.getElementById('f-pass').value='';
+      document.getElementById('f-pass').disabled = false;
+      
+      const isAdmin = userRole === 'admin';
+      document.getElementById('nav-overview').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('nav-report').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('nav-backup').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('nav-import').style.display = isAdmin ? 'flex' : 'none';
+      
+      if(db.inventory && db.inventory.length > 1) stock = db.inventory.slice(1).map(row => ({ category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'', status: row[4]||'Available', prevSN: row[5]||null, claimedAt: row[6]||null, claimReason: row[7]||null, replacedBySN: row[8]||null }));
+      if(db.repair_jobs && db.repair_jobs.length > 1) repairJobs = db.repair_jobs.slice(1).map(row => ({ id: row[0], sn: row[1], name: row[2], code: row[3], category: row[4], customer: row[5], techName: row[6], symptom: row[7], repairStatus: row[8], repairNotes: row[9], createdAt: row[10], startedAt: row[11], finishedAt: row[12], replacedSN: row[13], claimReason: row[14] }));
+      if(db.do_history && db.do_history.length > 1) doHistory = db.do_history.slice(1).map(row => ({ id: row[0], doNo: row[1], date: row[2], type: row[3], customer: row[4], salesperson: row[5], machine: row[6], headerText: row[7], items: JSON.parse(row[8]||'[]'), createdAt: row[9], createdBy: row[10] }));
+
+      refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();
+      tab(isAdmin ? 'overview' : 'inbound'); 
+      checkAlerts(); updateDOBadge();
+      toast('เข้าสู่ระบบสำเร็จ', 'success');
+    } else {
+      toast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','error');
+      document.getElementById('f-pass').disabled = false;
+    }
+  } catch (err) {
+    console.error(err);
+    toast('การเชื่อมต่อกับ Google Sheets ล้มเหลว', 'error');
+    document.getElementById('f-pass').disabled = false;
+  }
 }
-function doRegister(){
-  const u=document.getElementById('r-user').value.trim();
-  const p=document.getElementById('r-pass').value;
-  const c=document.getElementById('r-conf').value;
-  if(!u||!p||!c)return toast('กรุณากรอกข้อมูลให้ครบ','error');
-  if(p!==c)return toast('รหัสผ่านไม่ตรงกัน','error');
-  if(p.length<4)return toast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
-  if(users[u])return toast('มีชื่อผู้ใช้นี้แล้ว','error');
-  users[u]=p;LS.set('shq_users',users);
-  toast('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ','success');
-  setLoginTab('login');
-}
+
 function doLogout(){
-  currentUser=null;
+  currentUser=null; currentRole=null;
   document.getElementById('login-page').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('f-user').value='';document.getElementById('f-pass').value='';
-  inSession=[];outSession=[];setLoginTab('login');
+  inSession=[];outSession=[];
 }
 
 // ══════════════════════════════════════════════
@@ -1371,9 +1308,6 @@ function doTypeBadge(t){
   return'<span class="badge b-gray">📤 โอน</span>';
 }
 
-// ══════════════════════════════════════════════
-//  ALERTS & BADGES
-// ══════════════════════════════════════════════
 function checkAlerts(){
   const active=repairJobs.filter(j=>j.repairStatus!=='ซ่อมเสร็จ').length;
   const bar=document.getElementById('alert-bar');
@@ -1398,10 +1332,6 @@ function updateDOBadge(){
   if(doHistory.length>0){badge.style.display='inline-flex';badge.textContent=doHistory.length;}
   else badge.style.display='none';
 }
-
-// ══════════════════════════════════════════════
-//  CLOCK
-// ══════════════════════════════════════════════
 function updateClock(){
   const n=new Date();
   document.getElementById('clock').textContent=n.toLocaleDateString('th-TH')+' '+n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
@@ -1483,8 +1413,9 @@ function populateCatFilter(){
   const cats=[...new Set(stock.map(i=>i.category))].sort();
   sel.innerHTML='<option value="">— ทุกหมวดหมู่ —</option>'+cats.map(c=>`<option>${c}</option>`).join('');
 }
+
 let stockSortCol = 'sn';
-let stockSortDir = 'asc';
+let stockSortDir = 'desc'; // 🌟 เปลี่ยนค่าเริ่มต้นเป็นเรียงจากมากไปน้อย
 
 function sortStock(col){
   if(stockSortCol===col){
@@ -1549,7 +1480,7 @@ function filterStock(){
           ${item.status==='Sold'?`<button onclick="returnToStock(${idx})" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>`:''}
           ${item.status==='Repair'?`<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-sm" title="ดูรายการซ่อม">🔧</button>`:''}
           <button onclick="openEdit(${idx})" class="btn btn-ghost btn-sm">✏️</button>
-          <button onclick="delItem(${idx})" class="btn btn-red btn-sm">🗑</button>
+          ${currentRole==='admin'?`<button onclick="delItem(${idx})" class="btn btn-red btn-sm">🗑</button>`:''}
         </div>
       </td>
     </tr>`;
@@ -1560,7 +1491,7 @@ function filterStock(){
 function returnToStock(idx){
   const old=stock[idx].status;
   stock[idx].status='Available';
-  txns.unshift({date:today(),type:'♻️ คืนสต็อก',name:stock[idx].name,code:stock[idx].code,sn:stock[idx].sn,balance:getBalance(stock[idx].code),note:`คืนจากสถานะ: ${old}`});
+  logTransaction(today(), '♻️ คืนสต็อก', stock[idx].name, stock[idx].code, stock[idx].sn, getBalance(stock[idx].code), `คืนจากสถานะ: ${old}`);
   save();filterStock();checkAlerts();toast(`คืนสต็อก SN: ${stock[idx].sn} สำเร็จ`,'success');
   syncStockToSheets();
 }
@@ -1590,7 +1521,7 @@ function saveEdit(){
     ...(prevSN?{prevSN}:{})
   };
   if(newSN!==oldSN){
-    txns.unshift({date:today(),type:'✏️ เปลี่ยน SN',name:stock[idx].name,code:stock[idx].code,sn:newSN,balance:getBalance(stock[idx].code),note:`เปลี่ยน SN: ${oldSN} → ${newSN}`});
+    logTransaction(today(), '✏️ เปลี่ยน SN', stock[idx].name, stock[idx].code, newSN, getBalance(stock[idx].code), `เปลี่ยน SN: ${oldSN} → ${newSN}`);
   }
   save();closeModal('edit-modal');filterStock();checkAlerts();toast('แก้ไขสำเร็จ','success');
   syncStockToSheets();
@@ -1646,10 +1577,6 @@ function refreshCustomerSelects(){
     if(customers.includes(prev))s.value=prev;
   });
 }
-
-// ══════════════════════════════════════════════
-//  DATALISTS
-// ══════════════════════════════════════════════
 function updateDataLists(){
   const cats=[...new Set([...stock.map(i=>i.category),...masterProds.map(p=>p.category)])].filter(Boolean);
   const names=[...new Set([...stock.map(i=>i.name),...masterProds.map(p=>p.name)])];
@@ -1661,7 +1588,7 @@ function updateDataLists(){
 }
 
 // ══════════════════════════════════════════════
-//  INBOUND
+//  INBOUND & OUTBOUND
 // ══════════════════════════════════════════════
 function getBalance(code){return stock.filter(i=>i.code===code&&i.status==='Available').length}
 function updateBalance(){
@@ -1670,60 +1597,79 @@ function updateBalance(){
   const mp=masterProds.find(p=>p.code===code);
   if(mp){if(!document.getElementById('i-name').value)document.getElementById('i-name').value=mp.name;if(!document.getElementById('i-cat').value)document.getElementById('i-cat').value=mp.category;}
 }
+
 function doInbound(){
   const dt=document.getElementById('i-date').value||today();
   const cat=document.getElementById('i-cat').value.trim()||'ไม่ระบุ';
   const nm=document.getElementById('i-name').value.trim();
   const cd=document.getElementById('i-code').value.trim()||'-';
-  const sn=document.getElementById('i-sn').value.trim();
+  
+  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
+  const sn = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
+  if (!sn) {
+    document.getElementById('i-sn').value=''; 
+    document.getElementById('i-sn').focus(); 
+    return;
+  }
+  
   if(!nm)return inlineMsg('i-msg','❌ กรุณาระบุชื่อสินค้า',false);
-  if(!sn)return inlineMsg('i-msg','❌ กรุณาสแกน SN',false);
   if(stock.find(i=>i.sn===sn)){inlineMsg('i-msg',`❌ SN: ${sn} มีในระบบแล้ว!`,false);document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();return}
   
-  const item={category:cat,name:nm,code:cd,sn,status:'Available'};
+  const item={category:cat,name:nm,code:cd,sn,status:'Available', createdBy: currentUser};
   stock.unshift(item);inSession.push(item);
-  txns.unshift({date:dt,type:'📥 รับเข้า',name:nm,code:cd,sn,balance:getBalance(cd),note:'รับเข้าคลัง HQ'});
-  save();
   
-  saveInboundToSheets(item);
+  // 🌟 บันทึก Audit Log
+  logTransaction(dt, '📥 รับเข้า', nm, cd, sn, getBalance(cd), 'รับเข้าคลัง HQ');
+  
+  save(); syncStockToSheets();
   
   document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();
   updateBalance();inlineMsg('i-msg',`✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(cd)} ชิ้น)`,true);
   renderInSession();checkAlerts();
 }
+
 function renderInSession(){
   document.getElementById('i-session-count').textContent=inSession.length;
   document.getElementById('i-session').innerHTML=inSession.slice().reverse().map(i=>`
     <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-green" style="font-size:9px">📥 IN</span></div>`).join('');
 }
 
-// ══════════════════════════════════════════════
-//  OUTBOUND
-// ══════════════════════════════════════════════
 function doOutbound(){
   const dt=document.getElementById('o-date').value||today();
   const typ=document.getElementById('o-type').value;
   const cust=document.getElementById('o-cust').value;
-  const sn=document.getElementById('o-sn').value.trim();
-  if(!sn)return inlineMsg('o-msg','❌ กรุณาสแกน SN',false);
+  
+  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
+  const sn = filterBarcode(document.getElementById('o-sn').value, 'o-msg');
+  if (!sn) {
+    document.getElementById('o-sn').value=''; 
+    document.getElementById('o-sn').focus(); 
+    return;
+  }
+
   const idx=stock.findIndex(i=>i.sn===sn&&i.status==='Available');
   if(idx===-1){inlineMsg('o-msg',`❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`,false);document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();return}
+  
   stock[idx].status='Sold';
   const item=stock[idx];
   outSession.push(item);
-  txns.unshift({date:dt,type:typ,name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`→ ${cust}`});
-  save();document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();
+  
+  // 🌟 บันทึก Audit Log
+  logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.code), `→ ${cust}`);
+  
+  save(); syncStockToSheets();
+  
+  document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();
   inlineMsg('o-msg',`✅ ตัด: ${sn} → ${cust} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`,true);
-  renderOutSession();
-  renderOutboundHistory();
-  checkAlerts();
-  syncStockToSheets();
+  renderOutSession(); renderOutboundHistory(); checkAlerts();
 }
+
 function renderOutSession(){
   document.getElementById('o-session-count').textContent=outSession.length;
   document.getElementById('o-session').innerHTML=outSession.slice().reverse().map(i=>`
     <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`).join('');
 }
+
 function renderOutboundHistory() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
   let soldItems = stock.filter(i => i.status === 'Sold');
@@ -1824,7 +1770,6 @@ function saveDO(){
   document.getElementById('do-save-btn').style.background='#2dd4a0';
   toast(`บันทึกใบ DO: ${doNo} สำเร็จ`,'success');
   
-  // ซิงค์ใบ DO ขึ้นคลาวด์
   syncDOToSheets();
 
   setTimeout(()=>{
@@ -1836,9 +1781,6 @@ function saveDO(){
 function closeDOModal(){document.getElementById('do-modal').classList.remove('open')}
 function printDO(){window.print()}
 
-// ══════════════════════════════════════════════
-//  DO — VIEW / HISTORY
-// ══════════════════════════════════════════════
 function renderDOHistory(){
   const q=(document.getElementById('doh-q').value||'').toLowerCase();
   const ft=document.getElementById('doh-type').value;
@@ -1867,7 +1809,7 @@ function renderDOHistory(){
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();openDOView('${d.id}')" class="btn btn-ghost btn-sm">👁</button>
           <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-primary btn-sm">🖨️</button>
-          <button onclick="event.stopPropagation();deleteDO('${d.id}')" class="btn btn-red btn-sm">🗑</button>
+          ${currentRole==='admin'?`<button onclick="event.stopPropagation();deleteDO('${d.id}')" class="btn btn-red btn-sm">🗑</button>`:''}
         </div>
       </td>
     </tr>`).join('');
@@ -1933,15 +1875,6 @@ function deleteDO(id){
   doHistory=doHistory.filter(x=>x.id!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
   syncDOToSheets();
 }
-function exportDOHistoryCSV(){
-  const rows=[];
-  doHistory.forEach(d=>{
-    d.items.forEach(item=>{
-      rows.push({doNo:d.doNo,date:fmtDate(d.createdAt),type:d.type,customer:d.customer,salesperson:d.salesperson||'',createdBy:d.createdBy||'',itemName:item.name,itemCode:item.code,itemCategory:item.category,itemSN:item.sn});
-    });
-  });
-  dlCSV(toCSV(rows,['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']),'do_history_export.csv');
-}
 
 // ══════════════════════════════════════════════
 //  REPAIR
@@ -1950,7 +1883,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   const snField=document.getElementById('r-sn');
   if(snField){
     snField.addEventListener('input',()=>{
-      const sn=snField.value.trim();const res=document.getElementById('r-lookup-result');
+      const sn=snField.value.trim().replace(/^\*+|\*+$/g, '');
+      const res=document.getElementById('r-lookup-result');
       if(!sn){res.style.display='none';return}
       const item=stock.find(i=>i.sn===sn);
       if(item){
@@ -1966,7 +1900,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 });
 function doRepair(){
-  const sn=document.getElementById('r-sn').value.trim();
+  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
+  const sn = filterBarcode(document.getElementById('r-sn').value, 'r-msg');
+  if (!sn) { document.getElementById('r-sn').value=''; return; }
+
   const sym=document.getElementById('r-sym').value.trim();
   const cust=document.getElementById('r-cust').value;
   const tech=document.getElementById('r-tech').value.trim();
@@ -1975,11 +1912,13 @@ function doRepair(){
   if(idx===-1)return inlineMsg('r-msg',`❌ ไม่พบ SN ในระบบ`,false);
   
   const item=stock[idx];stock[idx].status='Repair';
-  const job={id:'RJ-'+Date.now(),sn,name:item.name,code:item.code,category:item.category,customer:cust,techName:tech,symptom:sym,repairStatus:'รอซ่อม',repairNotes:'',createdAt:nowISO(),startedAt:null,finishedAt:null};
+  const job={id:'RJ-'+Date.now(),sn,name:item.name,code:item.code,category:item.category,customer:cust,techName:tech,symptom:sym,repairStatus:'รอซ่อม',repairNotes:'',createdAt:nowISO(),startedAt:null,finishedAt:null,createdBy:currentUser};
   repairJobs.unshift(job);
-  txns.unshift({date:today(),type:'🔧 รับซ่อม',name:item.name,code:item.code,sn,balance:getBalance(item.code),note:`[${cust}] ${sym}`});
-  save();updateRepairBadges();checkAlerts();
   
+  // 🌟 บันทึก Audit Log
+  logTransaction(today(), '🔧 รับซ่อม', item.name, item.code, sn, getBalance(item.code), `[${cust}] ${sym}`);
+  
+  save();updateRepairBadges();checkAlerts();
   syncRepairToSheets();
   syncStockToSheets();
 
@@ -1987,6 +1926,7 @@ function doRepair(){
   document.getElementById('r-lookup-result').style.display='none';document.getElementById('r-sn').focus();
   toast(`รับซ่อม SN: ${sn} สำเร็จ`,'warning');
 }
+
 function renderRepairList(){
   updateRepairBadges();
   const q=(document.getElementById('rep-q')?.value||'').toLowerCase();
@@ -2070,19 +2010,14 @@ function advanceRepairStatus(newStatus){
     job.finishedAt=nowISO();
     const idx=stock.findIndex(i=>i.sn===job.sn);
     if(idx!==-1)stock[idx].status='Available';
-    txns.unshift({date:today(),type:'✅ ซ่อมเสร็จ',name:job.name,code:job.code,sn:job.sn,balance:getBalance(job.code),note:`ซ่อมเสร็จเรียบร้อย`});
+    logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), `ซ่อมเสร็จเรียบร้อย`);
     syncStockToSheets();
   }
   save();closeModal('repair-detail-modal');renderRepairList();checkAlerts();
   syncRepairToSheets();
 }
-function exportRepairCSV(){
-  const rows=repairJobs.map(j=>({id:j.id,sn:j.sn,name:j.name,code:j.code,category:j.category,customer:j.customer,repairStatus:j.repairStatus,createdAt:fmtISO(j.createdAt)}));
-  dlCSV(toCSV(rows,['id','sn','name','code','category','customer','repairStatus','createdAt']),'repair_export.csv');
-}
 
 // ══ SWAP / CLAIM SN ══
-let currentSwapJobId = null;
 function openSwapSNModal(jobId) {
   const job = repairJobs.find(j => j.id === jobId);if (!job) return;
   currentSwapJobId = jobId;
@@ -2094,7 +2029,7 @@ function openSwapSNModal(jobId) {
   document.getElementById('swap-sn-modal').classList.add('open');
 }
 function onSwapNewSNInput() {
-  const newSN = document.getElementById('swap-new-sn').value.trim();
+  const newSN = document.getElementById('swap-new-sn').value.trim().replace(/^\*+|\*+$/g, '');
   const lookup = document.getElementById('swap-new-lookup');
   const info = document.getElementById('swap-new-info');
   if (!newSN) { lookup.style.display = 'none'; return; }
@@ -2108,7 +2043,12 @@ function onSwapNewSNInput() {
 }
 function confirmSwapSN() {
   const job = repairJobs.find(j => j.id === currentSwapJobId);
-  const newSN = document.getElementById('swap-new-sn').value.trim();
+  const rawSN = document.getElementById('swap-new-sn').value;
+  
+  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
+  const newSN = filterBarcode(rawSN, 'swap-msg');
+  if (!newSN) { document.getElementById('swap-new-sn').value=''; return; }
+  
   const reason = document.getElementById('swap-reason').value.trim();
   if(!newSN||!reason) return toast('กรุณากรอกข้อมูลให้ครบ','error');
   
@@ -2123,7 +2063,7 @@ function confirmSwapSN() {
   if(newIdx!==-1) { stock[newIdx].status = 'Sold'; stock[newIdx].prevSN = oldSN; }
 
   job.repairStatus = 'เคลมเครื่อง';job.finishedAt = nowISO();job.replacedSN = newSN;
-  txns.unshift({date:today(),type:'🔄 เคลมสลับ SN',name:job.name,code:job.code,sn:oldSN,balance:getBalance(job.code),note:`เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`});
+  logTransaction(today(), '🔄 เคลมสลับ SN', job.name, job.code, oldSN, getBalance(job.code), `เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`);
   
   save();closeModal('swap-sn-modal');closeModal('repair-detail-modal');renderRepairList();checkAlerts();
   toast('สลับเปลี่ยนเครื่องเคลมสำเร็จ','success');
@@ -2133,9 +2073,52 @@ function confirmSwapSN() {
 }
 
 // ══════════════════════════════════════════════
-//  IMPORT / EXPORT / BACKUP
+//  IMPORT / EXPORT / BACKUP / REPORT
 // ══════════════════════════════════════════════
-let impHeaders=[],impRows=[],impFieldMap={};
+function toCSV(rows,headers){return[headers.join(','),...rows.map(r=>headers.map(h=>`"${r[h]||''}"`).join(','))].join('\n')}
+function dlCSV(csv,fname){const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;a.click()}
+function exportStockCSV(){dlCSV(toCSV(stock,['category','name','code','sn','status']),'stock_export.csv')}
+function exportReportCSV(){dlCSV(toCSV(txns,['date','type','name','code','sn','balance','note','user']),'report_export.csv')}
+function exportRepairCSV(){
+  const rows=repairJobs.map(j=>({id:j.id,sn:j.sn,name:j.name,code:j.code,category:j.category,customer:j.customer,repairStatus:j.repairStatus,createdAt:fmtISO(j.createdAt)}));
+  dlCSV(toCSV(rows,['id','sn','name','code','category','customer','repairStatus','createdAt']),'repair_export.csv');
+}
+function exportDOHistoryCSV(){
+  const rows=[];
+  doHistory.forEach(d=>{
+    d.items.forEach(item=>{
+      rows.push({doNo:d.doNo,date:fmtDate(d.createdAt),type:d.type,customer:d.customer,salesperson:d.salesperson||'',createdBy:d.createdBy||'',itemName:item.name,itemCode:item.code,itemCategory:item.category,itemSN:item.sn});
+    });
+  });
+  dlCSV(toCSV(rows,['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']),'do_history_export.csv');
+}
+function exportAllCSV(){exportStockCSV();exportReportCSV();exportRepairCSV()}
+function exportBackup(){
+  const data={version:5,stock,txns,masterProds,customers,doCounter,repairJobs,doHistory};
+  dlCSV(JSON.stringify(data),`backup_${today()}.json`);
+}
+
+function renderBackupStats(){
+  document.getElementById('backup-stats').innerHTML=`
+    <div style="background:var(--s2);padding:10px;border-radius:4px">สินค้าในระบบ: <b>${stock.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">ประวัติเคลื่อนไหว: <b>${txns.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">งานซ่อมรวม: <b>${repairJobs.length}</b></div>`;
+}
+
+function renderReport(){
+  const q=document.getElementById('rp-q').value.toLowerCase();const ft=document.getElementById('rp-type').value;
+  const data=txns.filter(t=>(!ft||t.type.includes(ft))&&(!q||t.sn.toLowerCase().includes(q)||t.name.toLowerCase().includes(q)));
+  document.getElementById('report-tbody').innerHTML=data.map(t=>`
+    <tr>
+      <td class="mono">${t.date}</td><td>${typeBadge(t.type)}</td>
+      <td>${t.name}</td><td class="code-cell">${t.code}</td>
+      <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td>
+      <td>${t.note}</td>
+      <td style="font-size:11px;color:var(--t3)">${t.user||'—'}</td>
+    </tr>`).join('');
+}
+
+let impRows=[];
 function onFileDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processFile(f)}
 function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f)}
 function processFile(f){
@@ -2144,34 +2127,26 @@ function processFile(f){
     const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const j=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    impHeaders=j[0].map(h=>String(h).trim());impRows=j.slice(1);
-    impHeaders.forEach(h=>{impFieldMap[h]=h});showPreview(f.name);
+    impRows=j.slice(1);
+    document.getElementById('import-preview').style.display='block';
+    document.getElementById('import-summary').textContent=`ไฟล์: ${f.name} (${impRows.length} แถว)`;
   };r.readAsArrayBuffer(f);
-}
-function showPreview(fname){
-  document.getElementById('import-preview').style.display='block';
-  document.getElementById('import-summary').textContent=`ไฟล์: ${fname} (${impRows.length} แถว)`;
 }
 function confirmImport(){
   let added=0;
   impRows.forEach(row=>{
     if(row[3]){
-      stock.unshift({category:row[0]||'ทั่วไป',name:row[1]||'ไม่ระบุ',code:row[2]||'-',sn:String(row[3]).trim(),status:row[4]||'Available'});
+      const cleanSN = String(row[3]).trim().replace(/^\*+|\*+$/g, '');
+      stock.unshift({category:row[0]||'ทั่วไป',name:row[1]||'ไม่ระบุ',code:row[2]||'-',sn:cleanSN,status:row[4]||'Available'});
       added++;
     }
   });
-  save();clearImport();filterStock();toast(`นำเข้าสำเร็จ ${added} รายการ`,'success');
+  save(); document.getElementById('import-preview').style.display='none'; impRows=[];
+  filterStock(); toast(`นำเข้าสำเร็จ ${added} รายการ`,'success');
   syncStockToSheets();
 }
 function clearImport(){document.getElementById('import-preview').style.display='none';impRows=[]}
-function toCSV(rows,headers){return[headers.join(','),...rows.map(r=>headers.map(h=>`"${r[h]||''}"`).join(','))].join('\n')}
-function dlCSV(csv,fname){const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;a.click()}
-function exportStockCSV(){dlCSV(toCSV(stock,['category','name','code','sn','status']),'stock_export.csv')}
-function exportReportCSV(){dlCSV(toCSV(txns,['date','type','name','code','sn','balance','note']),'report_export.csv')}
-function exportBackup(){
-  const data={version:4,stock,txns,masterProds,customers,doCounter,repairJobs,doHistory};
-  dlCSV(JSON.stringify(data),`backup_${today()}.json`);
-}
+
 function importBackup(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -2179,32 +2154,9 @@ function importBackup(e){
     const d=JSON.parse(ev.target.result);
     stock=d.stock||[];txns=d.txns||[];repairJobs=d.repairJobs||[];doHistory=d.doHistory||[];
     save();toast('Restore ข้อมูลเรียบร้อย','success');tab('overview');
-    
-    if(GOOGLE_SCRIPT_URL !== 'ใส่ลิงก์_WEB_APP_URL_ของคุณที่นี่') {
-      syncStockToSheets();
-      syncRepairToSheets();
-      syncDOToSheets();
-    }
+    syncStockToSheets(); syncRepairToSheets(); syncDOToSheets();
   };r.readAsText(f);
 }
-function renderBackupStats(){
-  document.getElementById('backup-stats').innerHTML=`
-    <div style="background:var(--s2);padding:10px;border-radius:4px">สินค้าในระบบ: <b>${stock.length}</b></div>
-    <div style="background:var(--s2);padding:10px;border-radius:4px">ประวัติเคลื่อนไหว: <b>${txns.length}</b></div>
-    <div style="background:var(--s2);padding:10px;border-radius:4px">งานซ่อมรวม: <b>${repairJobs.length}</b></div>`;
-}
-function exportAllCSV(){exportStockCSV();exportReportCSV();exportRepairCSV()}
-function renderReport(){
-  const q=document.getElementById('rp-q').value.toLowerCase();const ft=document.getElementById('rp-type').value;
-  const data=txns.filter(t=>(!ft||t.type.includes(ft))&&(!q||t.sn.toLowerCase().includes(q)||t.name.toLowerCase().includes(q)));
-  document.getElementById('report-tbody').innerHTML=data.map(t=>`
-    <tr>
-      <td class="mono">${t.date}</td><td>${typeBadge(t.type)}</td>
-      <td>${t.name}</td><td class="code-cell">${t.code}</td>
-      <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td><td>${t.note}</td>
-    </tr>`).join('');
-}
-function dlTemplate(fmt){}
 
 // ══════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
@@ -2217,9 +2169,6 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){['edit-modal','do-modal','repair-detail-modal','do-view-modal'].forEach(id=>document.getElementById(id).classList.remove('open'))}
 });
 
-// ══════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════
 window.onload=()=>{
   const d=today();
   document.getElementById('i-date').value=d;
