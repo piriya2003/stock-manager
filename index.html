@@ -324,7 +324,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
         <div class="form-row"><label class="field-label">Username</label><input type="text" id="f-user" placeholder="ชื่อผู้ใช้" onkeypress="if(event.key==='Enter')doLogin()"></div>
         <div class="form-row"><label class="field-label">Password</label><input type="password" id="f-pass" placeholder="รหัสผ่าน" onkeypress="if(event.key==='Enter')doLogin()"></div>
         <button onclick="doLogin()" class="btn btn-primary btn-full btn-lg mt-2">เข้าสู่ระบบ</button>
-        
       </div>
     </div>
   </div>
@@ -387,7 +386,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
   <div id="content">
 
-    <!-- ── OVERVIEW ── -->
     <div id="tab-overview" class="tab-content active">
       <div class="page-header">
         <div class="page-title">📈 แดชบอร์ด</div>
@@ -430,7 +428,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── STOCK ── -->
     <div id="tab-stock" class="tab-content">
       <div class="page-header">
         <div class="page-title">📋 สินค้าคงคลัง</div>
@@ -463,7 +460,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div style="margin-top:8px;font-size:11px;color:var(--t3);text-align:right">แสดง <span id="rec-count" style="color:var(--blue);font-weight:700">0</span> รายการ</div>
     </div>
 
-    <!-- ── MASTER ── -->
     <div id="tab-master" class="tab-content">
       <div class="page-title mb-4">⚙️ ข้อมูลหลัก</div>
       <div class="grid-2" style="align-items:start">
@@ -490,7 +486,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── IMPORT ── -->
     <div id="tab-import" class="tab-content">
       <div class="page-title mb-4">📂 Import ข้อมูล Excel / CSV</div>
       <div class="card">
@@ -536,7 +531,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── INBOUND ── -->
     <div id="tab-inbound" class="tab-content">
       <div class="page-title mb-4">📥 รับเข้าสินค้า</div>
       <div style="max-width:640px">
@@ -573,7 +567,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <datalist id="code-dl"></datalist>
     </div>
 
-    <!-- ── OUTBOUND ── -->
     <div id="tab-outbound" class="tab-content">
       <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
       <div style="max-width:640px">
@@ -619,7 +612,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── MAINTENANCE ── -->
     <div id="tab-maintenance" class="tab-content">
       <div class="page-header">
         <div class="page-title">🔧 ซ่อม</div>
@@ -682,7 +674,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── DO HISTORY ── -->
     <div id="tab-do-history" class="tab-content">
       <div class="page-header">
         <div class="page-title">📄 ประวัติใบ DO</div>
@@ -710,7 +701,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div style="margin-top:8px;font-size:11px;color:var(--blue);text-align:right">แสดง <span id="doh-count" style="color:var(--blue);font-weight:700">0</span> ใบ</div>
     </div>
 
-    <!-- ── REPORT ── -->
     <div id="tab-report" class="tab-content">
       <div class="page-header">
         <div class="page-title">📊 ประวัติการเคลื่อนไหว</div>
@@ -735,7 +725,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-    <!-- ── BACKUP ── -->
     <div id="tab-backup" class="tab-content">
       <div class="page-title mb-4">💾 Backup & Restore</div>
       <div class="grid-2" style="align-items:start;max-width:800px">
@@ -777,7 +766,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 </div>
 </div>
 
-<!-- ── DO MODAL ── -->
 <div class="modal-bg" id="do-modal">
   <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
     <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
@@ -825,7 +813,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
-<!-- ── EDIT MODAL ── -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <div class="modal-header">
@@ -854,7 +841,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
-<!-- ── SWAP SN MODAL ── -->
 <div class="modal-bg" id="swap-sn-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -893,7 +879,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
-<!-- ── REPAIR DETAIL MODAL ── -->
 <div class="modal-bg" id="repair-detail-modal">
   <div class="modal modal-xl">
     <div class="modal-header">
@@ -946,7 +931,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
-<!-- ── DO VIEW MODAL ── -->
 <div class="modal-bg" id="do-view-modal">
   <div class="modal modal-xl">
     <div class="modal-header">
@@ -1154,7 +1138,6 @@ async function syncDOToSheets() {
     });
   });
 
-  // sync header และ items แยกกัน
   showSync('syncing', 'กำลัง Sync DO...');
   let ok1 = false, ok2 = false;
   try {
@@ -1227,7 +1210,6 @@ function stopSessionTimer() {
 function filterBarcode(rawVal, msgElementId) {
   let cleanVal = rawVal.trim().replace(/^\*+|\*+$/g, '');
   if (!cleanVal) return null;
-  // ป้องกันสแกนโดนรหัส SKU (12 หลัก ขึ้นต้น 567)
   if (cleanVal.length === 12 && cleanVal.startsWith('567')) {
     inlineMsg(msgElementId, '⚠️ สแกนโดนรหัส SKU กรุณาสแกน Serial No. (บาร์โค้ดด้านล่าง)', false);
     return null;
@@ -1249,7 +1231,6 @@ async function doLogin() {
   document.getElementById('f-pass').disabled = true;
 
   try {
-    // Hash password ฝั่ง client ก่อนส่ง
     const pwHash = await sha256(p);
 
     const res = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=all&key=${API_KEY}`);
@@ -1263,14 +1244,11 @@ async function doLogin() {
 
     if (db.users && db.users.length > 1) {
       const userRows = db.users.slice(1);
-      // เปรียบเทียบ hash (ชีทต้องเก็บ hash แล้ว)
       const matched = userRows.find(row => String(row[0]) === u && String(row[1]) === pwHash);
-      // Fallback: เปรียบเทียบ plaintext สำหรับระบบเก่า (ลบออกเมื่อ migrate hash แล้ว)
       const matchedPlain = !matched ? userRows.find(row => String(row[0]) === u && String(row[1]) === p) : null;
       const finalMatch = matched || matchedPlain;
       if (finalMatch) { validUser = true; userRole = finalMatch[2] || 'staff'; }
     } else {
-      // Fallback hardcoded (ลบออกใน production)
       if (u === 'admin' && p === '1234') { validUser = true; userRole = 'admin'; }
     }
 
@@ -1285,14 +1263,12 @@ async function doLogin() {
       document.getElementById('user-role-display').textContent = userRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
       document.getElementById('f-pass').value = '';
 
-      // Role-based nav visibility
       const isAdmin = userRole === 'admin';
       ['nav-overview', 'nav-report', 'nav-backup', 'nav-import'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isAdmin ? 'flex' : 'none';
       });
 
-      // Load data from Sheets
       if (db.inventory && db.inventory.length > 1) {
         stock = db.inventory.slice(1).map(row => ({
           category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'',
@@ -1300,29 +1276,29 @@ async function doLogin() {
           claimReason: row[7]||null, replacedBySN: row[8]||null
         }));
       }
-      if (db.repair_jobs && db.repair_jobs.length > 1) {
-        repairJobs = db.repair_jobs.slice(1).map(row => ({
-          id: row[0], sn: row[1], name: row[2], code: row[3], category: row[4],
-          customer: row[5], techName: row[6], symptom: row[7], repairStatus: row[8],
-          repairNotes: row[9], createdAt: row[10], startedAt: row[11], finishedAt: row[12],
-          replacedSN: row[13], claimReason: row[14], createdBy: row[15]||''
-        }));
-      }
 
-      // Load DO from 2 separate sheets
-      if (db.do_header && db.do_header.length > 1 && db.do_items) {
-        const allItems = db.do_items && db.do_items.length > 1 ? db.do_items.slice(1) : [];
+      repairJobs = (db.repair_jobs && db.repair_jobs.length > 1) ? db.repair_jobs.slice(1).map(row => ({
+        id: row[0]||'', sn: row[1]||'', name: row[2]||'', code: row[3]||'', category: row[4]||'',
+        customer: row[5]||'', techName: row[6]||'', symptom: row[7]||'', repairStatus: row[8]||'',
+        repairNotes: row[9]||'', createdAt: row[10]||'', startedAt: row[11]||'', finishedAt: row[12]||'',
+        replacedSN: row[13]||'', claimReason: row[14]||'', createdBy: row[15]||''
+      })) : [];
+
+      if (db.do_header && db.do_header.length > 1) {
+        const allItems = (db.do_items && db.do_items.length > 1) ? db.do_items.slice(1) : [];
         doHistory = db.do_header.slice(1).map(row => {
-          const doId = row[0];
+          const dold = String(row[0]);
           const relatedItems = allItems
-            .filter(ir => ir[0] === doId)
-            .map(ir => ({ name: ir[1], code: ir[2], category: ir[3], sn: ir[4] }));
+            .filter(ir => String(ir[0]) === dold)
+            .map(ir => ({ name: ir[1]||'', code: ir[2]||'', category: ir[3]||'', sn: ir[4]||'' }));
           return {
-            id: doId, doNo: row[1], date: row[2], type: row[3], customer: row[4],
-            salesperson: row[5], machine: row[6], headerText: row[7],
-            createdAt: row[8], createdBy: row[9], items: relatedItems
+            id: dold, doNo: row[1]||'', date: row[2]||'', type: row[3]||'', customer: row[4]||'',
+            salesperson: row[5]||'', machine: row[6]||'', headerText: row[7]||'',
+            createdAt: row[8]||'', createdBy: row[9]||'', items: relatedItems
           };
         });
+      } else {
+        doHistory = [];
       }
 
       save();
@@ -1585,7 +1561,7 @@ function snCellHTML(item) {
 }
 
 function filterStock() {
-  const q  = (document.getElementById('s-q').value || '').toLowerCase();
+  const q   = (document.getElementById('s-q').value || '').toLowerCase();
   const st = document.getElementById('s-status').value;
   const cat = document.getElementById('s-cat').value;
   let data = stock.filter(i =>
@@ -2295,7 +2271,6 @@ function processFile(f) {
     impRows = j.slice(1);
     document.getElementById('import-preview').style.display = 'block';
     document.getElementById('import-summary').textContent = `ไฟล์: ${f.name} (${impRows.length} แถว)`;
-    // Preview
     const thead = document.getElementById('preview-thead');
     const tbody = document.getElementById('preview-tbody');
     if (j[0]) thead.innerHTML = j[0].map(h => `<th style="padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase">${h}</th>`).join('');
