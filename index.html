@@ -36,8 +36,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .login-title{font-size:22px;font-weight:700;letter-spacing:-.3px}
 .login-sub{font-size:12px;color:var(--blue);margin-top:4px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
 .login-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:28px}
-.login-tabs{display:none;} /* ซ่อนแท็บสมัครชั่วคราวให้ใช้จากชีต */
 .hint-box{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--t3);text-align:center;margin-top:16px}
+
+/* ── SYNC INDICATOR ── */
+#sync-indicator{position:fixed;bottom:60px;right:20px;z-index:9998;display:none;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:8px 12px;font-size:11px;color:var(--t2);align-items:center;gap:6px}
+#sync-indicator.syncing{display:flex;border-color:rgba(79,142,247,.3);color:var(--blue)}
+#sync-indicator.error{display:flex;border-color:rgba(240,96,96,.3);color:var(--red)}
+#sync-indicator.success{display:flex;border-color:rgba(45,212,160,.3);color:var(--green)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.sync-dot.pulse{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ── APP SHELL ── */
 #app{display:none;height:100vh;overflow:hidden}
@@ -62,6 +70,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);min-height:100
 .user-avatar{width:28px;height:28px;background:var(--blue-dim);border:1px solid rgba(79,142,247,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
 .user-name{font-size:12px;font-weight:600;color:var(--t1)}
 .user-role{font-size:10px;color:var(--t3)}
+
+/* ── SESSION TIMER ── */
+.session-timer{font-size:10px;color:var(--t3);text-align:center;margin-top:6px;font-family:var(--mono)}
+.session-timer.warn{color:var(--orange)}
 
 /* ── MAIN ── */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
@@ -353,7 +365,8 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div class="user-avatar" id="user-avatar">A</div>
       <div><div class="user-name" id="user-name-display">admin</div><div class="user-role" id="user-role-display">Administrator</div></div>
     </div>
-    <button onclick="doLogout()" class="btn btn-ghost w-full" style="font-size:12px">🚪 ออกจากระบบ</button>
+    <div class="session-timer" id="session-timer">⏱ เซสชัน: --:--</div>
+    <button onclick="doLogout()" class="btn btn-ghost w-full mt-2" style="font-size:12px">🚪 ออกจากระบบ</button>
   </div>
 </div>
 
@@ -374,48 +387,25 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
   <div id="content">
 
+    <!-- ── OVERVIEW ── -->
     <div id="tab-overview" class="tab-content active">
       <div class="page-header">
         <div class="page-title">📈 แดชบอร์ด</div>
         <button onclick="renderDashboard()" class="btn btn-ghost btn-sm">🔄 รีเฟรช</button>
       </div>
       <div class="stats-row">
-        <div class="stat-card blue">
-          <div class="stat-label">สินค้าทั้งหมด</div>
-          <div class="stat-value text-blue" id="d-total">0</div>
-          <div class="stat-sub" id="d-total-sub">ในระบบ</div>
-          <div class="stat-icon">📦</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">พร้อมใช้งาน</div>
-          <div class="stat-value text-green" id="d-avail">0</div>
-          <div class="stat-sub" id="d-avail-pct">0%</div>
-          <div class="stat-icon">✅</div>
-        </div>
-        <div class="stat-card gray">
-          <div class="stat-label">โอน / ขายออก</div>
-          <div class="stat-value" style="color:var(--t3)" id="d-sold">0</div>
-          <div class="stat-sub" id="d-sold-pct">0%</div>
-          <div class="stat-icon">📤</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-label">รับซ่อม</div>
-          <div class="stat-value text-orange" id="d-repair">0</div>
-          <div class="stat-sub" id="d-repair-pct">0%</div>
-          <div class="stat-icon">🔧</div>
-        </div>
+        <div class="stat-card blue"><div class="stat-label">สินค้าทั้งหมด</div><div class="stat-value text-blue" id="d-total">0</div><div class="stat-sub" id="d-total-sub">ในระบบ</div><div class="stat-icon">📦</div></div>
+        <div class="stat-card green"><div class="stat-label">พร้อมใช้งาน</div><div class="stat-value text-green" id="d-avail">0</div><div class="stat-sub" id="d-avail-pct">0%</div><div class="stat-icon">✅</div></div>
+        <div class="stat-card gray"><div class="stat-label">โอน / ขายออก</div><div class="stat-value" style="color:var(--t3)" id="d-sold">0</div><div class="stat-sub" id="d-sold-pct">0%</div><div class="stat-icon">📤</div></div>
+        <div class="stat-card orange"><div class="stat-label">รับซ่อม</div><div class="stat-value text-orange" id="d-repair">0</div><div class="stat-sub" id="d-repair-pct">0%</div><div class="stat-icon">🔧</div></div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div class="card">
           <div class="card-header"><span class="card-title">สัดส่วนสถานะ</span></div>
           <div class="card-body" id="status-chart-wrap"></div>
         </div>
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">สินค้าตามหมวดหมู่</span>
-            <span id="cat-count-badge" class="badge b-blue" style="font-size:10px"></span>
-          </div>
+          <div class="card-header"><span class="card-title">สินค้าตามหมวดหมู่</span><span id="cat-count-badge" class="badge b-blue" style="font-size:10px"></span></div>
           <div style="max-height:220px;overflow-y:auto">
             <table style="width:100%;border-collapse:collapse;font-size:12px">
               <thead><tr>
@@ -428,38 +418,25 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           </div>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">รายการเคลื่อนไหวล่าสุด</span>
-            <button onclick="tab('report')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button>
-          </div>
-          <div class="tbl-wrap" style="border:none;border-radius:0">
-            <table>
-              <thead><tr><th>วันที่</th><th>ประเภท</th><th>สินค้า</th><th>SN</th><th>หมายเหตุ</th></tr></thead>
-              <tbody id="recent-tx"></tbody>
-            </table>
-          </div>
+          <div class="card-header"><span class="card-title">รายการเคลื่อนไหวล่าสุด</span><button onclick="tab('report')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button></div>
+          <div class="tbl-wrap" style="border:none;border-radius:0"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>สินค้า</th><th>SN</th><th>หมายเหตุ</th></tr></thead><tbody id="recent-tx"></tbody></table></div>
         </div>
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">ใบ DO ล่าสุด</span>
-            <button onclick="tab('do-history')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button>
-          </div>
+          <div class="card-header"><span class="card-title">ใบ DO ล่าสุด</span><button onclick="tab('do-history')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button></div>
           <div id="dashboard-do-list" style="padding:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto"></div>
         </div>
       </div>
     </div>
 
+    <!-- ── STOCK ── -->
     <div id="tab-stock" class="tab-content">
       <div class="page-header">
         <div class="page-title">📋 สินค้าคงคลัง</div>
         <div class="flex gap-2 flex-wrap">
           <input type="text" id="s-q" oninput="filterStock()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
-          <select id="s-cat" onchange="filterStock()" style="width:180px">
-            <option value="">— ทุกหมวดหมู่ —</option>
-          </select>
+          <select id="s-cat" onchange="filterStock()" style="width:180px"><option value="">— ทุกหมวดหมู่ —</option></select>
           <select id="s-status" onchange="filterStock()" style="width:150px">
             <option value="">— ทุกสถานะ —</option>
             <option value="Available">พร้อมใช้งาน</option>
@@ -486,6 +463,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <div style="margin-top:8px;font-size:11px;color:var(--t3);text-align:right">แสดง <span id="rec-count" style="color:var(--blue);font-weight:700">0</span> รายการ</div>
     </div>
 
+    <!-- ── MASTER ── -->
     <div id="tab-master" class="tab-content">
       <div class="page-title mb-4">⚙️ ข้อมูลหลัก</div>
       <div class="grid-2" style="align-items:start">
@@ -498,9 +476,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
             <button onclick="saveMasterProduct()" class="btn btn-primary btn-full mt-1">+ บันทึกต้นแบบ</button>
           </div>
           <hr class="divider" style="margin:0">
-          <div class="card-body" style="max-height:240px;overflow-y:auto">
-            <div id="master-product-list" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
+          <div class="card-body" style="max-height:240px;overflow-y:auto"><div id="master-product-list" style="display:flex;flex-direction:column;gap:6px"></div></div>
         </div>
         <div class="card">
           <div class="card-header" style="border-color:rgba(45,212,160,.2)"><span class="card-title text-green">👥 ลูกค้า / สาขา</span></div>
@@ -509,13 +485,12 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
             <button onclick="saveCustomer()" class="btn btn-success btn-full">+ เพิ่มลูกค้า</button>
           </div>
           <hr class="divider" style="margin:0">
-          <div class="card-body" style="max-height:280px;overflow-y:auto">
-            <div id="customer-list" style="display:flex;flex-direction:column;gap:6px"></div>
-          </div>
+          <div class="card-body" style="max-height:280px;overflow-y:auto"><div id="customer-list" style="display:flex;flex-direction:column;gap:6px"></div></div>
         </div>
       </div>
     </div>
 
+    <!-- ── IMPORT ── -->
     <div id="tab-import" class="tab-content">
       <div class="page-title mb-4">📂 Import ข้อมูล Excel / CSV</div>
       <div class="card">
@@ -537,30 +512,19 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
                 <span class="field-tag">category</span> <span class="field-tag">name</span> <span class="field-tag">code</span> <span class="field-tag">sn</span> <span class="field-tag">status</span>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button onclick="dlTemplate('xlsx')" class="btn btn-ghost btn-sm">⬇ Template .xlsx</button>
-              <button onclick="dlTemplate('csv')" class="btn btn-ghost btn-sm">⬇ Template .csv</button>
-            </div>
           </div>
         </div>
       </div>
       <div id="import-preview" style="display:none" class="mt-4">
         <div class="card">
           <div class="card-header">
-            <div>
-              <div style="font-size:13px;font-weight:600">ตัวอย่างข้อมูล (Preview)</div>
-              <div id="import-summary" class="text-muted text-sm mt-1"></div>
-            </div>
+            <div><div style="font-size:13px;font-weight:600">ตัวอย่างข้อมูล (Preview)</div><div id="import-summary" class="text-muted text-sm mt-1"></div></div>
             <div class="flex gap-2">
               <button onclick="clearImport()" class="btn btn-ghost btn-sm">✕ ยกเลิก</button>
               <button onclick="confirmImport()" class="btn btn-primary btn-sm">✅ นำเข้าข้อมูล</button>
             </div>
           </div>
           <div class="card-body">
-            <div style="background:var(--s2);border-radius:var(--r);padding:14px;margin-bottom:14px">
-              <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">🗂 Field Mapping</div>
-              <div id="mapping-grid" class="mapping-row" style="gap:10px"></div>
-            </div>
             <div style="max-height:240px;overflow-y:auto;border:1px solid var(--b1);border-radius:var(--r)">
               <table style="width:100%;border-collapse:collapse;font-size:12px">
                 <thead><tr id="preview-thead" style="background:var(--s2)"></tr></thead>
@@ -570,11 +534,9 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           </div>
         </div>
       </div>
-      <div id="import-log" style="display:none" class="mt-4">
-        <div class="card"><div class="card-body" id="import-log-inner"></div></div>
-      </div>
     </div>
 
+    <!-- ── INBOUND ── -->
     <div id="tab-inbound" class="tab-content">
       <div class="page-title mb-4">📥 รับเข้าสินค้า</div>
       <div style="max-width:640px">
@@ -590,10 +552,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
               <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="i-code" oninput="updateBalance()" placeholder="รหัส (ถ้ามี)" list="code-dl"></div>
               <div>
                 <label class="field-label">คงเหลือ (Available)</label>
-                <div class="balance-display mt-1">
-                  <div class="balance-num" id="i-balance">0</div>
-                  <div class="balance-label">ชิ้นพร้อมใช้งาน</div>
-                </div>
+                <div class="balance-display mt-1"><div class="balance-num" id="i-balance">0</div><div class="balance-label">ชิ้นพร้อมใช้งาน</div></div>
               </div>
             </div>
             <div class="form-row">
@@ -614,6 +573,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       <datalist id="code-dl"></datalist>
     </div>
 
+    <!-- ── OUTBOUND ── -->
     <div id="tab-outbound" class="tab-content">
       <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
       <div style="max-width:640px">
@@ -643,35 +603,23 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <div id="o-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
         </div>
       </div>
-      
-      <hr class="divider" style="margin: 24px 0;">
+      <hr class="divider" style="margin:24px 0">
       <div class="page-header mb-3">
-        <div class="page-title" style="font-size: 15px;">📦 รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
-        <div class="flex gap-2 flex-wrap items-center">
-          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:240px">
-        </div>
+        <div class="page-title" style="font-size:15px">📦 รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
+        <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:240px">
       </div>
-      
       <div class="card">
-        <div class="card-header">
-          <span class="card-title">สรุปจำนวนรวม: <span id="o-hist-total" style="color:var(--orange);font-weight:700;font-family:var(--mono);">0</span> ชิ้น</span>
-        </div>
-        <div class="tbl-wrap" style="max-height: 400px; overflow-y: auto;">
+        <div class="card-header"><span class="card-title">สรุปจำนวนรวม: <span id="o-hist-total" style="color:var(--orange);font-weight:700;font-family:var(--mono)">0</span> ชิ้น</span></div>
+        <div class="tbl-wrap" style="max-height:400px;overflow-y:auto">
           <table>
-            <thead>
-              <tr>
-                <th>ชื่อสินค้า</th>
-                <th>รหัส / หมวดหมู่</th>
-                <th style="text-align:center">จำนวนที่ออก (ชิ้น)</th>
-                <th>Serial Numbers (SN)</th>
-              </tr>
-            </thead>
+            <thead><tr><th>ชื่อสินค้า</th><th>รหัส / หมวดหมู่</th><th style="text-align:center">จำนวนที่ออก (ชิ้น)</th><th>Serial Numbers (SN)</th></tr></thead>
             <tbody id="o-hist-tbody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
+    <!-- ── MAINTENANCE ── -->
     <div id="tab-maintenance" class="tab-content">
       <div class="page-header">
         <div class="page-title">🔧 ซ่อม</div>
@@ -734,6 +682,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
+    <!-- ── DO HISTORY ── -->
     <div id="tab-do-history" class="tab-content">
       <div class="page-header">
         <div class="page-title">📄 ประวัติใบ DO</div>
@@ -747,47 +696,21 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
           <button onclick="exportDOHistoryCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-        <div class="stat-card blue" style="padding:14px 18px">
-          <div class="stat-label">ใบ DO ทั้งหมด</div>
-          <div class="stat-value text-blue" id="doh-total">0</div>
-          <div class="stat-sub">ใบ</div>
-          <div class="stat-icon">📄</div>
-        </div>
-        <div class="stat-card orange" style="padding:14px 18px">
-          <div class="stat-label">รายการสินค้ารวม</div>
-          <div class="stat-value text-orange" id="doh-items">0</div>
-          <div class="stat-sub">ชิ้น</div>
-          <div class="stat-icon">📦</div>
-        </div>
-        <div class="stat-card green" style="padding:14px 18px">
-          <div class="stat-label">ลูกค้าที่รับสินค้า</div>
-          <div class="stat-value text-green" id="doh-custs">0</div>
-          <div class="stat-sub">ราย</div>
-          <div class="stat-icon">👥</div>
-        </div>
+        <div class="stat-card blue" style="padding:14px 18px"><div class="stat-label">ใบ DO ทั้งหมด</div><div class="stat-value text-blue" id="doh-total">0</div><div class="stat-sub">ใบ</div><div class="stat-icon">📄</div></div>
+        <div class="stat-card orange" style="padding:14px 18px"><div class="stat-label">รายการสินค้ารวม</div><div class="stat-value text-orange" id="doh-items">0</div><div class="stat-sub">ชิ้น</div><div class="stat-icon">📦</div></div>
+        <div class="stat-card green" style="padding:14px 18px"><div class="stat-label">ลูกค้าที่รับสินค้า</div><div class="stat-value text-green" id="doh-custs">0</div><div class="stat-sub">ราย</div><div class="stat-icon">👥</div></div>
       </div>
-
       <div class="tbl-wrap" style="max-height:calc(100vh - 300px);overflow-y:auto">
         <table>
-          <thead>
-            <tr>
-              <th>เลขที่ DO</th>
-              <th>วันที่ออก</th>
-              <th>ประเภท</th>
-              <th>ลูกค้า / สาขา</th>
-              <th style="text-align:center">รายการ</th>
-              <th>ผู้สร้าง</th>
-              <th style="text-align:center">จัดการ</th>
-            </tr>
-          </thead>
+          <thead><tr><th>เลขที่ DO</th><th>วันที่ออก</th><th>ประเภท</th><th>ลูกค้า / สาขา</th><th style="text-align:center">รายการ</th><th>ผู้สร้าง</th><th style="text-align:center">จัดการ</th></tr></thead>
           <tbody id="do-history-tbody"></tbody>
         </table>
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--blue);text-align:right">แสดง <span id="doh-count" style="color:var(--blue);font-weight:700">0</span> ใบ</div>
     </div>
 
+    <!-- ── REPORT ── -->
     <div id="tab-report" class="tab-content">
       <div class="page-header">
         <div class="page-title">📊 ประวัติการเคลื่อนไหว</div>
@@ -812,6 +735,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
+    <!-- ── BACKUP ── -->
     <div id="tab-backup" class="tab-content">
       <div class="page-title mb-4">💾 Backup & Restore</div>
       <div class="grid-2" style="align-items:start;max-width:800px">
@@ -848,8 +772,12 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
       </div>
     </div>
 
-  </div></div></div></div>
+  </div>
+</div>
+</div>
+</div>
 
+<!-- ── DO MODAL ── -->
 <div class="modal-bg" id="do-modal">
   <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
     <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
@@ -897,6 +825,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
+<!-- ── EDIT MODAL ── -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
     <div class="modal-header">
@@ -925,6 +854,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
+<!-- ── SWAP SN MODAL ── -->
 <div class="modal-bg" id="swap-sn-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -963,6 +893,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
+<!-- ── REPAIR DETAIL MODAL ── -->
 <div class="modal-bg" id="repair-detail-modal">
   <div class="modal modal-xl">
     <div class="modal-header">
@@ -1015,6 +946,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
+<!-- ── DO VIEW MODAL ── -->
 <div class="modal-bg" id="do-view-modal">
   <div class="modal modal-xl">
     <div class="modal-header">
@@ -1053,423 +985,628 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
   </div>
 </div>
 
+<div id="sync-indicator"><div class="sync-dot pulse" id="sync-dot"></div><span id="sync-text">กำลัง Sync...</span></div>
 <div id="toast-area"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  STATE & CONFIG
-// ══════════════════════════════════════════════
-// 🔴 URL Web App ของคุณ
+// ══════════════════════════════════════════════════════════════
+//  CONFIG & CONSTANTS
+// ══════════════════════════════════════════════════════════════
+// 🔑 ต้องตรงกับ API_KEY ใน Apps Script
+const API_KEY = '7f4a9b2c8e1d3f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG1JTaKAps1aygjtrYmDrU1v8898ygmTBiLJUsdKg2PsNvBex4DPDNIxlxy3RpkMbrfA/exec';
 
+// Session config
+const SESSION_TIMEOUT_MS = 8 * 60 * 60 * 1000; // 8 ชั่วโมง
+const SESSION_WARN_MS    = 30 * 60 * 1000;      // เตือนเมื่อเหลือ 30 นาที
+
+// ══════════════════════════════════════════════════════════════
+//  SAFE LOCALSTORAGE
+// ══════════════════════════════════════════════════════════════
 const LS = {
-  get(k,d=null){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d}catch{return d}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{toast('พื้นที่ localStorage เต็ม','warning')}},
+  get(k, d = null) {
+    try {
+      const v = localStorage.getItem(k);
+      if (v === null) return d;
+      const parsed = JSON.parse(v);
+      // ตรวจ type ขั้นต้น ป้องกัน parse พัง
+      if (['shq_stock','shq_txns','shq_mprods','shq_custs','shq_repair_jobs','shq_do_history'].includes(k)) {
+        return Array.isArray(parsed) ? parsed : d;
+      }
+      return parsed;
+    } catch (e) {
+      console.warn(`LS.get(${k}) failed:`, e);
+      return d;
+    }
+  },
+  set(k, v) {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch (e) {
+      toast('⚠️ พื้นที่ LocalStorage เต็ม ไม่สามารถบันทึกได้', 'warning');
+      console.error('LS.set error:', e);
+    }
+  },
+  clear(k) {
+    try { localStorage.removeItem(k); } catch {}
+  }
 };
 
-let stock       = LS.get('shq_stock',[]);
-let txns        = LS.get('shq_txns',[]);
-let masterProds = LS.get('shq_mprods',[]);
-let customers   = LS.get('shq_custs',['TOPS Supermarket','โครงการ A','ลูกค้า Walk-in']);
-let doCounter   = LS.get('shq_do_counter',1);
-let repairJobs  = LS.get('shq_repair_jobs',[]);
-let doHistory   = LS.get('shq_do_history',[]);
-let currentUser = null;
-let currentRole = null;
-let inSession   = [];
-let outSession  = [];
-let currentRepairJobId = null;
-let currentViewDOId = null;
-let doModalMode = 'create'; 
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let stock       = LS.get('shq_stock', []);
+let txns        = LS.get('shq_txns', []);
+let masterProds = LS.get('shq_mprods', []);
+let customers   = LS.get('shq_custs', ['TOPS Supermarket', 'โครงการ A', 'ลูกค้า Walk-in']);
+let doCounter   = LS.get('shq_do_counter', 1);
+let repairJobs  = LS.get('shq_repair_jobs', []);
+let doHistory   = LS.get('shq_do_history', []);
 
-function save(){
-  LS.set('shq_stock',stock);
-  LS.set('shq_txns',txns);
-  LS.set('shq_mprods',masterProds);
-  LS.set('shq_custs',customers);
-  LS.set('shq_do_counter',doCounter);
-  LS.set('shq_repair_jobs',repairJobs);
-  LS.set('shq_do_history',doHistory);
+let currentUser    = null;
+let currentRole    = null;
+let loginTime      = null;
+let sessionTimerInterval = null;
+
+let inSession  = [];
+let outSession = [];
+let currentRepairJobId = null;
+let currentViewDOId    = null;
+let currentSwapJobId   = null;
+let doModalMode        = 'create';
+
+function save() {
+  LS.set('shq_stock', stock);
+  LS.set('shq_txns', txns);
+  LS.set('shq_mprods', masterProds);
+  LS.set('shq_custs', customers);
+  LS.set('shq_do_counter', doCounter);
+  LS.set('shq_repair_jobs', repairJobs);
+  LS.set('shq_do_history', doHistory);
 }
 
-// ══════════════════════════════════════════════
-//  BARCODE FILTER & AUDIT LOGGING
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+//  CLIENT-SIDE SHA-256 (สำหรับ hash password ก่อนส่ง)
+// ══════════════════════════════════════════════════════════════
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SYNC INDICATOR
+// ══════════════════════════════════════════════════════════════
+let syncHideTimer = null;
+function showSync(state, text) {
+  const el = document.getElementById('sync-indicator');
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  el.className = state; // syncing | error | success
+  dot.className = 'sync-dot' + (state === 'syncing' ? ' pulse' : '');
+  txt.textContent = text;
+  clearTimeout(syncHideTimer);
+  if (state !== 'syncing') {
+    syncHideTimer = setTimeout(() => { el.className = ''; }, 3000);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SYNC WITH RETRY
+// ══════════════════════════════════════════════════════════════
+async function syncWithRetry(payload, retries = 3) {
+  showSync('syncing', 'กำลัง Sync...');
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(`${GOOGLE_SCRIPT_URL}?key=${API_KEY}`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        showSync('success', '✓ Sync สำเร็จ');
+        return true;
+      }
+      throw new Error(result.message || 'Unknown error');
+    } catch (err) {
+      if (i < retries - 1) {
+        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+      } else {
+        showSync('error', '✗ Sync ล้มเหลว (Local เท่านั้น)');
+        console.error('Sync failed after retries:', err);
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+async function syncStockToSheets() {
+  const rows = stock.map(item => [
+    item.category, item.name, item.code, item.sn, item.status,
+    item.prevSN || '', item.claimedAt || '', item.claimReason || '', item.replacedBySN || ''
+  ]);
+  return syncWithRetry({ sheetName: 'inventory', action: 'update_all', data: rows });
+}
+
+async function syncRepairToSheets() {
+  const rows = repairJobs.map(j => [
+    j.id||'', j.sn||'', j.name||'', j.code||'', j.category||'',
+    j.customer||'', j.techName||'', j.symptom||'', j.repairStatus||'',
+    j.repairNotes||'', j.createdAt||'', j.startedAt||'', j.finishedAt||'',
+    j.replacedSN||'', j.claimReason||'', j.createdBy||''
+  ]);
+  return syncWithRetry({ sheetName: 'repair_jobs', action: 'update_all', data: rows });
+}
+
+// ── DO History: แยก 2 Sheet ──
+async function syncDOToSheets() {
+  const headers = doHistory.map(d => [
+    d.id||'', d.doNo||'', d.date||'', d.type||'', d.customer||'',
+    d.salesperson||'', d.machine||'', d.headerText||'',
+    d.createdAt||'', d.createdBy||''
+  ]);
+  const items = [];
+  doHistory.forEach(d => {
+    (d.items||[]).forEach(item => {
+      items.push([d.id, item.name||'', item.code||'', item.category||'', item.sn||'']);
+    });
+  });
+
+  // sync header และ items แยกกัน
+  showSync('syncing', 'กำลัง Sync DO...');
+  let ok1 = false, ok2 = false;
+  try {
+    const r1 = await fetch(`${GOOGLE_SCRIPT_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      body: JSON.stringify({ sheetName: 'do_header', action: 'update_all', data: headers })
+    });
+    const j1 = await r1.json();
+    ok1 = j1.status === 'success';
+  } catch {}
+  try {
+    const r2 = await fetch(`${GOOGLE_SCRIPT_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      body: JSON.stringify({ sheetName: 'do_items', action: 'update_all', data: items })
+    });
+    const j2 = await r2.json();
+    ok2 = j2.status === 'success';
+  } catch {}
+
+  if (ok1 && ok2) showSync('success', '✓ DO Sync สำเร็จ');
+  else showSync('error', '✗ DO Sync ล้มเหลว');
+}
+
+async function logTransaction(date, type, name, code, sn, balance, note) {
+  txns.unshift({ date, type, name, code, sn, balance, note, user: currentUser });
+  syncWithRetry({
+    sheetName: 'transactions', action: 'insert',
+    data: [date, type, name, code, sn, balance, note, currentUser]
+  }).catch(console.error);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SESSION MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+function startSessionTimer() {
+  clearInterval(sessionTimerInterval);
+  loginTime = Date.now();
+  sessionTimerInterval = setInterval(() => {
+    if (!loginTime) return;
+    const elapsed = Date.now() - loginTime;
+    const remaining = SESSION_TIMEOUT_MS - elapsed;
+    if (remaining <= 0) {
+      clearInterval(sessionTimerInterval);
+      toast('⏰ Session หมดอายุ กรุณา Login ใหม่', 'warning');
+      doLogout();
+      return;
+    }
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const timerEl = document.getElementById('session-timer');
+    const label = `⏱ เหลือ: ${h > 0 ? h + 'ชม. ' : ''}${m}นาที`;
+    timerEl.textContent = label;
+    timerEl.className = 'session-timer' + (remaining < SESSION_WARN_MS ? ' warn' : '');
+    if (remaining < SESSION_WARN_MS && remaining > SESSION_WARN_MS - 60000) {
+      toast('⚠️ Session จะหมดใน 30 นาที', 'warning');
+    }
+  }, 60000);
+}
+
+function stopSessionTimer() {
+  clearInterval(sessionTimerInterval);
+  loginTime = null;
+  const timerEl = document.getElementById('session-timer');
+  if (timerEl) timerEl.textContent = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BARCODE FILTER
+// ══════════════════════════════════════════════════════════════
 function filterBarcode(rawVal, msgElementId) {
-  let cleanVal = rawVal.trim().replace(/^\*+|\*+$/g, ''); 
+  let cleanVal = rawVal.trim().replace(/^\*+|\*+$/g, '');
+  if (!cleanVal) return null;
+  // ป้องกันสแกนโดนรหัส SKU (12 หลัก ขึ้นต้น 567)
   if (cleanVal.length === 12 && cleanVal.startsWith('567')) {
-    inlineMsg(msgElementId, '⚠️ สแกนโดนรหัส SKU กรุณาสแกนบาร์โค้ด Serial No. (ด้านล่าง)', false);
-    return null; 
+    inlineMsg(msgElementId, '⚠️ สแกนโดนรหัส SKU กรุณาสแกน Serial No. (บาร์โค้ดด้านล่าง)', false);
+    return null;
   }
   return cleanVal;
 }
 
-async function logTransaction(date, type, name, code, sn, balance, note) {
-  txns.unshift({date, type, name, code, sn, balance, note, user: currentUser});
-  
-  let payload = {
-    sheetName: 'transactions',
-    action: 'insert',
-    data: [date, type, name, code, sn, balance, note, currentUser]
-  };
-  fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(console.error);
-}
-
-// ══════════════════════════════════════════════
-//  SYNC FUNCTIONS
-// ══════════════════════════════════════════════
-async function syncStockToSheets() {
-  try {
-    let rowsData = stock.map(item => [item.category, item.name, item.code, item.sn, item.status, item.prevSN||'', item.claimedAt||'', item.claimReason||'', item.replacedBySN||'']);
-    let payload = { sheetName: 'inventory', action: 'update_all', data: rowsData };
-    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-  } catch (err) { console.error(err); }
-}
-
-async function syncRepairToSheets() {
-  try {
-    let rowsData = repairJobs.map(j => [j.id||'', j.sn||'', j.name||'', j.code||'', j.category||'', j.customer||'', j.techName||'', j.symptom||'', j.repairStatus||'', j.repairNotes||'', j.createdAt||'', j.startedAt||'', j.finishedAt||'', j.replacedSN||'', j.claimReason||'', currentUser||'']);
-    let payload = { sheetName: 'repair_jobs', action: 'update_all', data: rowsData };
-    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-  } catch (err) { console.error(err); }
-}
-
-async function syncDOToSheets() {
-  try {
-    let rowsData = doHistory.map(d => [d.id||'', d.doNo||'', d.date||'', d.type||'', d.customer||'', d.salesperson||'', d.machine||'', d.headerText||'', JSON.stringify(d.items||[]), d.createdAt||'', d.createdBy||'']);
-    let payload = { sheetName: 'do_history', action: 'update_all', data: rowsData };
-    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-  } catch (err) { console.error(err); }
-}
-
-// ══════════════════════════════════════════════
-//  AUTH (RBAC)
-// ══════════════════════════════════════════════
-async function doLogin(){
+// ══════════════════════════════════════════════════════════════
+//  AUTH (RBAC + SHA-256 Hash)
+// ══════════════════════════════════════════════════════════════
+async function doLogin() {
   const u = document.getElementById('f-user').value.trim();
   const p = document.getElementById('f-pass').value;
-  if(!u||!p) return toast('กรุณากรอก username และ password','error');
-  
-  toast('กำลังตรวจสอบข้อมูลผู้ใช้งาน...', 'info');
+  if (!u || !p) return toast('กรุณากรอก username และ password', 'error');
+
+  const loginBtn = document.querySelector('#form-login .btn-primary');
+  loginBtn.disabled = true;
+  loginBtn.textContent = '⏳ กำลังตรวจสอบ...';
   document.getElementById('f-pass').disabled = true;
 
   try {
-    let res = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=all`);
-    let db = await res.json();
-    
+    // Hash password ฝั่ง client ก่อนส่ง
+    const pwHash = await sha256(p);
+
+    const res = await fetch(`${GOOGLE_SCRIPT_URL}?sheetName=all&key=${API_KEY}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const db = await res.json();
+
+    if (db.error) throw new Error(db.error);
+
     let validUser = false;
-    let userRole = 'staff';
-    
+    let userRole  = 'staff';
+
     if (db.users && db.users.length > 1) {
       const userRows = db.users.slice(1);
-      const matched = userRows.find(row => String(row[0]) === u && String(row[1]) === p);
-      if (matched) {
-        validUser = true;
-        userRole = matched[2] || 'staff';
-      }
+      // เปรียบเทียบ hash (ชีทต้องเก็บ hash แล้ว)
+      const matched = userRows.find(row => String(row[0]) === u && String(row[1]) === pwHash);
+      // Fallback: เปรียบเทียบ plaintext สำหรับระบบเก่า (ลบออกเมื่อ migrate hash แล้ว)
+      const matchedPlain = !matched ? userRows.find(row => String(row[0]) === u && String(row[1]) === p) : null;
+      const finalMatch = matched || matchedPlain;
+      if (finalMatch) { validUser = true; userRole = finalMatch[2] || 'staff'; }
     } else {
-      // Fallback
-      if(u === 'admin' && p === '1234') { validUser = true; userRole = 'admin'; }
+      // Fallback hardcoded (ลบออกใน production)
+      if (u === 'admin' && p === '1234') { validUser = true; userRole = 'admin'; }
     }
 
-    if(validUser) {
+    if (validUser) {
       currentUser = u;
-      currentRole = userRole; 
-      
-      document.getElementById('login-page').style.display='none';
-      document.getElementById('app').style.display='block';
+      currentRole = userRole;
+
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
       document.getElementById('user-name-display').textContent = u;
       document.getElementById('user-avatar').textContent = u.charAt(0).toUpperCase();
       document.getElementById('user-role-display').textContent = userRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
-      document.getElementById('f-pass').value='';
-      document.getElementById('f-pass').disabled = false;
-      
-      const isAdmin = userRole === 'admin';
-      document.getElementById('nav-overview').style.display = isAdmin ? 'flex' : 'none';
-      document.getElementById('nav-report').style.display = isAdmin ? 'flex' : 'none';
-      document.getElementById('nav-backup').style.display = isAdmin ? 'flex' : 'none';
-      document.getElementById('nav-import').style.display = isAdmin ? 'flex' : 'none';
-      
-      if(db.inventory && db.inventory.length > 1) stock = db.inventory.slice(1).map(row => ({ category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'', status: row[4]||'Available', prevSN: row[5]||null, claimedAt: row[6]||null, claimReason: row[7]||null, replacedBySN: row[8]||null }));
-      if(db.repair_jobs && db.repair_jobs.length > 1) repairJobs = db.repair_jobs.slice(1).map(row => ({ id: row[0], sn: row[1], name: row[2], code: row[3], category: row[4], customer: row[5], techName: row[6], symptom: row[7], repairStatus: row[8], repairNotes: row[9], createdAt: row[10], startedAt: row[11], finishedAt: row[12], replacedSN: row[13], claimReason: row[14] }));
-      if(db.do_history && db.do_history.length > 1) doHistory = db.do_history.slice(1).map(row => ({ id: row[0], doNo: row[1], date: row[2], type: row[3], customer: row[4], salesperson: row[5], machine: row[6], headerText: row[7], items: JSON.parse(row[8]||'[]'), createdAt: row[9], createdBy: row[10] }));
+      document.getElementById('f-pass').value = '';
 
+      // Role-based nav visibility
+      const isAdmin = userRole === 'admin';
+      ['nav-overview', 'nav-report', 'nav-backup', 'nav-import'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isAdmin ? 'flex' : 'none';
+      });
+
+      // Load data from Sheets
+      if (db.inventory && db.inventory.length > 1) {
+        stock = db.inventory.slice(1).map(row => ({
+          category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'',
+          status: row[4]||'Available', prevSN: row[5]||null, claimedAt: row[6]||null,
+          claimReason: row[7]||null, replacedBySN: row[8]||null
+        }));
+      }
+      if (db.repair_jobs && db.repair_jobs.length > 1) {
+        repairJobs = db.repair_jobs.slice(1).map(row => ({
+          id: row[0], sn: row[1], name: row[2], code: row[3], category: row[4],
+          customer: row[5], techName: row[6], symptom: row[7], repairStatus: row[8],
+          repairNotes: row[9], createdAt: row[10], startedAt: row[11], finishedAt: row[12],
+          replacedSN: row[13], claimReason: row[14], createdBy: row[15]||''
+        }));
+      }
+
+      // Load DO from 2 separate sheets
+      if (db.do_header && db.do_header.length > 1 && db.do_items) {
+        const allItems = db.do_items && db.do_items.length > 1 ? db.do_items.slice(1) : [];
+        doHistory = db.do_header.slice(1).map(row => {
+          const doId = row[0];
+          const relatedItems = allItems
+            .filter(ir => ir[0] === doId)
+            .map(ir => ({ name: ir[1], code: ir[2], category: ir[3], sn: ir[4] }));
+          return {
+            id: doId, doNo: row[1], date: row[2], type: row[3], customer: row[4],
+            salesperson: row[5], machine: row[6], headerText: row[7],
+            createdAt: row[8], createdBy: row[9], items: relatedItems
+          };
+        });
+      }
+
+      save();
       refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();
-      tab(isAdmin ? 'overview' : 'inbound'); 
+      tab(isAdmin ? 'overview' : 'inbound');
       checkAlerts(); updateDOBadge();
+      startSessionTimer();
       toast('เข้าสู่ระบบสำเร็จ', 'success');
     } else {
-      toast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','error');
-      document.getElementById('f-pass').disabled = false;
+      toast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
     }
   } catch (err) {
     console.error(err);
-    toast('การเชื่อมต่อกับ Google Sheets ล้มเหลว', 'error');
+    toast('การเชื่อมต่อกับ Google Sheets ล้มเหลว: ' + err.message, 'error');
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'เข้าสู่ระบบ';
     document.getElementById('f-pass').disabled = false;
   }
 }
 
-function doLogout(){
-  currentUser=null; currentRole=null;
-  document.getElementById('login-page').style.display='flex';
-  document.getElementById('app').style.display='none';
-  document.getElementById('f-user').value='';document.getElementById('f-pass').value='';
-  inSession=[];outSession=[];
+function doLogout() {
+  currentUser = null; currentRole = null;
+  stopSessionTimer();
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('f-user').value = '';
+  document.getElementById('f-pass').value = '';
+  inSession = []; outSession = [];
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  UI HELPERS
-// ══════════════════════════════════════════════
-function toast(msg,type='info'){
-  const el=document.createElement('div');el.className='toast '+type;
-  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
-  el.textContent=(icons[type]||'')+' '+msg;
-  const c=document.getElementById('toast-area');c.appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},3200);
-}
-function tab(name){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');
-  if(name==='overview')renderDashboard();
-  if(name==='stock'){
-    populateCatFilter();
-    ['cat','name','sn','status'].forEach(c=>{const th=document.getElementById('th-'+c);if(th)th.classList.remove('asc','desc');});
-    const colMap={category:'cat',name:'name',sn:'sn',status:'status'};
-    const thEl=document.getElementById('th-'+colMap[stockSortCol]);
-    if(thEl)thEl.classList.add(stockSortDir);
-    filterStock();
-  }
-  if(name==='report')renderReport();
-  if(name==='maintenance'){renderRepairList();updateRepairBadges()}
-  if(name==='do-history')renderDOHistory();
-  if(name==='backup')renderBackupStats();
-  if(name==='inbound')setTimeout(()=>document.getElementById('i-sn').focus(),80);
-  if(name==='outbound'){
-    setTimeout(()=>document.getElementById('o-sn').focus(),80);
-    renderOutboundHistory();
-  }
-}
-function repairSubTab(name){
-  document.getElementById('rsub-intake').style.display=name==='intake'?'block':'none';
-  document.getElementById('rsub-list').style.display=name==='list'?'block':'none';
-  document.getElementById('stab-intake').classList.toggle('active',name==='intake');
-  document.getElementById('stab-list').classList.toggle('active',name==='list');
-  if(name==='list')renderRepairList();
-  if(name==='intake')setTimeout(()=>document.getElementById('r-sn').focus(),80);
-}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-function inlineMsg(id,msg,ok){
-  const el=document.getElementById(id);
-  el.textContent=msg;el.style.color=ok?'var(--green)':'var(--red)';
-  setTimeout(()=>{if(el.textContent===msg)el.textContent=''},3000);
-}
-function today(){return new Date().toISOString().split('T')[0]}
-function nowISO(){return new Date().toISOString()}
-function nowStr(){
-  const n=new Date();
-  return`${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
-}
-function fmtISO(iso){
-  if(!iso)return'—';
-  const d=new Date(iso);
-  return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-function fmtDate(iso){if(!iso)return'—';const d=new Date(iso);return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`}
-function durationStr(start,end){
-  if(!start)return'—';
-  const ms=(end?new Date(end):new Date())-new Date(start);
-  const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
-  if(h>=24){const d=Math.floor(h/24);return`${d} วัน ${h%24} ชม.`}
-  return`${h} ชม. ${m} นาที`;
-}
-function statusBadge(s){
-  if(s==='Available')return'<span class="badge b-green">● พร้อมใช้</span>';
-  if(s==='Sold')return'<span class="badge b-gray">● โอน/ขาย</span>';
-  if(s==='Claimed')return'<span class="badge b-red">🔴 เคลม/ชำรุด</span>';
-  return'<span class="badge b-orange">● รับซ่อม</span>';
-}
-function repairStatusBadge(s){
-  if(s==='รอซ่อม')return'<span class="badge b-orange">🟡 รอซ่อม</span>';
-  if(s==='กำลังซ่อม')return'<span class="badge b-cyan">🔵 กำลังซ่อม</span>';
-  if(s==='เคลมเครื่อง')return'<span class="badge b-red">🔴 เคลมเครื่อง</span>';
-  return'<span class="badge b-green">🟢 ซ่อมเสร็จ</span>';
-}
-function typeBadge(t){
-  if(t.includes('รับเข้า'))return'<span class="badge b-green">📥 รับเข้า</span>';
-  if(t.includes('ซ่อม'))return'<span class="badge b-orange">🔧 ซ่อม</span>';
-  if(t.includes('ขาย'))return'<span class="badge b-blue">💰 ขาย</span>';
-  if(t.includes('คืน'))return'<span class="badge b-purple">♻️ คืน</span>';
-  return'<span class="badge b-gray">📤 '+t.replace('โอนสินค้า','โอน')+'</span>';
-}
-function doTypeBadge(t){
-  if(t==='ขายสินค้า')return'<span class="badge b-blue">💰 ขาย</span>';
-  return'<span class="badge b-gray">📤 โอน</span>';
+// ══════════════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  el.textContent = (icons[type] || '') + ' ' + msg;
+  const c = document.getElementById('toast-area');
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3200);
 }
 
-function checkAlerts(){
-  const active=repairJobs.filter(j=>j.repairStatus!=='ซ่อมเสร็จ').length;
-  const bar=document.getElementById('alert-bar');
-  const badge=document.getElementById('badge-repair');
-  if(active>0){
-    bar.style.display='flex';
-    document.getElementById('alert-text').textContent=`มีงานซ่อมค้างอยู่ ${active} รายการ`;
-    badge.style.display='inline-flex';badge.textContent=active;
-  }else{bar.style.display='none';badge.style.display='none'}
-}
-function updateRepairBadges(){
-  const wait=repairJobs.filter(j=>j.repairStatus==='รอซ่อม').length;
-  const wip=repairJobs.filter(j=>j.repairStatus==='กำลังซ่อม').length;
-  const t=today();
-  const doneToday=repairJobs.filter(j=>j.repairStatus==='ซ่อมเสร็จ'&&j.finishedAt&&j.finishedAt.startsWith(t)).length;
-  document.getElementById('badge-wait').textContent=wait+' รอ';
-  document.getElementById('badge-wip').textContent=wip+' กำลังซ่อม';
-  document.getElementById('badge-done-today').textContent=doneToday+' เสร็จวันนี้';
-}
-function updateDOBadge(){
-  const badge=document.getElementById('badge-do');
-  if(doHistory.length>0){badge.style.display='inline-flex';badge.textContent=doHistory.length;}
-  else badge.style.display='none';
-}
-function updateClock(){
-  const n=new Date();
-  document.getElementById('clock').textContent=n.toLocaleDateString('th-TH')+' '+n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+function tab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const nb = document.getElementById('nav-' + name);
+  if (nb) nb.classList.add('active');
+  if (name === 'overview') renderDashboard();
+  if (name === 'stock') { populateCatFilter(); filterStock(); }
+  if (name === 'report') renderReport();
+  if (name === 'maintenance') { renderRepairList(); updateRepairBadges(); }
+  if (name === 'do-history') renderDOHistory();
+  if (name === 'backup') renderBackupStats();
+  if (name === 'inbound') setTimeout(() => document.getElementById('i-sn').focus(), 80);
+  if (name === 'outbound') { setTimeout(() => document.getElementById('o-sn').focus(), 80); renderOutboundHistory(); }
 }
 
-// ══════════════════════════════════════════════
+function repairSubTab(name) {
+  document.getElementById('rsub-intake').style.display = name === 'intake' ? 'block' : 'none';
+  document.getElementById('rsub-list').style.display = name === 'list' ? 'block' : 'none';
+  document.getElementById('stab-intake').classList.toggle('active', name === 'intake');
+  document.getElementById('stab-list').classList.toggle('active', name === 'list');
+  if (name === 'list') renderRepairList();
+  if (name === 'intake') setTimeout(() => document.getElementById('r-sn').focus(), 80);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function inlineMsg(id, msg, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--green)' : 'var(--red)';
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3500);
+}
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function nowISO() { return new Date().toISOString(); }
+function nowStr() {
+  const n = new Date();
+  return `${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+function fmtISO(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+function durationStr(start, end) {
+  if (!start) return '—';
+  const ms = (end ? new Date(end) : new Date()) - new Date(start);
+  const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 24) { const d = Math.floor(h / 24); return `${d} วัน ${h % 24} ชม.`; }
+  return `${h} ชม. ${m} นาที`;
+}
+function statusBadge(s) {
+  if (s === 'Available') return '<span class="badge b-green">● พร้อมใช้</span>';
+  if (s === 'Sold') return '<span class="badge b-gray">● โอน/ขาย</span>';
+  if (s === 'Claimed') return '<span class="badge b-red">🔴 เคลม/ชำรุด</span>';
+  return '<span class="badge b-orange">● รับซ่อม</span>';
+}
+function repairStatusBadge(s) {
+  if (s === 'รอซ่อม') return '<span class="badge b-orange">🟡 รอซ่อม</span>';
+  if (s === 'กำลังซ่อม') return '<span class="badge b-cyan">🔵 กำลังซ่อม</span>';
+  if (s === 'เคลมเครื่อง') return '<span class="badge b-red">🔴 เคลมเครื่อง</span>';
+  return '<span class="badge b-green">🟢 ซ่อมเสร็จ</span>';
+}
+function typeBadge(t) {
+  if (t.includes('รับเข้า')) return '<span class="badge b-green">📥 รับเข้า</span>';
+  if (t.includes('ซ่อม')) return '<span class="badge b-orange">🔧 ซ่อม</span>';
+  if (t.includes('ขาย')) return '<span class="badge b-blue">💰 ขาย</span>';
+  if (t.includes('คืน')) return '<span class="badge b-purple">♻️ คืน</span>';
+  return '<span class="badge b-gray">📤 ' + t.replace('โอนสินค้า', 'โอน') + '</span>';
+}
+function doTypeBadge(t) {
+  if (t === 'ขายสินค้า') return '<span class="badge b-blue">💰 ขาย</span>';
+  return '<span class="badge b-gray">📤 โอน</span>';
+}
+
+function checkAlerts() {
+  const active = repairJobs.filter(j => j.repairStatus !== 'ซ่อมเสร็จ' && j.repairStatus !== 'เคลมเครื่อง').length;
+  const bar = document.getElementById('alert-bar');
+  const badge = document.getElementById('badge-repair');
+  if (active > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('alert-text').textContent = `มีงานซ่อมค้างอยู่ ${active} รายการ`;
+    badge.style.display = 'inline-flex'; badge.textContent = active;
+  } else { bar.style.display = 'none'; badge.style.display = 'none'; }
+}
+
+function updateRepairBadges() {
+  const wait = repairJobs.filter(j => j.repairStatus === 'รอซ่อม').length;
+  const wip  = repairJobs.filter(j => j.repairStatus === 'กำลังซ่อม').length;
+  const t = today();
+  const doneToday = repairJobs.filter(j => j.repairStatus === 'ซ่อมเสร็จ' && j.finishedAt && j.finishedAt.startsWith(t)).length;
+  document.getElementById('badge-wait').textContent = wait + ' รอ';
+  document.getElementById('badge-wip').textContent  = wip + ' กำลังซ่อม';
+  document.getElementById('badge-done-today').textContent = doneToday + ' เสร็จวันนี้';
+}
+
+function updateDOBadge() {
+  const badge = document.getElementById('badge-do');
+  if (doHistory.length > 0) { badge.style.display = 'inline-flex'; badge.textContent = doHistory.length; }
+  else badge.style.display = 'none';
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleDateString('th-TH') + ' ' + n.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ══════════════════════════════════════════════════════════════
 //  DASHBOARD
-// ══════════════════════════════════════════════
-function renderDashboard(){
-  const total=stock.length,avail=stock.filter(i=>i.status==='Available').length;
-  const sold=stock.filter(i=>i.status==='Sold').length,repair=stock.filter(i=>i.status==='Repair').length;
-  const pct=n=>total?Math.round(n/total*100)+'%':'0%';
-  document.getElementById('d-total').textContent=total;
-  document.getElementById('d-avail').textContent=avail;
-  document.getElementById('d-sold').textContent=sold;
-  document.getElementById('d-repair').textContent=repair;
-  document.getElementById('d-avail-pct').textContent=pct(avail)+' ของทั้งหมด';
-  document.getElementById('d-sold-pct').textContent=pct(sold)+' ของทั้งหมด';
-  document.getElementById('d-repair-pct').textContent=pct(repair)+' ของทั้งหมด';
-  const w=document.getElementById('status-chart-wrap');
-  const rows=[
-    {label:'พร้อมใช้งาน',count:avail,cls:'b-green',color:'var(--green)'},
-    {label:'โอน/ขายแล้ว',count:sold,cls:'b-gray',color:'var(--t3)'},
-    {label:'รับซ่อม',count:repair,cls:'b-orange',color:'var(--orange)'},
+// ══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const total = stock.length, avail = stock.filter(i => i.status === 'Available').length;
+  const sold = stock.filter(i => i.status === 'Sold').length, repair = stock.filter(i => i.status === 'Repair').length;
+  const pct = n => total ? Math.round(n / total * 100) + '%' : '0%';
+  document.getElementById('d-total').textContent = total;
+  document.getElementById('d-avail').textContent = avail;
+  document.getElementById('d-sold').textContent  = sold;
+  document.getElementById('d-repair').textContent = repair;
+  document.getElementById('d-avail-pct').textContent = pct(avail) + ' ของทั้งหมด';
+  document.getElementById('d-sold-pct').textContent  = pct(sold) + ' ของทั้งหมด';
+  document.getElementById('d-repair-pct').textContent = pct(repair) + ' ของทั้งหมด';
+
+  const w = document.getElementById('status-chart-wrap');
+  const rows = [
+    { label: 'พร้อมใช้งาน', count: avail, cls: 'b-green', color: 'var(--green)' },
+    { label: 'โอน/ขายแล้ว', count: sold,  cls: 'b-gray',  color: 'var(--t3)' },
+    { label: 'รับซ่อม',     count: repair, cls: 'b-orange', color: 'var(--orange)' },
   ];
-  w.innerHTML=rows.map(r=>`
+  w.innerHTML = rows.map(r => `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <span class="badge ${r.cls}" style="width:90px;justify-content:center">${r.label}</span>
       <div style="flex:1;background:var(--s3);border-radius:3px;height:6px;overflow:hidden">
-        <div style="width:${total?Math.round(r.count/total*100):0}%;height:100%;background:${r.color};border-radius:3px;transition:width .5s"></div>
+        <div style="width:${total ? Math.round(r.count / total * 100) : 0}%;height:100%;background:${r.color};border-radius:3px;transition:width .5s"></div>
       </div>
       <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:${r.color};width:36px;text-align:right">${r.count}</span>
     </div>`).join('');
-  const catMap={};
-  stock.forEach(i=>{if(!catMap[i.category])catMap[i.category]={total:0,avail:0};catMap[i.category].total++;if(i.status==='Available')catMap[i.category].avail++});
-  const sorted=Object.entries(catMap).sort((a,b)=>b[1].total-a[1].total);
-  document.getElementById('cat-count-badge').textContent=sorted.length+' หมวดหมู่';
-  document.getElementById('cat-tbody').innerHTML=sorted.map(([cat,v])=>`
+
+  const catMap = {};
+  stock.forEach(i => {
+    if (!catMap[i.category]) catMap[i.category] = { total: 0, avail: 0 };
+    catMap[i.category].total++;
+    if (i.status === 'Available') catMap[i.category].avail++;
+  });
+  const sorted = Object.entries(catMap).sort((a, b) => b[1].total - a[1].total);
+  document.getElementById('cat-count-badge').textContent = sorted.length + ' หมวดหมู่';
+  document.getElementById('cat-tbody').innerHTML = sorted.map(([cat, v]) => `
     <tr>
       <td style="padding:8px 14px;border-top:1px solid rgba(255,255,255,.03);color:var(--blue)">${cat}</td>
       <td style="padding:8px 14px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--t1)">${v.total}</td>
       <td style="padding:8px 14px;text-align:right;font-family:var(--mono);color:var(--green)">${v.avail}</td>
     </tr>`).join('');
-  const tbody=document.getElementById('recent-tx');
-  const recent=txns.slice(0,8);
-  if(!recent.length){tbody.innerHTML='<tr><td colspan="5" class="tbl-empty">ยังไม่มีประวัติ</td></tr>';}
-  else tbody.innerHTML=recent.map(t=>`
-    <tr>
+
+  const tbody = document.getElementById('recent-tx');
+  const recent = txns.slice(0, 8);
+  tbody.innerHTML = !recent.length ? '<tr><td colspan="5" class="tbl-empty">ยังไม่มีประวัติ</td></tr>' :
+    recent.map(t => `<tr>
       <td class="mono" style="font-size:11px">${t.date}</td>
       <td>${typeBadge(t.type)}</td>
       <td style="color:var(--t1);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td>
       <td class="sn-cell">${t.sn}</td>
       <td style="font-size:11px;color:var(--t3)">${t.note}</td>
     </tr>`).join('');
-    
-  const doList=document.getElementById('dashboard-do-list');
-  const recent5=doHistory.slice(0,5);
-  if(!recent5.length){doList.innerHTML='<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px">ยังไม่มีใบ DO</div>';}
-  else doList.innerHTML=recent5.map(d=>`
-    <div class="do-card" onclick="openDOView('${d.id}')">
-      <div>
-        <div class="do-card-num">${d.doNo}</div>
-        <div class="do-card-meta">${fmtDate(d.createdAt)}</div>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div>
-        <div style="font-size:11px;color:var(--t3)">${d.type||'โอนสินค้า'}</div>
-      </div>
-      <div class="do-summary-chip">${d.items.length} ชิ้น</div>
-    </div>`).join('');
-  checkAlerts();updateDOBadge();
+
+  const doList = document.getElementById('dashboard-do-list');
+  const recent5 = doHistory.slice(0, 5);
+  doList.innerHTML = !recent5.length ? '<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px">ยังไม่มีใบ DO</div>' :
+    recent5.map(d => `
+      <div class="do-card" onclick="openDOView('${d.id}')">
+        <div><div class="do-card-num">${d.doNo}</div><div class="do-card-meta">${fmtDate(d.createdAt)}</div></div>
+        <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div><div style="font-size:11px;color:var(--t3)">${d.type||'โอนสินค้า'}</div></div>
+        <div class="do-summary-chip">${(d.items||[]).length} ชิ้น</div>
+      </div>`).join('');
+  checkAlerts(); updateDOBadge();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  STOCK
-// ══════════════════════════════════════════════
-function populateCatFilter(){
-  const sel=document.getElementById('s-cat');
-  const cats=[...new Set(stock.map(i=>i.category))].sort();
-  sel.innerHTML='<option value="">— ทุกหมวดหมู่ —</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+// ══════════════════════════════════════════════════════════════
+function populateCatFilter() {
+  const sel = document.getElementById('s-cat');
+  const cats = [...new Set(stock.map(i => i.category))].sort();
+  sel.innerHTML = '<option value="">— ทุกหมวดหมู่ —</option>' + cats.map(c => `<option>${c}</option>`).join('');
 }
 
 let stockSortCol = 'sn';
-let stockSortDir = 'desc'; // 🌟 เปลี่ยนค่าเริ่มต้นเป็นเรียงจากมากไปน้อย
+let stockSortDir = 'desc';
 
-function sortStock(col){
-  if(stockSortCol===col){
-    stockSortDir = stockSortDir==='asc'?'desc':'asc';
+function sortStock(col) {
+  if (stockSortCol === col) {
+    stockSortDir = stockSortDir === 'asc' ? 'desc' : 'asc';
   } else {
-    stockSortCol=col; stockSortDir='asc';
+    stockSortCol = col; stockSortDir = 'asc';
   }
-  ['cat','name','sn','status'].forEach(c=>{
-    const th=document.getElementById('th-'+c);
-    if(!th)return;
-    th.classList.remove('asc','desc');
+  ['cat', 'name', 'sn', 'status'].forEach(c => {
+    const th = document.getElementById('th-' + c);
+    if (th) th.classList.remove('asc', 'desc');
   });
-  const colMap={category:'cat',name:'name',sn:'sn',status:'status'};
-  const thEl=document.getElementById('th-'+colMap[col]);
-  if(thEl)thEl.classList.add(stockSortDir);
+  const colMap = { category: 'cat', name: 'name', sn: 'sn', status: 'status' };
+  const thEl = document.getElementById('th-' + colMap[col]);
+  if (thEl) thEl.classList.add(stockSortDir);
   filterStock();
 }
 
-function snCellHTML(item){
-  if(item.prevSN && item.prevSN!==item.sn){
-    return `<td class="sn-cell">
-      <div class="sn-arrow-wrap">
-        <span class="sn-old">${item.prevSN}</span>
-        <span class="sn-arrow">↓ สลับ SN</span>
-        <span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span>
-      </div>
-    </td>`;
+function snCellHTML(item) {
+  if (item.prevSN && item.prevSN !== item.sn) {
+    return `<td class="sn-cell"><div class="sn-arrow-wrap"><span class="sn-old">${item.prevSN}</span><span class="sn-arrow">↓ สลับ SN</span><span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span></div></td>`;
   }
   return `<td class="sn-cell">${item.sn}</td>`;
 }
 
-function filterStock(){
-  const q=(document.getElementById('s-q').value||'').toLowerCase();
-  const st=document.getElementById('s-status').value;
-  const cat=document.getElementById('s-cat').value;
-  let data=stock.filter(i=>
-    (!st||i.status===st)&&
-    (!cat||i.category===cat)&&
-    (!q||i.name.toLowerCase().includes(q)||i.sn.toLowerCase().includes(q)||(i.prevSN&&i.prevSN.toLowerCase().includes(q))||i.category.toLowerCase().includes(q)||i.code.toLowerCase().includes(q))
+function filterStock() {
+  const q  = (document.getElementById('s-q').value || '').toLowerCase();
+  const st = document.getElementById('s-status').value;
+  const cat = document.getElementById('s-cat').value;
+  let data = stock.filter(i =>
+    (!st || i.status === st) &&
+    (!cat || i.category === cat) &&
+    (!q || i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || (i.prevSN && i.prevSN.toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q))
   );
-  data.sort((a,b)=>{
-    let va=String(a[stockSortCol]||'').toLowerCase();
-    let vb=String(b[stockSortCol]||'').toLowerCase();
-    if(stockSortCol==='sn'){
-      const numA=va.replace(/\D/g,''), numB=vb.replace(/\D/g,'');
-      if(numA&&numB){const diff=Number(numA)-Number(numB);if(diff!==0)return stockSortDir==='asc'?diff:-diff;}
+  data.sort((a, b) => {
+    let va = String(a[stockSortCol] || '').toLowerCase();
+    let vb = String(b[stockSortCol] || '').toLowerCase();
+    if (stockSortCol === 'sn') {
+      const numA = va.replace(/\D/g, ''), numB = vb.replace(/\D/g, '');
+      if (numA && numB) { const diff = Number(numA) - Number(numB); if (diff !== 0) return stockSortDir === 'asc' ? diff : -diff; }
     }
-    return stockSortDir==='asc'?va.localeCompare(vb,'th'):vb.localeCompare(va,'th');
+    return stockSortDir === 'asc' ? va.localeCompare(vb, 'th') : vb.localeCompare(va, 'th');
   });
-  const tbody=document.getElementById('stock-tbody');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>';document.getElementById('rec-count').textContent=0;return}
-  tbody.innerHTML=data.map(item=>{
-    const idx=stock.findIndex(p=>p.sn===item.sn);
-    return`<tr>
+  const tbody = document.getElementById('stock-tbody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
+  tbody.innerHTML = data.map(item => {
+    const idx = stock.findIndex(p => p.sn === item.sn);
+    return `<tr>
       <td style="color:var(--blue);font-weight:500">${item.category}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
@@ -1477,268 +1614,257 @@ function filterStock(){
       <td>${statusBadge(item.status)}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
-          ${item.status==='Sold'?`<button onclick="returnToStock(${idx})" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>`:''}
-          ${item.status==='Repair'?`<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-sm" title="ดูรายการซ่อม">🔧</button>`:''}
+          ${item.status === 'Sold' ? `<button onclick="returnToStock(${idx})" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>` : ''}
+          ${item.status === 'Repair' ? `<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-sm" title="ดูรายการซ่อม">🔧</button>` : ''}
           <button onclick="openEdit(${idx})" class="btn btn-ghost btn-sm">✏️</button>
-          ${currentRole==='admin'?`<button onclick="delItem(${idx})" class="btn btn-red btn-sm">🗑</button>`:''}
+          ${currentRole === 'admin' ? `<button onclick="delItem(${idx})" class="btn btn-red btn-sm">🗑</button>` : ''}
         </div>
       </td>
     </tr>`;
   }).join('');
-  document.getElementById('rec-count').textContent=data.length;
+  document.getElementById('rec-count').textContent = data.length;
 }
 
-function returnToStock(idx){
-  const old=stock[idx].status;
-  stock[idx].status='Available';
+function returnToStock(idx) {
+  const old = stock[idx].status;
+  stock[idx].status = 'Available';
   logTransaction(today(), '♻️ คืนสต็อก', stock[idx].name, stock[idx].code, stock[idx].sn, getBalance(stock[idx].code), `คืนจากสถานะ: ${old}`);
-  save();filterStock();checkAlerts();toast(`คืนสต็อก SN: ${stock[idx].sn} สำเร็จ`,'success');
+  save(); filterStock(); checkAlerts();
+  toast(`คืนสต็อก SN: ${stock[idx].sn} สำเร็จ`, 'success');
   syncStockToSheets();
 }
 
-function openEdit(idx){
-  const i=stock[idx];
-  document.getElementById('edit-idx').value=idx;
-  document.getElementById('edit-cat').value=i.category;
-  document.getElementById('edit-name').value=i.name;
-  document.getElementById('edit-code').value=i.code;
-  document.getElementById('edit-sn').value=i.sn;
-  document.getElementById('edit-status').value=i.status;
+function openEdit(idx) {
+  const i = stock[idx];
+  document.getElementById('edit-idx').value = idx;
+  document.getElementById('edit-cat').value = i.category;
+  document.getElementById('edit-name').value = i.name;
+  document.getElementById('edit-code').value = i.code;
+  document.getElementById('edit-sn').value = i.sn;
+  document.getElementById('edit-status').value = i.status;
   document.getElementById('edit-modal').classList.add('open');
 }
 
-function saveEdit(){
-  const idx=parseInt(document.getElementById('edit-idx').value);
-  const oldSN=stock[idx].sn;
-  const newSN=document.getElementById('edit-sn').value;
-  const prevSN = (newSN!==oldSN) ? oldSN : (stock[idx].prevSN||null);
-  stock[idx]={
-    category:document.getElementById('edit-cat').value,
-    name:document.getElementById('edit-name').value,
-    code:document.getElementById('edit-code').value,
-    sn:newSN,
-    status:document.getElementById('edit-status').value,
-    ...(prevSN?{prevSN}:{})
+function saveEdit() {
+  const idx = parseInt(document.getElementById('edit-idx').value);
+  const oldSN = stock[idx].sn;
+  const newSN = document.getElementById('edit-sn').value;
+  const prevSN = (newSN !== oldSN) ? oldSN : (stock[idx].prevSN || null);
+  stock[idx] = {
+    category: document.getElementById('edit-cat').value,
+    name: document.getElementById('edit-name').value,
+    code: document.getElementById('edit-code').value,
+    sn: newSN,
+    status: document.getElementById('edit-status').value,
+    ...(prevSN ? { prevSN } : {})
   };
-  if(newSN!==oldSN){
+  if (newSN !== oldSN) {
     logTransaction(today(), '✏️ เปลี่ยน SN', stock[idx].name, stock[idx].code, newSN, getBalance(stock[idx].code), `เปลี่ยน SN: ${oldSN} → ${newSN}`);
   }
-  save();closeModal('edit-modal');filterStock();checkAlerts();toast('แก้ไขสำเร็จ','success');
+  save(); closeModal('edit-modal'); filterStock(); checkAlerts();
+  toast('แก้ไขสำเร็จ', 'success');
   syncStockToSheets();
 }
 
-function delItem(idx){
-  const sn=stock[idx].sn;
-  if(!confirm(`ลบสินค้า SN: ${sn}?\n(ไม่สามารถกู้คืนได้)`))return;
-  stock.splice(idx,1);save();filterStock();checkAlerts();toast(`ลบ SN: ${sn} สำเร็จ`,'success');
+function delItem(idx) {
+  const sn = stock[idx].sn;
+  if (!confirm(`ลบสินค้า SN: ${sn}?\n(ไม่สามารถกู้คืนได้)`)) return;
+  stock.splice(idx, 1);
+  save(); filterStock(); checkAlerts();
+  toast(`ลบ SN: ${sn} สำเร็จ`, 'success');
   syncStockToSheets();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  MASTER DATA
-// ══════════════════════════════════════════════
-function saveMasterProduct(){
-  const cat=document.getElementById('m-cat').value.trim();
-  const name=document.getElementById('m-name').value.trim();
-  const code=document.getElementById('m-code').value.trim();
-  if(!name)return toast('กรุณาใส่ชื่อสินค้า','error');
-  masterProds.push({category:cat,name,code});save();renderMasterProducts();updateDataLists();
-  document.getElementById('m-cat').value='';document.getElementById('m-name').value='';document.getElementById('m-code').value='';
-  toast('บันทึกต้นแบบสำเร็จ','success');
+// ══════════════════════════════════════════════════════════════
+function saveMasterProduct() {
+  const cat  = document.getElementById('m-cat').value.trim();
+  const name = document.getElementById('m-name').value.trim();
+  const code = document.getElementById('m-code').value.trim();
+  if (!name) return toast('กรุณาใส่ชื่อสินค้า', 'error');
+  masterProds.push({ category: cat, name, code });
+  save(); renderMasterProducts(); updateDataLists();
+  document.getElementById('m-cat').value = ''; document.getElementById('m-name').value = ''; document.getElementById('m-code').value = '';
+  toast('บันทึกต้นแบบสำเร็จ', 'success');
 }
-function renderMasterProducts(){
-  const el=document.getElementById('master-product-list');
-  el.innerHTML=masterProds.length?masterProds.map((p,i)=>`
+
+function renderMasterProducts() {
+  const el = document.getElementById('master-product-list');
+  el.innerHTML = masterProds.length ? masterProds.map((p, i) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
-      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category||'—'}</span><b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code}</span></span>
+      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category || '—'}</span><b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code}</span></span>
       <button onclick="masterProds.splice(${i},1);save();renderMasterProducts();updateDataLists()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
-    </div>`).join(''):'<div style="text-align:center;color:var(--t3);font-size:12px;padding:12px">ยังไม่มีต้นแบบ</div>';
+    </div>`).join('') : '<div style="text-align:center;color:var(--t3);font-size:12px;padding:12px">ยังไม่มีต้นแบบ</div>';
 }
-function saveCustomer(){
-  const name=document.getElementById('m-cust').value.trim();
-  if(!name)return toast('กรุณาใส่ชื่อลูกค้า','error');
-  if(customers.includes(name))return toast('มีชื่อนี้แล้ว','error');
-  customers.push(name);save();refreshCustomerSelects();renderCustomerList();
-  document.getElementById('m-cust').value='';toast('เพิ่มลูกค้าสำเร็จ','success');
+
+function saveCustomer() {
+  const name = document.getElementById('m-cust').value.trim();
+  if (!name) return toast('กรุณาใส่ชื่อลูกค้า', 'error');
+  if (customers.includes(name)) return toast('มีชื่อนี้แล้ว', 'error');
+  customers.push(name); save(); refreshCustomerSelects(); renderCustomerList();
+  document.getElementById('m-cust').value = '';
+  toast('เพิ่มลูกค้าสำเร็จ', 'success');
 }
-function renderCustomerList(){
-  const el=document.getElementById('customer-list');
-  el.innerHTML=customers.map((c,i)=>`
+
+function renderCustomerList() {
+  const el = document.getElementById('customer-list');
+  el.innerHTML = customers.map((c, i) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
       <span style="color:var(--t1)">👤 ${c}</span>
       <button onclick="customers.splice(${i},1);save();refreshCustomerSelects();renderCustomerList()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
     </div>`).join('');
 }
-function refreshCustomerSelects(){
-  ['o-cust','r-cust'].forEach(id=>{
-    const s=document.getElementById(id);if(!s)return;
-    const prev=s.value;
-    s.innerHTML=customers.map(c=>`<option value="${c}">${c}</option>`).join('');
-    if(customers.includes(prev))s.value=prev;
+
+function refreshCustomerSelects() {
+  ['o-cust', 'r-cust'].forEach(id => {
+    const s = document.getElementById(id); if (!s) return;
+    const prev = s.value;
+    s.innerHTML = customers.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (customers.includes(prev)) s.value = prev;
   });
 }
-function updateDataLists(){
-  const cats=[...new Set([...stock.map(i=>i.category),...masterProds.map(p=>p.category)])].filter(Boolean);
-  const names=[...new Set([...stock.map(i=>i.name),...masterProds.map(p=>p.name)])];
-  const codes=[...new Set([...stock.map(i=>i.code),...masterProds.map(p=>p.code)])].filter(c=>c&&c!=='-');
-  const catDl=document.getElementById('cat-dl');const prodDl=document.getElementById('product-dl');const codeDl=document.getElementById('code-dl');
-  if(catDl)catDl.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
-  if(prodDl)prodDl.innerHTML=names.map(n=>`<option value="${n}">`).join('');
-  if(codeDl)codeDl.innerHTML=codes.map(c=>`<option value="${c}">`).join('');
+
+function updateDataLists() {
+  const cats  = [...new Set([...stock.map(i => i.category), ...masterProds.map(p => p.category)])].filter(Boolean);
+  const names = [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])];
+  const codes = [...new Set([...stock.map(i => i.code), ...masterProds.map(p => p.code)])].filter(c => c && c !== '-');
+  const catDl  = document.getElementById('cat-dl');
+  const prodDl = document.getElementById('product-dl');
+  const codeDl = document.getElementById('code-dl');
+  if (catDl)  catDl.innerHTML  = cats.map(c => `<option value="${c}">`).join('');
+  if (prodDl) prodDl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+  if (codeDl) codeDl.innerHTML = codes.map(c => `<option value="${c}">`).join('');
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  INBOUND & OUTBOUND
-// ══════════════════════════════════════════════
-function getBalance(code){return stock.filter(i=>i.code===code&&i.status==='Available').length}
-function updateBalance(){
-  const code=document.getElementById('i-code').value;
-  document.getElementById('i-balance').textContent=getBalance(code);
-  const mp=masterProds.find(p=>p.code===code);
-  if(mp){if(!document.getElementById('i-name').value)document.getElementById('i-name').value=mp.name;if(!document.getElementById('i-cat').value)document.getElementById('i-cat').value=mp.category;}
+// ══════════════════════════════════════════════════════════════
+function getBalance(code) { return stock.filter(i => i.code === code && i.status === 'Available').length; }
+function updateBalance() {
+  const code = document.getElementById('i-code').value;
+  document.getElementById('i-balance').textContent = getBalance(code);
+  const mp = masterProds.find(p => p.code === code);
+  if (mp) {
+    if (!document.getElementById('i-name').value) document.getElementById('i-name').value = mp.name;
+    if (!document.getElementById('i-cat').value)  document.getElementById('i-cat').value  = mp.category;
+  }
 }
 
-function doInbound(){
-  const dt=document.getElementById('i-date').value||today();
-  const cat=document.getElementById('i-cat').value.trim()||'ไม่ระบุ';
-  const nm=document.getElementById('i-name').value.trim();
-  const cd=document.getElementById('i-code').value.trim()||'-';
-  
-  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
-  const sn = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
-  if (!sn) {
-    document.getElementById('i-sn').value=''; 
-    document.getElementById('i-sn').focus(); 
-    return;
-  }
-  
-  if(!nm)return inlineMsg('i-msg','❌ กรุณาระบุชื่อสินค้า',false);
-  if(stock.find(i=>i.sn===sn)){inlineMsg('i-msg',`❌ SN: ${sn} มีในระบบแล้ว!`,false);document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();return}
-  
-  const item={category:cat,name:nm,code:cd,sn,status:'Available', createdBy: currentUser};
-  stock.unshift(item);inSession.push(item);
-  
-  // 🌟 บันทึก Audit Log
+function doInbound() {
+  const dt  = document.getElementById('i-date').value || today();
+  const cat = document.getElementById('i-cat').value.trim() || 'ไม่ระบุ';
+  const nm  = document.getElementById('i-name').value.trim();
+  const cd  = document.getElementById('i-code').value.trim() || '-';
+  const sn  = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
+  if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
+  if (!nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
+  if (stock.find(i => i.sn === sn)) { inlineMsg('i-msg', `❌ SN: ${sn} มีในระบบแล้ว!`, false); document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
+
+  const item = { category: cat, name: nm, code: cd, sn, status: 'Available', createdBy: currentUser };
+  stock.unshift(item); inSession.push(item);
   logTransaction(dt, '📥 รับเข้า', nm, cd, sn, getBalance(cd), 'รับเข้าคลัง HQ');
-  
   save(); syncStockToSheets();
-  
-  document.getElementById('i-sn').value='';document.getElementById('i-sn').focus();
-  updateBalance();inlineMsg('i-msg',`✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(cd)} ชิ้น)`,true);
-  renderInSession();checkAlerts();
+  document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus();
+  updateBalance();
+  inlineMsg('i-msg', `✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(cd)} ชิ้น)`, true);
+  renderInSession(); checkAlerts();
 }
 
-function renderInSession(){
-  document.getElementById('i-session-count').textContent=inSession.length;
-  document.getElementById('i-session').innerHTML=inSession.slice().reverse().map(i=>`
-    <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-green" style="font-size:9px">📥 IN</span></div>`).join('');
+function renderInSession() {
+  document.getElementById('i-session-count').textContent = inSession.length;
+  document.getElementById('i-session').innerHTML = inSession.slice().reverse().map(i =>
+    `<div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-green" style="font-size:9px">📥 IN</span></div>`
+  ).join('');
 }
 
-function doOutbound(){
-  const dt=document.getElementById('o-date').value||today();
-  const typ=document.getElementById('o-type').value;
-  const cust=document.getElementById('o-cust').value;
-  
-  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
-  const sn = filterBarcode(document.getElementById('o-sn').value, 'o-msg');
-  if (!sn) {
-    document.getElementById('o-sn').value=''; 
-    document.getElementById('o-sn').focus(); 
-    return;
-  }
+function doOutbound() {
+  const dt   = document.getElementById('o-date').value || today();
+  const typ  = document.getElementById('o-type').value;
+  const cust = document.getElementById('o-cust').value;
+  const sn   = filterBarcode(document.getElementById('o-sn').value, 'o-msg');
+  if (!sn) { document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
 
-  const idx=stock.findIndex(i=>i.sn===sn&&i.status==='Available');
-  if(idx===-1){inlineMsg('o-msg',`❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`,false);document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();return}
-  
-  stock[idx].status='Sold';
-  const item=stock[idx];
+  const idx = stock.findIndex(i => i.sn === sn && i.status === 'Available');
+  if (idx === -1) { inlineMsg('o-msg', `❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`, false); document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
+
+  stock[idx].status = 'Sold';
+  const item = stock[idx];
   outSession.push(item);
-  
-  // 🌟 บันทึก Audit Log
   logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.code), `→ ${cust}`);
-  
   save(); syncStockToSheets();
-  
-  document.getElementById('o-sn').value='';document.getElementById('o-sn').focus();
-  inlineMsg('o-msg',`✅ ตัด: ${sn} → ${cust} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`,true);
+  document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus();
+  inlineMsg('o-msg', `✅ ตัด: ${sn} → ${cust} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`, true);
   renderOutSession(); renderOutboundHistory(); checkAlerts();
 }
 
-function renderOutSession(){
-  document.getElementById('o-session-count').textContent=outSession.length;
-  document.getElementById('o-session').innerHTML=outSession.slice().reverse().map(i=>`
-    <div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`).join('');
+function renderOutSession() {
+  document.getElementById('o-session-count').textContent = outSession.length;
+  document.getElementById('o-session').innerHTML = outSession.slice().reverse().map(i =>
+    `<div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`
+  ).join('');
 }
 
 function renderOutboundHistory() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
   let soldItems = stock.filter(i => i.status === 'Sold');
-  if (q) {
-    soldItems = soldItems.filter(i => 
-      i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || i.code.toLowerCase().includes(q)
-    );
-  }
-  const totalEl = document.getElementById('o-hist-total');
-  if(totalEl) totalEl.textContent = soldItems.length;
+  if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
+  document.getElementById('o-hist-total').textContent = soldItems.length;
 
   const groups = {};
   soldItems.forEach(item => {
     const key = item.name + '|' + item.code;
-    if (!groups[key]) {
-      groups[key] = { name: item.name, code: item.code, category: item.category, count: 0, sns: [] };
-    }
-    groups[key].count++;groups[key].sns.push(item.sn);
+    if (!groups[key]) groups[key] = { name: item.name, code: item.code, category: item.category, count: 0, sns: [] };
+    groups[key].count++; groups[key].sns.push(item.sn);
   });
 
   const tbody = document.getElementById('o-hist-tbody');
-  if(!tbody) return;
+  if (!tbody) return;
   const groupVals = Object.values(groups);
-  if (!groupVals.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>';return;
-  }
+  if (!groupVals.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>'; return; }
   tbody.innerHTML = groupVals.map(g => `
     <tr>
-      <td style="color:var(--t1); font-weight: 500;">${g.name}</td>
-      <td>
-        <div class="code-cell">${g.code}</div>
-        <div style="font-size: 10px; color: var(--t3); margin-top: 2px;">${g.category}</div>
-      </td>
-      <td style="text-align:center; font-family:var(--mono); color:var(--orange); font-weight:700; font-size:14px;">${g.count}</td>
-      <td style="font-size: 11px; color: var(--t2); font-family: var(--mono); max-width: 300px; line-height: 1.6; white-space: normal;">
-        ${g.sns.map(sn => `<span style="display:inline-block; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; margin:2px 2px; border:1px solid var(--b1);">${sn}</span>`).join('')}
+      <td style="color:var(--t1);font-weight:500">${g.name}</td>
+      <td><div class="code-cell">${g.code}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${g.category}</div></td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700;font-size:14px">${g.count}</td>
+      <td style="font-size:11px;color:var(--t2);font-family:var(--mono);max-width:300px;line-height:1.6;white-space:normal">
+        ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('')}
       </td>
     </tr>`).join('');
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  DO — CREATE / SAVE / PRINT
-// ══════════════════════════════════════════════
-function genDONo(){
-  const n=new Date(),yy=String(n.getFullYear()).slice(-2),mm=String(n.getMonth()+1).padStart(2,'0'),dd=String(n.getDate()).padStart(2,'0');
-  return`DO-${yy}${mm}${dd}-${String(doCounter).padStart(4,'0')}`;
+// ══════════════════════════════════════════════════════════════
+function genDONo() {
+  const n = new Date(), yy = String(n.getFullYear()).slice(-2), mm = String(n.getMonth()+1).padStart(2,'0'), dd = String(n.getDate()).padStart(2,'0');
+  return `DO-${yy}${mm}${dd}-${String(doCounter).padStart(4,'0')}`;
 }
-function openDOModal(){
-  doModalMode='create';
-  document.getElementById('do-modal-badge').style.display='none';
-  document.getElementById('do-modal-hint').textContent='กรอกข้อมูลและกด "บันทึก DO" เพื่อบันทึกประวัติ';
-  document.getElementById('do-save-btn').style.display='inline-flex';
-  document.getElementById('do-header-text').contentEditable='true';
-  document.getElementById('do-no').readOnly=false;document.getElementById('do-cust').readOnly=false;
-  document.getElementById('do-salesperson').readOnly=false;document.getElementById('do-machine').readOnly=false;
-  document.getElementById('do-no').value=genDONo();
-  document.getElementById('do-date').textContent=nowStr();
-  document.getElementById('do-cust').value=document.getElementById('o-cust').value||'';
 
-  const items=document.getElementById('do-items');
-  if(!outSession.length){
-    items.innerHTML='<tr><td colspan="3" style="text-align:center;padding:12px;color:#888">ไม่มีรายการในเซสชั่นนี้</td></tr>';
-  }else{
-    const grp={};
-    outSession.forEach(i=>{
-      if(!grp[i.name])grp[i.name]={qty:0,sns:[],code:i.code,category:i.category};
-      grp[i.name].qty++;grp[i.name].sns.push(i.sn);
+function openDOModal() {
+  doModalMode = 'create';
+  document.getElementById('do-modal-badge').style.display = 'none';
+  document.getElementById('do-modal-hint').textContent = 'กรอกข้อมูลและกด "บันทึก DO" เพื่อบันทึกประวัติ';
+  document.getElementById('do-save-btn').style.display = 'inline-flex';
+  document.getElementById('do-header-text').contentEditable = 'true';
+  document.getElementById('do-no').readOnly = false;
+  document.getElementById('do-cust').readOnly = false;
+  document.getElementById('do-salesperson').readOnly = false;
+  document.getElementById('do-machine').readOnly = false;
+  document.getElementById('do-no').value = genDONo();
+  document.getElementById('do-date').textContent = nowStr();
+  document.getElementById('do-cust').value = document.getElementById('o-cust').value || '';
+
+  const items = document.getElementById('do-items');
+  if (!outSession.length) {
+    items.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:12px;color:#888">ไม่มีรายการในเซสชั่นนี้</td></tr>';
+  } else {
+    const grp = {};
+    outSession.forEach(i => {
+      if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
+      grp[i.name].qty++; grp[i.name].sns.push(i.sn);
     });
-    items.innerHTML=Object.entries(grp).map(([name,v],i)=>`
+    items.innerHTML = Object.entries(grp).map(([name, v], i) => `
       <tr style="border-bottom:1px solid #eee">
         <td style="padding:6px 8px">${i+1}. ${name}<div style="font-size:10px;color:#888">${v.code} / ${v.category}</div></td>
         <td style="text-align:center;padding:6px 8px">${v.qty}</td>
@@ -1747,93 +1873,102 @@ function openDOModal(){
   }
   document.getElementById('do-modal').classList.add('open');
 }
-function saveDO(){
-  const doNo=document.getElementById('do-no').value.trim();
-  const custVal=document.getElementById('do-cust').value.trim();
-  const salesVal=document.getElementById('do-salesperson').value.trim();
-  const machineVal=document.getElementById('do-machine').value.trim();
-  const headerText=document.getElementById('do-header-text').innerText;
-  const typ=document.getElementById('o-type')?.value||'โอนสินค้า';
 
-  if(!doNo)return toast('กรุณาระบุเลขที่ DO','error');
-  if(!custVal)return toast('กรุณาระบุชื่อลูกค้า','error');
-  if(!outSession.length)return toast('ไม่มีรายการสินค้าในเซสชั่น','error');
-  if(doHistory.find(d=>d.doNo===doNo))return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`,'error');
+function saveDO() {
+  const doNo       = document.getElementById('do-no').value.trim();
+  const custVal    = document.getElementById('do-cust').value.trim();
+  const salesVal   = document.getElementById('do-salesperson').value.trim();
+  const machineVal = document.getElementById('do-machine').value.trim();
+  const headerText = document.getElementById('do-header-text').innerText;
+  const typ        = document.getElementById('o-type')?.value || 'โอนสินค้า';
 
-  const record={
-    id:'DO-'+Date.now(),doNo,date:today(),type:typ,customer:custVal,salesperson:salesVal,machine:machineVal,headerText,
-    items:outSession.map(i=>({name:i.name,code:i.code,category:i.category,sn:i.sn})),
-    createdAt:nowISO(),createdBy:currentUser
+  if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
+  if (!custVal) return toast('กรุณาระบุชื่อลูกค้า', 'error');
+  if (!outSession.length) return toast('ไม่มีรายการสินค้าในเซสชั่น', 'error');
+  if (doHistory.find(d => d.doNo === doNo)) return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
+
+  const record = {
+    id: 'DO-' + Date.now(), doNo, date: today(), type: typ, customer: custVal,
+    salesperson: salesVal, machine: machineVal, headerText,
+    items: outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: i.sn })),
+    createdAt: nowISO(), createdBy: currentUser
   };
-  doHistory.unshift(record);doCounter++;save();updateDOBadge();
-  document.getElementById('do-save-btn').textContent='✅ บันทึกแล้ว';
-  document.getElementById('do-save-btn').style.background='#2dd4a0';
-  toast(`บันทึกใบ DO: ${doNo} สำเร็จ`,'success');
-  
+  doHistory.unshift(record); doCounter++;
+  save(); updateDOBadge();
+
+  const saveBtn = document.getElementById('do-save-btn');
+  saveBtn.textContent = '✅ บันทึกแล้ว';
+  saveBtn.style.background = '#2dd4a0';
+  toast(`บันทึกใบ DO: ${doNo} สำเร็จ`, 'success');
+
   syncDOToSheets();
 
-  setTimeout(()=>{
-    document.getElementById('do-save-btn').textContent='💾 บันทึก DO';
-    document.getElementById('do-save-btn').style.background='#22d3ee';
-  },3000);
-  outSession=[];renderOutSession();
+  setTimeout(() => { saveBtn.textContent = '💾 บันทึก DO'; saveBtn.style.background = '#22d3ee'; }, 3000);
+  outSession = []; renderOutSession();
 }
-function closeDOModal(){document.getElementById('do-modal').classList.remove('open')}
-function printDO(){window.print()}
 
-function renderDOHistory(){
-  const q=(document.getElementById('doh-q').value||'').toLowerCase();
-  const ft=document.getElementById('doh-type').value;
-  let data=[...doHistory];
-  if(ft)data=data.filter(d=>d.type===ft);
-  if(q)data=data.filter(d=>d.doNo.toLowerCase().includes(q)||d.customer.toLowerCase().includes(q)||d.items.some(i=>i.name.toLowerCase().includes(q)||i.sn.toLowerCase().includes(q)));
+function closeDOModal() { document.getElementById('do-modal').classList.remove('open'); }
+function printDO() { window.print(); }
 
-  const totalItems=doHistory.reduce((s,d)=>s+d.items.length,0);
-  const uniqueCusts=new Set(doHistory.map(d=>d.customer)).size;
-  document.getElementById('doh-total').textContent=doHistory.length;
-  document.getElementById('doh-items').textContent=totalItems;
-  document.getElementById('doh-custs').textContent=uniqueCusts;
-  document.getElementById('doh-count').textContent=data.length;
-  
-  const tbody=document.getElementById('do-history-tbody');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>';return}
-  tbody.innerHTML=data.map(d=>`
+function renderDOHistory() {
+  const q  = (document.getElementById('doh-q').value || '').toLowerCase();
+  const ft = document.getElementById('doh-type').value;
+  let data = [...doHistory];
+  if (ft) data = data.filter(d => d.type === ft);
+  if (q) data = data.filter(d =>
+    d.doNo.toLowerCase().includes(q) ||
+    d.customer.toLowerCase().includes(q) ||
+    (d.items||[]).some(i => i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q))
+  );
+
+  const totalItems = doHistory.reduce((s, d) => s + (d.items||[]).length, 0);
+  const uniqueCusts = new Set(doHistory.map(d => d.customer)).size;
+  document.getElementById('doh-total').textContent = doHistory.length;
+  document.getElementById('doh-items').textContent = totalItems;
+  document.getElementById('doh-custs').textContent = uniqueCusts;
+  document.getElementById('doh-count').textContent = data.length;
+
+  const tbody = document.getElementById('do-history-tbody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>'; return; }
+  tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="openDOView('${d.id}')">
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(d.createdAt)}</td>
       <td>${doTypeBadge(d.type)}</td>
       <td style="color:var(--t1);font-weight:500">${d.customer}</td>
-      <td style="text-align:center"><span class="do-summary-chip">${d.items.length} ชิ้น</span></td>
+      <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
       <td style="font-size:11px;color:var(--t3)">${d.createdBy||'—'}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();openDOView('${d.id}')" class="btn btn-ghost btn-sm">👁</button>
           <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-primary btn-sm">🖨️</button>
-          ${currentRole==='admin'?`<button onclick="event.stopPropagation();deleteDO('${d.id}')" class="btn btn-red btn-sm">🗑</button>`:''}
+          ${currentRole === 'admin' ? `<button onclick="event.stopPropagation();deleteDO('${d.id}')" class="btn btn-red btn-sm">🗑</button>` : ''}
         </div>
       </td>
     </tr>`).join('');
 }
-function openDOView(id){
-  const d=doHistory.find(x=>x.id===id);if(!d)return;
-  currentViewDOId=id;
-  document.getElementById('dov-no').textContent='เลขที่: '+d.doNo;
-  document.getElementById('dov-no2').textContent=d.doNo;
-  document.getElementById('dov-date').textContent=fmtDate(d.createdAt)+' '+new Date(d.createdAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('dov-type').innerHTML=doTypeBadge(d.type);
-  document.getElementById('dov-cust').textContent=d.customer;
-  document.getElementById('dov-user').textContent=d.createdBy||'—';
-  document.getElementById('dov-sales').textContent=d.salesperson||'—';
 
-  const grp={};d.items.forEach(i=>{grp[i.name]=(grp[i.name]||0)+1});
-  document.getElementById('dov-summary').innerHTML=Object.entries(grp).map(([name,qty])=>`
+function openDOView(id) {
+  const d = doHistory.find(x => x.id === id); if (!d) return;
+  currentViewDOId = id;
+  document.getElementById('dov-no').textContent = 'เลขที่: ' + d.doNo;
+  document.getElementById('dov-no2').textContent = d.doNo;
+  document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('dov-type').innerHTML = doTypeBadge(d.type);
+  document.getElementById('dov-cust').textContent = d.customer;
+  document.getElementById('dov-user').textContent = d.createdBy || '—';
+  document.getElementById('dov-sales').textContent = d.salesperson || '—';
+
+  const grp = {};
+  (d.items||[]).forEach(i => { grp[i.name] = (grp[i.name] || 0) + 1; });
+  document.getElementById('dov-summary').innerHTML = Object.entries(grp).map(([name, qty]) => `
     <div style="display:flex;justify-content:space-between;font-size:12px">
       <span style="color:var(--t2)">${name}</span>
       <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${qty} ชิ้น</span>
     </div>`).join('');
 
-  document.getElementById('dov-item-count').textContent=d.items.length;
-  document.getElementById('dov-items-tbody').innerHTML=d.items.map((item,i)=>`
+  document.getElementById('dov-item-count').textContent = (d.items||[]).length;
+  document.getElementById('dov-items-tbody').innerHTML = (d.items||[]).map((item, i) => `
     <tr>
       <td style="text-align:center;font-size:11px;color:var(--t3)">${i+1}</td>
       <td style="color:var(--t1)">${item.name}</td>
@@ -1843,25 +1978,27 @@ function openDOView(id){
     </tr>`).join('');
   document.getElementById('do-view-modal').classList.add('open');
 }
-function reopenDOForPrint(id){
-  const d=doHistory.find(x=>x.id===id);if(!d)return;
-  closeModal('do-view-modal');doModalMode='view';
-  document.getElementById('do-modal-badge').style.display='inline';
-  document.getElementById('do-save-btn').style.display='none';
-  document.getElementById('do-header-text').innerText=d.headerText||'';
-  document.getElementById('do-header-text').contentEditable='false';
-  document.getElementById('do-no').value=d.doNo;document.getElementById('do-no').readOnly=true;
-  document.getElementById('do-cust').value=d.customer;document.getElementById('do-cust').readOnly=true;
-  document.getElementById('do-salesperson').value=d.salesperson||'';document.getElementById('do-salesperson').readOnly=true;
-  document.getElementById('do-machine').value=d.machine||'';document.getElementById('do-machine').readOnly=true;
-  document.getElementById('do-date').textContent=fmtDate(d.createdAt);
 
-  const grp={};
-  d.items.forEach(i=>{
-    if(!grp[i.name])grp[i.name]={qty:0,sns:[],code:i.code,category:i.category};
-    grp[i.name].qty++;grp[i.name].sns.push(i.sn);
+function reopenDOForPrint(id) {
+  const d = doHistory.find(x => x.id === id); if (!d) return;
+  closeModal('do-view-modal'); doModalMode = 'view';
+  document.getElementById('do-modal-badge').style.display = 'inline';
+  document.getElementById('do-save-btn').style.display = 'none';
+  document.getElementById('do-header-text').innerText = d.headerText || '';
+  document.getElementById('do-header-text').contentEditable = 'false';
+  ['do-no','do-cust','do-salesperson','do-machine'].forEach(id => { document.getElementById(id).readOnly = true; });
+  document.getElementById('do-no').value = d.doNo;
+  document.getElementById('do-cust').value = d.customer;
+  document.getElementById('do-salesperson').value = d.salesperson || '';
+  document.getElementById('do-machine').value = d.machine || '';
+  document.getElementById('do-date').textContent = fmtDate(d.createdAt);
+
+  const grp = {};
+  (d.items||[]).forEach(i => {
+    if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
+    grp[i.name].qty++; grp[i.name].sns.push(i.sn);
   });
-  document.getElementById('do-items').innerHTML=Object.entries(grp).map(([name,v],i)=>`
+  document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => `
     <tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px">${i+1}. ${name}<div style="font-size:10px;color:#888">${v.code} / ${v.category}</div></td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
@@ -1869,311 +2006,363 @@ function reopenDOForPrint(id){
     </tr>`).join('');
   document.getElementById('do-modal').classList.add('open');
 }
-function deleteDO(id){
-  const d=doHistory.find(x=>x.id===id);if(!d)return;
-  if(!confirm(`ลบใบ DO เลขที่: ${d.doNo}?`))return;
-  doHistory=doHistory.filter(x=>x.id!==id);save();renderDOHistory();updateDOBadge();toast(`ลบใบ DO สำเร็จ`,'info');
+
+function deleteDO(id) {
+  const d = doHistory.find(x => x.id === id); if (!d) return;
+  if (!confirm(`ลบใบ DO เลขที่: ${d.doNo}?`)) return;
+  doHistory = doHistory.filter(x => x.id !== id);
+  save(); renderDOHistory(); updateDOBadge();
+  toast('ลบใบ DO สำเร็จ', 'info');
   syncDOToSheets();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  REPAIR
-// ══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',()=>{
-  const snField=document.getElementById('r-sn');
-  if(snField){
-    snField.addEventListener('input',()=>{
-      const sn=snField.value.trim().replace(/^\*+|\*+$/g, '');
-      const res=document.getElementById('r-lookup-result');
-      if(!sn){res.style.display='none';return}
-      const item=stock.find(i=>i.sn===sn);
-      if(item){
-        res.style.display='block';document.getElementById('r-lookup-name').textContent=item.name;
-        document.getElementById('r-lookup-code').textContent=item.code+' / '+item.category;
-        document.getElementById('r-lookup-status').innerHTML=statusBadge(item.status);
-      }else{
-        res.style.display='block';document.getElementById('r-lookup-name').textContent='ไม่พบ SN นี้ในระบบ';
-        document.getElementById('r-lookup-code').textContent='';
-        document.getElementById('r-lookup-status').innerHTML='<span class="badge b-red">❌ ไม่พบ</span>';
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const snField = document.getElementById('r-sn');
+  if (snField) {
+    snField.addEventListener('input', () => {
+      const sn  = snField.value.trim().replace(/^\*+|\*+$/g, '');
+      const res = document.getElementById('r-lookup-result');
+      if (!sn) { res.style.display = 'none'; return; }
+      const item = stock.find(i => i.sn === sn);
+      res.style.display = 'block';
+      if (item) {
+        document.getElementById('r-lookup-name').textContent = item.name;
+        document.getElementById('r-lookup-code').textContent = item.code + ' / ' + item.category;
+        document.getElementById('r-lookup-status').innerHTML = statusBadge(item.status);
+      } else {
+        document.getElementById('r-lookup-name').textContent = 'ไม่พบ SN นี้ในระบบ';
+        document.getElementById('r-lookup-code').textContent = '';
+        document.getElementById('r-lookup-status').innerHTML = '<span class="badge b-red">❌ ไม่พบ</span>';
       }
     });
   }
 });
-function doRepair(){
-  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
-  const sn = filterBarcode(document.getElementById('r-sn').value, 'r-msg');
-  if (!sn) { document.getElementById('r-sn').value=''; return; }
 
-  const sym=document.getElementById('r-sym').value.trim();
-  const cust=document.getElementById('r-cust').value;
-  const tech=document.getElementById('r-tech').value.trim();
-  if(!sn||!sym)return inlineMsg('r-msg','❌ กรุณากรอกข้อมูลให้ครบ',false);
-  const idx=stock.findIndex(i=>i.sn===sn);
-  if(idx===-1)return inlineMsg('r-msg',`❌ ไม่พบ SN ในระบบ`,false);
-  
-  const item=stock[idx];stock[idx].status='Repair';
-  const job={id:'RJ-'+Date.now(),sn,name:item.name,code:item.code,category:item.category,customer:cust,techName:tech,symptom:sym,repairStatus:'รอซ่อม',repairNotes:'',createdAt:nowISO(),startedAt:null,finishedAt:null,createdBy:currentUser};
+function doRepair() {
+  const sn  = filterBarcode(document.getElementById('r-sn').value, 'r-msg');
+  if (!sn) { document.getElementById('r-sn').value = ''; return; }
+  const sym  = document.getElementById('r-sym').value.trim();
+  const cust = document.getElementById('r-cust').value;
+  const tech = document.getElementById('r-tech').value.trim();
+  if (!sym) return inlineMsg('r-msg', '❌ กรุณากรอกอาการเสีย', false);
+
+  const idx = stock.findIndex(i => i.sn === sn);
+  if (idx === -1) return inlineMsg('r-msg', '❌ ไม่พบ SN ในระบบ', false);
+
+  const item = stock[idx]; stock[idx].status = 'Repair';
+  const job = {
+    id: 'RJ-' + Date.now(), sn, name: item.name, code: item.code, category: item.category,
+    customer: cust, techName: tech, symptom: sym, repairStatus: 'รอซ่อม',
+    repairNotes: '', createdAt: nowISO(), startedAt: null, finishedAt: null, createdBy: currentUser
+  };
   repairJobs.unshift(job);
-  
-  // 🌟 บันทึก Audit Log
   logTransaction(today(), '🔧 รับซ่อม', item.name, item.code, sn, getBalance(item.code), `[${cust}] ${sym}`);
-  
-  save();updateRepairBadges();checkAlerts();
-  syncRepairToSheets();
-  syncStockToSheets();
+  save(); updateRepairBadges(); checkAlerts();
+  syncRepairToSheets(); syncStockToSheets();
 
-  document.getElementById('r-sn').value='';document.getElementById('r-sym').value='';document.getElementById('r-tech').value='';
-  document.getElementById('r-lookup-result').style.display='none';document.getElementById('r-sn').focus();
-  toast(`รับซ่อม SN: ${sn} สำเร็จ`,'warning');
+  document.getElementById('r-sn').value = ''; document.getElementById('r-sym').value = ''; document.getElementById('r-tech').value = '';
+  document.getElementById('r-lookup-result').style.display = 'none';
+  document.getElementById('r-sn').focus();
+  toast(`รับซ่อม SN: ${sn} สำเร็จ`, 'warning');
 }
 
-function renderRepairList(){
+function renderRepairList() {
   updateRepairBadges();
-  const q=(document.getElementById('rep-q')?.value||'').toLowerCase();
-  const sf=document.getElementById('rep-status-filter')?.value||'';
-  let data=[...repairJobs];
-  if(sf)data=data.filter(j=>j.repairStatus===sf);
-  if(q)data=data.filter(j=>j.sn.toLowerCase().includes(q)||j.name.toLowerCase().includes(q)||j.symptom.toLowerCase().includes(q));
-  data.sort((a,b)=>{const ord={'รอซ่อม':0,'กำลังซ่อม':1,'ซ่อมเสร็จ':2,'เคลมเครื่อง':3};return(ord[a.repairStatus]||0)-(ord[b.repairStatus]||0)});
-  const el=document.getElementById('repair-list-grid');
-  if(!data.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--t3)">ไม่มีรายการซ่อม</div>';return}
-  el.innerHTML=data.map(job=>{
-    const sc={'รอซ่อม':'wait','กำลังซ่อม':'wip','ซ่อมเสร็จ':'done','เคลมเครื่อง':'done'}[job.repairStatus]||'wait';
-    return`<div class="repair-card status-${sc}" onclick="openRepairDetail('${job.id}')">
+  const q  = (document.getElementById('rep-q')?.value || '').toLowerCase();
+  const sf = document.getElementById('rep-status-filter')?.value || '';
+  let data = [...repairJobs];
+  if (sf) data = data.filter(j => j.repairStatus === sf);
+  if (q) data = data.filter(j => j.sn.toLowerCase().includes(q) || j.name.toLowerCase().includes(q) || j.symptom.toLowerCase().includes(q));
+  data.sort((a, b) => {
+    const ord = { 'รอซ่อม': 0, 'กำลังซ่อม': 1, 'ซ่อมเสร็จ': 2, 'เคลมเครื่อง': 3 };
+    return (ord[a.repairStatus] || 0) - (ord[b.repairStatus] || 0);
+  });
+
+  const el = document.getElementById('repair-list-grid');
+  if (!data.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3)">ไม่มีรายการซ่อม</div>'; return; }
+  el.innerHTML = data.map(job => {
+    const sc = { 'รอซ่อม': 'wait', 'กำลังซ่อม': 'wip', 'ซ่อมเสร็จ': 'done', 'เคลมเครื่อง': 'done' }[job.repairStatus] || 'wait';
+    return `<div class="repair-card status-${sc}" onclick="openRepairDetail('${job.id}')">
       <div class="repair-info">
         <div class="repair-sn">${job.sn}</div><div class="repair-name">${job.name}</div>
         <div class="repair-symptom">🚨 ${job.symptom}</div>
-        <div class="repair-meta">
-          ${repairStatusBadge(job.repairStatus)}
-          <span style="font-size:10px;color:var(--t3)">👤 ${job.customer}</span>
-        </div>
+        <div class="repair-meta">${repairStatusBadge(job.repairStatus)}<span style="font-size:10px;color:var(--t3)">👤 ${job.customer}</span></div>
       </div>
     </div>`;
   }).join('');
 }
-function openRepairDetailBySN(sn){
-  const job=repairJobs.find(j=>j.sn===sn&&j.repairStatus!=='ซ่อมเสร็จ')||repairJobs.find(j=>j.sn===sn);
-  if(job)openRepairDetail(job.id);else toast('ไม่พบรายการซ่อมสำหรับ SN นี้','warning');
+
+function openRepairDetailBySN(sn) {
+  const job = repairJobs.find(j => j.sn === sn && j.repairStatus !== 'ซ่อมเสร็จ') || repairJobs.find(j => j.sn === sn);
+  if (job) openRepairDetail(job.id);
+  else toast('ไม่พบรายการซ่อมสำหรับ SN นี้', 'warning');
 }
-function openRepairDetail(id){
-  const job=repairJobs.find(j=>j.id===id);if(!job)return;
-  currentRepairJobId=id;
-  document.getElementById('rd-sn').textContent='SN: '+job.sn;
-  document.getElementById('rd-name').textContent=job.name;
-  document.getElementById('rd-cat').textContent=job.category;document.getElementById('rd-code').textContent=job.code;
-  document.getElementById('rd-sn2').textContent=job.sn;document.getElementById('rd-cust').textContent=job.customer;
-  document.getElementById('rd-tech').textContent=job.techName||'—';
-  document.getElementById('rd-created').textContent=fmtISO(job.createdAt);
-  document.getElementById('rd-started').textContent=fmtISO(job.startedAt);
-  document.getElementById('rd-finished').textContent=fmtISO(job.finishedAt);
-  document.getElementById('rd-duration').textContent=job.repairStatus==='ซ่อมเสร็จ'?durationStr(job.startedAt,job.finishedAt):job.repairStatus==='กำลังซ่อม'?'กำลังซ่อม':'—';
-  document.getElementById('rd-symptom-display').textContent=job.symptom;
-  document.getElementById('rd-notes').value=job.repairNotes||'';
-  
-  const steps=['รอซ่อม','กำลังซ่อม','ซ่อมเสร็จ','เคลมเครื่อง'];
-  const cur=steps.indexOf(job.repairStatus);const isClaimed=job.repairStatus==='เคลมเครื่อง';
-  [0,1,2,3].forEach(i=>{
-    const el=document.getElementById('rdflow-'+i);if(!el)return;
-    if(isClaimed){
-      if(i<2)el.className='status-step done';else if(i===3)el.className='status-step active';else el.className='status-step';
-    }else{el.className='status-step'+(i<cur?' done':i===cur?' active':'')}
-    if(i>0){
-      const line=document.getElementById('rdline-'+i);
-      if(line)line.className='status-line'+(isClaimed?(i<2?' filled':' '):(i<=cur?' filled':''));
+
+function openRepairDetail(id) {
+  const job = repairJobs.find(j => j.id === id); if (!job) return;
+  currentRepairJobId = id;
+  document.getElementById('rd-sn').textContent = 'SN: ' + job.sn;
+  document.getElementById('rd-name').textContent = job.name;
+  document.getElementById('rd-cat').textContent  = job.category;
+  document.getElementById('rd-code').textContent = job.code;
+  document.getElementById('rd-sn2').textContent  = job.sn;
+  document.getElementById('rd-cust').textContent = job.customer;
+  document.getElementById('rd-tech').textContent = job.techName || '—';
+  document.getElementById('rd-created').textContent  = fmtISO(job.createdAt);
+  document.getElementById('rd-started').textContent  = fmtISO(job.startedAt);
+  document.getElementById('rd-finished').textContent = fmtISO(job.finishedAt);
+  document.getElementById('rd-duration').textContent =
+    job.repairStatus === 'ซ่อมเสร็จ' ? durationStr(job.startedAt, job.finishedAt) :
+    job.repairStatus === 'กำลังซ่อม' ? 'กำลังซ่อม (ยังไม่เสร็จ)' : '—';
+  document.getElementById('rd-symptom-display').textContent = job.symptom;
+  document.getElementById('rd-notes').value = job.repairNotes || '';
+
+  const steps = ['รอซ่อม', 'กำลังซ่อม', 'ซ่อมเสร็จ', 'เคลมเครื่อง'];
+  const cur = steps.indexOf(job.repairStatus);
+  const isClaimed = job.repairStatus === 'เคลมเครื่อง';
+  [0, 1, 2, 3].forEach(i => {
+    const el = document.getElementById('rdflow-' + i); if (!el) return;
+    if (isClaimed) {
+      el.className = 'status-step' + (i < 2 ? ' done' : i === 3 ? ' active' : '');
+    } else {
+      el.className = 'status-step' + (i < cur ? ' done' : i === cur ? ' active' : '');
+    }
+    if (i > 0) {
+      const line = document.getElementById('rdline-' + i);
+      if (line) line.className = 'status-line' + (isClaimed ? (i < 2 ? ' filled' : '') : (i <= cur ? ' filled' : ''));
     }
   });
-  
-  const acts=document.getElementById('rd-actions');let btns='';
-  if(job.repairStatus=='รอซ่อม'){
-    btns+=`<button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึกหมายเหตุ</button>
-           <button onclick="advanceRepairStatus('กำลังซ่อม')" class="btn btn-cyan">🔵 เริ่มซ่อม</button>`;
-  }else if(job.repairStatus=='กำลังซ่อม'){
-    btns+=`<button onclick="openSwapSNModal('${job.id}')" class="btn btn-orange btn-sm">🔄 เคลม/สลับ SN</button>
-           <button onclick="advanceRepairStatus('ซ่อมเสร็จ')" class="btn btn-success">✅ ซ่อมเสร็จแล้ว</button>`;
-  }else{
-    btns+=`<span class="badge b-green">เสร็จสิ้น</span>`;
+
+  const acts = document.getElementById('rd-actions'); let btns = '';
+  if (job.repairStatus === 'รอซ่อม') {
+    btns += `<button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึกหมายเหตุ</button>
+             <button onclick="advanceRepairStatus('กำลังซ่อม')" class="btn btn-cyan">🔵 เริ่มซ่อม</button>`;
+  } else if (job.repairStatus === 'กำลังซ่อม') {
+    btns += `<button onclick="openSwapSNModal('${job.id}')" class="btn btn-orange btn-sm">🔄 เคลม/สลับ SN</button>
+             <button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึก</button>
+             <button onclick="advanceRepairStatus('ซ่อมเสร็จ')" class="btn btn-success">✅ ซ่อมเสร็จแล้ว</button>`;
+  } else {
+    btns += `<span class="badge b-green">เสร็จสิ้น</span>`;
   }
-  acts.innerHTML=btns;
+  acts.innerHTML = btns;
   document.getElementById('repair-detail-modal').classList.add('open');
 }
-function saveRepairNotes(){
-  const job=repairJobs.find(j=>j.id===currentRepairJobId);if(!job)return;
-  job.repairNotes=document.getElementById('rd-notes').value;save();toast('บันทึกสำเร็จ','success');
-  syncRepairToSheets();
-}
-function advanceRepairStatus(newStatus){
-  const job=repairJobs.find(j=>j.id===currentRepairJobId);if(!job)return;
-  job.repairNotes=document.getElementById('rd-notes').value;
-  job.repairStatus=newStatus;
-  if(newStatus==='กำลังซ่อม'&&!job.startedAt)job.startedAt=nowISO();
-  if(newStatus==='ซ่อมเสร็จ'){
-    job.finishedAt=nowISO();
-    const idx=stock.findIndex(i=>i.sn===job.sn);
-    if(idx!==-1)stock[idx].status='Available';
-    logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), `ซ่อมเสร็จเรียบร้อย`);
-    syncStockToSheets();
-  }
-  save();closeModal('repair-detail-modal');renderRepairList();checkAlerts();
+
+function saveRepairNotes() {
+  const job = repairJobs.find(j => j.id === currentRepairJobId); if (!job) return;
+  job.repairNotes = document.getElementById('rd-notes').value;
+  save(); toast('บันทึกสำเร็จ', 'success');
   syncRepairToSheets();
 }
 
-// ══ SWAP / CLAIM SN ══
+function advanceRepairStatus(newStatus) {
+  const job = repairJobs.find(j => j.id === currentRepairJobId); if (!job) return;
+  job.repairNotes = document.getElementById('rd-notes').value;
+  job.repairStatus = newStatus;
+  if (newStatus === 'กำลังซ่อม' && !job.startedAt) job.startedAt = nowISO();
+  if (newStatus === 'ซ่อมเสร็จ') {
+    job.finishedAt = nowISO();
+    const idx = stock.findIndex(i => i.sn === job.sn);
+    if (idx !== -1) stock[idx].status = 'Available';
+    logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), 'ซ่อมเสร็จเรียบร้อย');
+    syncStockToSheets();
+  }
+  save(); closeModal('repair-detail-modal'); renderRepairList(); checkAlerts();
+  syncRepairToSheets();
+}
+
+// ── SWAP / CLAIM SN ──
 function openSwapSNModal(jobId) {
-  const job = repairJobs.find(j => j.id === jobId);if (!job) return;
+  const job = repairJobs.find(j => j.id === jobId); if (!job) return;
   currentSwapJobId = jobId;
   document.getElementById('swap-old-sn-label').textContent = 'SN เดิม: ' + job.sn;
   document.getElementById('swap-old-info').innerHTML = `<b>${job.sn}</b> (${job.name})`;
   document.getElementById('swap-new-sn').value = '';
   document.getElementById('swap-new-lookup').style.display = 'none';
   document.getElementById('swap-reason').value = '';
+  document.getElementById('swap-msg').textContent = '';
   document.getElementById('swap-sn-modal').classList.add('open');
 }
+
 function onSwapNewSNInput() {
-  const newSN = document.getElementById('swap-new-sn').value.trim().replace(/^\*+|\*+$/g, '');
+  const newSN  = document.getElementById('swap-new-sn').value.trim().replace(/^\*+|\*+$/g, '');
   const lookup = document.getElementById('swap-new-lookup');
-  const info = document.getElementById('swap-new-info');
+  const info   = document.getElementById('swap-new-info');
   if (!newSN) { lookup.style.display = 'none'; return; }
   const item = stock.find(i => i.sn === newSN);
   lookup.style.display = 'block';
-  if (item && item.status==='Available') {
+  if (item && item.status === 'Available') {
     info.innerHTML = `<span class="text-green">✅ พร้อมสลับ: ${item.name}</span>`;
   } else {
     info.innerHTML = `<span class="text-red">❌ ไม่พบหรือไม่พร้อมใช้งาน</span>`;
   }
 }
+
 function confirmSwapSN() {
-  const job = repairJobs.find(j => j.id === currentSwapJobId);
-  const rawSN = document.getElementById('swap-new-sn').value;
-  
-  // 🌟 เรียกใช้ตัวกรองบาร์โค้ด
-  const newSN = filterBarcode(rawSN, 'swap-msg');
-  if (!newSN) { document.getElementById('swap-new-sn').value=''; return; }
-  
+  const job    = repairJobs.find(j => j.id === currentSwapJobId);
+  const newSN  = filterBarcode(document.getElementById('swap-new-sn').value, 'swap-msg');
+  if (!newSN) { document.getElementById('swap-new-sn').value = ''; return; }
   const reason = document.getElementById('swap-reason').value.trim();
-  if(!newSN||!reason) return toast('กรุณากรอกข้อมูลให้ครบ','error');
-  
-  const newItem = stock.find(i => i.sn === newSN && i.status==='Available');
-  if(!newItem) return toast('เครื่องใหม่ไม่พร้อมใช้งาน','error');
+  if (!reason) return toast('กรุณากรอกเหตุผลการเคลม', 'error');
 
-  const oldSN = job.sn;
+  const newItem = stock.find(i => i.sn === newSN && i.status === 'Available');
+  if (!newItem) return toast('เครื่องใหม่ไม่พร้อมใช้งานหรือไม่พบ SN', 'error');
+
+  const oldSN  = job.sn;
   const oldIdx = stock.findIndex(i => i.sn === oldSN);
-  if(oldIdx!==-1) stock[oldIdx].status = 'Claimed';
-  
+  if (oldIdx !== -1) { stock[oldIdx].status = 'Claimed'; stock[oldIdx].claimedAt = nowISO(); stock[oldIdx].claimReason = reason; stock[oldIdx].replacedBySN = newSN; }
+
   const newIdx = stock.findIndex(i => i.sn === newSN);
-  if(newIdx!==-1) { stock[newIdx].status = 'Sold'; stock[newIdx].prevSN = oldSN; }
+  if (newIdx !== -1) { stock[newIdx].status = 'Sold'; stock[newIdx].prevSN = oldSN; }
 
-  job.repairStatus = 'เคลมเครื่อง';job.finishedAt = nowISO();job.replacedSN = newSN;
+  job.repairStatus = 'เคลมเครื่อง'; job.finishedAt = nowISO(); job.replacedSN = newSN; job.claimReason = reason;
   logTransaction(today(), '🔄 เคลมสลับ SN', job.name, job.code, oldSN, getBalance(job.code), `เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`);
-  
-  save();closeModal('swap-sn-modal');closeModal('repair-detail-modal');renderRepairList();checkAlerts();
-  toast('สลับเปลี่ยนเครื่องเคลมสำเร็จ','success');
 
-  syncStockToSheets();
-  syncRepairToSheets();
+  save(); closeModal('swap-sn-modal'); closeModal('repair-detail-modal');
+  renderRepairList(); checkAlerts();
+  toast('สลับเปลี่ยนเครื่องเคลมสำเร็จ', 'success');
+  syncStockToSheets(); syncRepairToSheets();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  IMPORT / EXPORT / BACKUP / REPORT
-// ══════════════════════════════════════════════
-function toCSV(rows,headers){return[headers.join(','),...rows.map(r=>headers.map(h=>`"${r[h]||''}"`).join(','))].join('\n')}
-function dlCSV(csv,fname){const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;a.click()}
-function exportStockCSV(){dlCSV(toCSV(stock,['category','name','code','sn','status']),'stock_export.csv')}
-function exportReportCSV(){dlCSV(toCSV(txns,['date','type','name','code','sn','balance','note','user']),'report_export.csv')}
-function exportRepairCSV(){
-  const rows=repairJobs.map(j=>({id:j.id,sn:j.sn,name:j.name,code:j.code,category:j.category,customer:j.customer,repairStatus:j.repairStatus,createdAt:fmtISO(j.createdAt)}));
-  dlCSV(toCSV(rows,['id','sn','name','code','category','customer','repairStatus','createdAt']),'repair_export.csv');
+// ══════════════════════════════════════════════════════════════
+function toCSV(rows, headers) {
+  return [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
 }
-function exportDOHistoryCSV(){
-  const rows=[];
-  doHistory.forEach(d=>{
-    d.items.forEach(item=>{
-      rows.push({doNo:d.doNo,date:fmtDate(d.createdAt),type:d.type,customer:d.customer,salesperson:d.salesperson||'',createdBy:d.createdBy||'',itemName:item.name,itemCode:item.code,itemCategory:item.category,itemSN:item.sn});
+function dlCSV(csv, fname) {
+  const b = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname; a.click();
+}
+function exportStockCSV() { dlCSV(toCSV(stock, ['category','name','code','sn','status']), 'stock_export.csv'); }
+function exportReportCSV() { dlCSV(toCSV(txns, ['date','type','name','code','sn','balance','note','user']), 'report_export.csv'); }
+function exportRepairCSV() {
+  const rows = repairJobs.map(j => ({ id: j.id, sn: j.sn, name: j.name, code: j.code, category: j.category, customer: j.customer, repairStatus: j.repairStatus, createdAt: fmtISO(j.createdAt), finishedAt: fmtISO(j.finishedAt), symptom: j.symptom, repairNotes: j.repairNotes||'' }));
+  dlCSV(toCSV(rows, ['id','sn','name','code','category','customer','repairStatus','symptom','repairNotes','createdAt','finishedAt']), 'repair_export.csv');
+}
+function exportDOHistoryCSV() {
+  const rows = [];
+  doHistory.forEach(d => {
+    (d.items||[]).forEach(item => {
+      rows.push({ doNo: d.doNo, date: fmtDate(d.createdAt), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: d.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
     });
   });
-  dlCSV(toCSV(rows,['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']),'do_history_export.csv');
+  dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']), 'do_history_export.csv');
 }
-function exportAllCSV(){exportStockCSV();exportReportCSV();exportRepairCSV()}
-function exportBackup(){
-  const data={version:5,stock,txns,masterProds,customers,doCounter,repairJobs,doHistory};
-  dlCSV(JSON.stringify(data),`backup_${today()}.json`);
+function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); }
+function exportBackup() {
+  const data = { version: 6, stock, txns, masterProds, customers, doCounter, repairJobs, doHistory };
+  const b = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${today()}.json`; a.click();
 }
 
-function renderBackupStats(){
-  document.getElementById('backup-stats').innerHTML=`
+function renderBackupStats() {
+  document.getElementById('backup-stats').innerHTML = `
     <div style="background:var(--s2);padding:10px;border-radius:4px">สินค้าในระบบ: <b>${stock.length}</b></div>
     <div style="background:var(--s2);padding:10px;border-radius:4px">ประวัติเคลื่อนไหว: <b>${txns.length}</b></div>
-    <div style="background:var(--s2);padding:10px;border-radius:4px">งานซ่อมรวม: <b>${repairJobs.length}</b></div>`;
+    <div style="background:var(--s2);padding:10px;border-radius:4px">งานซ่อมรวม: <b>${repairJobs.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">ใบ DO รวม: <b>${doHistory.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">ต้นแบบสินค้า: <b>${masterProds.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">ลูกค้า: <b>${customers.length}</b></div>`;
 }
 
-function renderReport(){
-  const q=document.getElementById('rp-q').value.toLowerCase();const ft=document.getElementById('rp-type').value;
-  const data=txns.filter(t=>(!ft||t.type.includes(ft))&&(!q||t.sn.toLowerCase().includes(q)||t.name.toLowerCase().includes(q)));
-  document.getElementById('report-tbody').innerHTML=data.map(t=>`
+function renderReport() {
+  const q  = document.getElementById('rp-q').value.toLowerCase();
+  const ft = document.getElementById('rp-type').value;
+  const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || t.sn.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+  document.getElementById('report-tbody').innerHTML = data.map(t => `
     <tr>
       <td class="mono">${t.date}</td><td>${typeBadge(t.type)}</td>
       <td>${t.name}</td><td class="code-cell">${t.code}</td>
       <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td>
-      <td>${t.note}</td>
-      <td style="font-size:11px;color:var(--t3)">${t.user||'—'}</td>
+      <td>${t.note}</td><td style="font-size:11px;color:var(--t3)">${t.user||'—'}</td>
     </tr>`).join('');
 }
 
-let impRows=[];
-function onFileDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processFile(f)}
-function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f)}
-function processFile(f){
-  const r=new FileReader();
-  r.onload=ev=>{
-    const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const j=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    impRows=j.slice(1);
-    document.getElementById('import-preview').style.display='block';
-    document.getElementById('import-summary').textContent=`ไฟล์: ${f.name} (${impRows.length} แถว)`;
-  };r.readAsArrayBuffer(f);
+let impRows = [];
+function onFileDrop(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) processFile(f); }
+function onFileSelect(e) { const f = e.target.files[0]; if (f) processFile(f); }
+function processFile(f) {
+  if (f.size > 10 * 1024 * 1024) return toast('ไฟล์ใหญ่เกิน 10MB', 'error');
+  const r = new FileReader();
+  r.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const j  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    impRows = j.slice(1);
+    document.getElementById('import-preview').style.display = 'block';
+    document.getElementById('import-summary').textContent = `ไฟล์: ${f.name} (${impRows.length} แถว)`;
+    // Preview
+    const thead = document.getElementById('preview-thead');
+    const tbody = document.getElementById('preview-tbody');
+    if (j[0]) thead.innerHTML = j[0].map(h => `<th style="padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase">${h}</th>`).join('');
+    tbody.innerHTML = impRows.slice(0, 5).map(row =>
+      `<tr>${row.map(c => `<td style="padding:7px 12px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)">${c}</td>`).join('')}</tr>`
+    ).join('');
+  };
+  r.readAsArrayBuffer(f);
 }
-function confirmImport(){
-  let added=0;
-  impRows.forEach(row=>{
-    if(row[3]){
+function confirmImport() {
+  let added = 0;
+  impRows.forEach(row => {
+    if (row[3]) {
       const cleanSN = String(row[3]).trim().replace(/^\*+|\*+$/g, '');
-      stock.unshift({category:row[0]||'ทั่วไป',name:row[1]||'ไม่ระบุ',code:row[2]||'-',sn:cleanSN,status:row[4]||'Available'});
-      added++;
+      if (!stock.find(i => i.sn === cleanSN)) {
+        stock.unshift({ category: row[0]||'ทั่วไป', name: row[1]||'ไม่ระบุ', code: row[2]||'-', sn: cleanSN, status: row[4]||'Available' });
+        added++;
+      }
     }
   });
-  save(); document.getElementById('import-preview').style.display='none'; impRows=[];
-  filterStock(); toast(`นำเข้าสำเร็จ ${added} รายการ`,'success');
+  save(); document.getElementById('import-preview').style.display = 'none'; impRows = [];
+  filterStock(); toast(`นำเข้าสำเร็จ ${added} รายการ`, 'success');
   syncStockToSheets();
 }
-function clearImport(){document.getElementById('import-preview').style.display='none';impRows=[]}
+function clearImport() { document.getElementById('import-preview').style.display = 'none'; impRows = []; }
 
-function importBackup(e){
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    const d=JSON.parse(ev.target.result);
-    stock=d.stock||[];txns=d.txns||[];repairJobs=d.repairJobs||[];doHistory=d.doHistory||[];
-    save();toast('Restore ข้อมูลเรียบร้อย','success');tab('overview');
-    syncStockToSheets(); syncRepairToSheets(); syncDOToSheets();
-  };r.readAsText(f);
+function importBackup(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (!confirm('การ Restore จะแทนที่ข้อมูลทั้งหมด ยืนยัน?')) return;
+      stock = Array.isArray(d.stock) ? d.stock : [];
+      txns  = Array.isArray(d.txns) ? d.txns : [];
+      repairJobs = Array.isArray(d.repairJobs) ? d.repairJobs : [];
+      doHistory  = Array.isArray(d.doHistory) ? d.doHistory : [];
+      masterProds = Array.isArray(d.masterProds) ? d.masterProds : [];
+      customers = Array.isArray(d.customers) ? d.customers : [];
+      doCounter = d.doCounter || 1;
+      save(); toast('Restore ข้อมูลเรียบร้อย', 'success'); tab('overview');
+      syncStockToSheets(); syncRepairToSheets(); syncDOToSheets();
+    } catch (err) { toast('ไฟล์ backup ไม่ถูกต้อง: ' + err.message, 'error'); }
+  };
+  r.readAsText(f);
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
-// ══════════════════════════════════════════════
-document.addEventListener('keydown',e=>{
-  if(!currentUser)return;
-  if(e.key==='F2'){e.preventDefault();tab('inbound')}
-  if(e.key==='F3'){e.preventDefault();tab('outbound')}
-  if(e.key==='F4'){e.preventDefault();tab('maintenance')}
-  if(e.key==='Escape'){['edit-modal','do-modal','repair-detail-modal','do-view-modal'].forEach(id=>document.getElementById(id).classList.remove('open'))}
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (!currentUser) return;
+  if (e.key === 'F2') { e.preventDefault(); tab('inbound'); }
+  if (e.key === 'F3') { e.preventDefault(); tab('outbound'); }
+  if (e.key === 'F4') { e.preventDefault(); tab('maintenance'); }
+  if (e.key === 'Escape') {
+    ['edit-modal','do-modal','repair-detail-modal','do-view-modal','swap-sn-modal'].forEach(id => {
+      document.getElementById(id).classList.remove('open');
+    });
+  }
 });
 
-window.onload=()=>{
-  const d=today();
-  document.getElementById('i-date').value=d;
-  document.getElementById('o-date').value=d;
-  updateClock();setInterval(updateClock,30000);
+window.onload = () => {
+  const d = today();
+  document.getElementById('i-date').value = d;
+  document.getElementById('o-date').value = d;
+  updateClock(); setInterval(updateClock, 30000);
 };
 </script>
 </body>
