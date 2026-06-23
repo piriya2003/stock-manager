@@ -1283,19 +1283,24 @@ async function doLogin() {
         if (el) el.style.display = isAdmin ? 'flex' : 'none';
       });
 
+      // 🔥 FIX: แปลง SN เป็น String เสมอ
       if (db.inventory && db.inventory.length > 1) {
         stock = db.inventory.slice(1).map(row => ({
-          category: row[0]||'', name: row[1]||'', code: row[2]||'-', sn: row[3]||'',
-          status: row[4]||'Available', prevSN: row[5]||null, claimedAt: row[6]||null,
-          claimReason: row[7]||null, replacedBySN: row[8]||null
+          category: row[0]||'', name: row[1]||'', code: row[2]||'-', 
+          sn: String(row[3] || ''), // บังคับเป็น String
+          status: row[4]||'Available', prevSN: row[5] ? String(row[5]) : null, claimedAt: row[6]||null,
+          claimReason: row[7]||null, replacedBySN: row[8] ? String(row[8]) : null
         }));
       }
 
+      // 🔥 FIX: แปลง SN ในระบบซ่อมให้เป็น String เสมอเช่นกัน
       repairJobs = (db.repair_jobs && db.repair_jobs.length > 1) ? db.repair_jobs.slice(1).map(row => ({
-        id: row[0]||'', sn: row[1]||'', name: row[2]||'', code: row[3]||'', category: row[4]||'',
+        id: row[0]||'', 
+        sn: String(row[1] || ''), // บังคับเป็น String
+        name: row[2]||'', code: row[3]||'', category: row[4]||'',
         customer: row[5]||'', techName: row[6]||'', symptom: row[7]||'', repairStatus: row[8]||'',
         repairNotes: row[9]||'', createdAt: row[10]||'', startedAt: row[11]||'', finishedAt: row[12]||'',
-        replacedSN: row[13]||'', claimReason: row[14]||'', createdBy: row[15]||''
+        replacedSN: row[13] ? String(row[13]) : '', claimReason: row[14]||'', createdBy: row[15]||''
       })) : [];
 
       if (db.do_header && db.do_header.length > 1) {
@@ -1304,7 +1309,7 @@ async function doLogin() {
           const dold = String(row[0]);
           const relatedItems = allItems
             .filter(ir => String(ir[0]) === dold)
-            .map(ir => ({ name: ir[1]||'', code: ir[2]||'', category: ir[3]||'', sn: ir[4]||'' }));
+            .map(ir => ({ name: ir[1]||'', code: ir[2]||'', category: ir[3]||'', sn: String(ir[4]||'') }));
           return {
             id: dold, doNo: row[1]||'', date: row[2]||'', type: row[3]||'', customer: row[4]||'',
             salesperson: row[5]||'', machine: row[6]||'', headerText: row[7]||'',
@@ -1581,7 +1586,7 @@ function filterStock() {
   let data = stock.filter(i =>
     (!st || i.status === st) &&
     (!cat || i.category === cat) &&
-    (!q || i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || (i.prevSN && i.prevSN.toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q))
+    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prevSN && String(i.prevSN).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q))
   );
   data.sort((a, b) => {
     let va = String(a[stockSortCol] || '').toLowerCase();
@@ -1595,7 +1600,7 @@ function filterStock() {
   const tbody = document.getElementById('stock-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map(item => {
-    const idx = stock.findIndex(p => p.sn === item.sn);
+    const idx = stock.findIndex(p => String(p.sn) === String(item.sn));
     return `<tr>
       <td style="color:var(--blue);font-weight:500">${item.category}</td>
       <td style="color:var(--t1)">${item.name}</td>
@@ -1637,8 +1642,8 @@ function openEdit(idx) {
 
 function saveEdit() {
   const idx = parseInt(document.getElementById('edit-idx').value);
-  const oldSN = stock[idx].sn;
-  const newSN = document.getElementById('edit-sn').value;
+  const oldSN = String(stock[idx].sn);
+  const newSN = String(document.getElementById('edit-sn').value);
   const prevSN = (newSN !== oldSN) ? oldSN : (stock[idx].prevSN || null);
   stock[idx] = {
     category: document.getElementById('edit-cat').value,
@@ -1749,7 +1754,7 @@ function doInbound() {
   const sn  = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
   if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
   if (!nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
-  if (stock.find(i => i.sn === sn)) { inlineMsg('i-msg', `❌ SN: ${sn} มีในระบบแล้ว!`, false); document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
+  if (stock.find(i => String(i.sn) === sn)) { inlineMsg('i-msg', `❌ SN: ${sn} มีในระบบแล้ว!`, false); document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
 
   const item = { category: cat, name: nm, code: cd, sn, status: 'Available', createdBy: currentUser };
   stock.unshift(item); inSession.push(item);
@@ -1775,7 +1780,7 @@ function doOutbound() {
   const sn   = filterBarcode(document.getElementById('o-sn').value, 'o-msg');
   if (!sn) { document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
 
-  const idx = stock.findIndex(i => i.sn === sn && i.status === 'Available');
+  const idx = stock.findIndex(i => String(i.sn) === sn && i.status === 'Available');
   if (idx === -1) { inlineMsg('o-msg', `❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`, false); document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
 
   stock[idx].status = 'Sold';
@@ -1798,7 +1803,7 @@ function renderOutSession() {
 function renderOutboundHistory() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
   let soldItems = stock.filter(i => i.status === 'Sold');
-  if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
+  if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
   const groups = {};
@@ -1880,7 +1885,7 @@ function saveDO() {
   const record = {
     id: 'DO-' + Date.now(), doNo, date: today(), type: typ, customer: custVal,
     salesperson: salesVal, machine: machineVal, headerText,
-    items: outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: i.sn })),
+    items: outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) })),
     createdAt: nowISO(), createdBy: currentUser
   };
   doHistory.unshift(record); doCounter++;
@@ -1908,7 +1913,7 @@ function renderDOHistory() {
   if (q) data = data.filter(d =>
     d.doNo.toLowerCase().includes(q) ||
     d.customer.toLowerCase().includes(q) ||
-    (d.items||[]).some(i => i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q))
+    (d.items||[]).some(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q))
   );
 
   const totalItems = doHistory.reduce((s, d) => s + (d.items||[]).length, 0);
@@ -2016,7 +2021,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const sn  = snField.value.trim().replace(/^\*+|\*+$/g, '');
       const res = document.getElementById('r-lookup-result');
       if (!sn) { res.style.display = 'none'; return; }
-      const item = stock.find(i => i.sn === sn);
+      
+      // 🔥 FIX: ใช้ String(i.sn) เพื่อให้หาตัวเลขจากฐานข้อมูลเจอ
+      const item = stock.find(i => String(i.sn) === sn);
+      
       res.style.display = 'block';
       if (item) {
         document.getElementById('r-lookup-name').textContent = item.name;
@@ -2039,7 +2047,7 @@ function doRepair() {
   const tech = document.getElementById('r-tech').value.trim();
   if (!sym) return inlineMsg('r-msg', '❌ กรุณากรอกอาการเสีย', false);
 
-  const idx = stock.findIndex(i => i.sn === sn);
+  const idx = stock.findIndex(i => String(i.sn) === sn);
   if (idx === -1) return inlineMsg('r-msg', '❌ ไม่พบ SN ในระบบ', false);
 
   const item = stock[idx]; stock[idx].status = 'Repair';
@@ -2065,7 +2073,7 @@ function renderRepairList() {
   const sf = document.getElementById('rep-status-filter')?.value || '';
   let data = [...repairJobs];
   if (sf) data = data.filter(j => j.repairStatus === sf);
-  if (q) data = data.filter(j => j.sn.toLowerCase().includes(q) || j.name.toLowerCase().includes(q) || j.symptom.toLowerCase().includes(q));
+  if (q) data = data.filter(j => String(j.sn).toLowerCase().includes(q) || j.name.toLowerCase().includes(q) || j.symptom.toLowerCase().includes(q));
   data.sort((a, b) => {
     const ord = { 'รอซ่อม': 0, 'กำลังซ่อม': 1, 'ซ่อมเสร็จ': 2, 'เคลมเครื่อง': 3 };
     return (ord[a.repairStatus] || 0) - (ord[b.repairStatus] || 0);
@@ -2086,7 +2094,7 @@ function renderRepairList() {
 }
 
 function openRepairDetailBySN(sn) {
-  const job = repairJobs.find(j => j.sn === sn && j.repairStatus !== 'ซ่อมเสร็จ') || repairJobs.find(j => j.sn === sn);
+  const job = repairJobs.find(j => String(j.sn) === sn && j.repairStatus !== 'ซ่อมเสร็จ') || repairJobs.find(j => String(j.sn) === sn);
   if (job) openRepairDetail(job.id);
   else toast('ไม่พบรายการซ่อมสำหรับ SN นี้', 'warning');
 }
@@ -2157,7 +2165,7 @@ function advanceRepairStatus(newStatus) {
   if (newStatus === 'กำลังซ่อม' && !job.startedAt) job.startedAt = nowISO();
   if (newStatus === 'ซ่อมเสร็จ') {
     job.finishedAt = nowISO();
-    const idx = stock.findIndex(i => i.sn === job.sn);
+    const idx = stock.findIndex(i => String(i.sn) === job.sn);
     if (idx !== -1) stock[idx].status = 'Available';
     logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), 'ซ่อมเสร็จเรียบร้อย');
     syncStockToSheets();
@@ -2184,7 +2192,7 @@ function onSwapNewSNInput() {
   const lookup = document.getElementById('swap-new-lookup');
   const info   = document.getElementById('swap-new-info');
   if (!newSN) { lookup.style.display = 'none'; return; }
-  const item = stock.find(i => i.sn === newSN);
+  const item = stock.find(i => String(i.sn) === newSN);
   lookup.style.display = 'block';
   if (item && item.status === 'Available') {
     info.innerHTML = `<span class="text-green">✅ พร้อมสลับ: ${item.name}</span>`;
@@ -2200,14 +2208,14 @@ function confirmSwapSN() {
   const reason = document.getElementById('swap-reason').value.trim();
   if (!reason) return toast('กรุณากรอกเหตุผลการเคลม', 'error');
 
-  const newItem = stock.find(i => i.sn === newSN && i.status === 'Available');
+  const newItem = stock.find(i => String(i.sn) === newSN && i.status === 'Available');
   if (!newItem) return toast('เครื่องใหม่ไม่พร้อมใช้งานหรือไม่พบ SN', 'error');
 
-  const oldSN  = job.sn;
-  const oldIdx = stock.findIndex(i => i.sn === oldSN);
+  const oldSN  = String(job.sn);
+  const oldIdx = stock.findIndex(i => String(i.sn) === oldSN);
   if (oldIdx !== -1) { stock[oldIdx].status = 'Claimed'; stock[oldIdx].claimedAt = nowISO(); stock[oldIdx].claimReason = reason; stock[oldIdx].replacedBySN = newSN; }
 
-  const newIdx = stock.findIndex(i => i.sn === newSN);
+  const newIdx = stock.findIndex(i => String(i.sn) === newSN);
   if (newIdx !== -1) { stock[newIdx].status = 'Sold'; stock[newIdx].prevSN = oldSN; }
 
   job.repairStatus = 'เคลมเครื่อง'; job.finishedAt = nowISO(); job.replacedSN = newSN; job.claimReason = reason;
@@ -2264,7 +2272,7 @@ function renderBackupStats() {
 function renderReport() {
   const q  = document.getElementById('rp-q').value.toLowerCase();
   const ft = document.getElementById('rp-type').value;
-  const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || t.sn.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+  const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
   document.getElementById('report-tbody').innerHTML = data.map(t => `
     <tr>
       <td class="mono">${t.date}</td><td>${typeBadge(t.type)}</td>
@@ -2301,7 +2309,7 @@ function confirmImport() {
   impRows.forEach(row => {
     if (row[3]) {
       const cleanSN = String(row[3]).trim().replace(/^\*+|\*+$/g, '');
-      if (!stock.find(i => i.sn === cleanSN)) {
+      if (!stock.find(i => String(i.sn) === cleanSN)) {
         stock.unshift({ category: row[0]||'ทั่วไป', name: row[1]||'ไม่ระบุ', code: row[2]||'-', sn: cleanSN, status: row[4]||'Available' });
         added++;
       }
@@ -2320,9 +2328,9 @@ function importBackup(e) {
     try {
       const d = JSON.parse(ev.target.result);
       if (!confirm('การ Restore จะแทนที่ข้อมูลทั้งหมด ยืนยัน?')) return;
-      stock = Array.isArray(d.stock) ? d.stock : [];
+      stock = Array.isArray(d.stock) ? d.stock.map(i => ({...i, sn: String(i.sn)})) : []; // 🔥 FIX: ป้องกันตอน Restore ด้วย
       txns  = Array.isArray(d.txns) ? d.txns : [];
-      repairJobs = Array.isArray(d.repairJobs) ? d.repairJobs : [];
+      repairJobs = Array.isArray(d.repairJobs) ? d.repairJobs.map(j => ({...j, sn: String(j.sn)})) : []; // 🔥 FIX: ป้องกันตอน Restore ด้วย
       doHistory  = Array.isArray(d.doHistory) ? d.doHistory : [];
       masterProds = Array.isArray(d.masterProds) ? d.masterProds : [];
       customers = Array.isArray(d.customers) ? d.customers : [];
