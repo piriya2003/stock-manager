@@ -68,7 +68,7 @@ async function finishLogin(session) {
 
   refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();
   tab(isAdmin ? 'overview' : 'inbound');
-  checkAlerts(); updateDOBadge();
+  checkAlerts(); updateDOBadge(); updateGRNBadge();
   startSessionTimer();
   toast('เข้าสู่ระบบสำเร็จ', 'success');
 }

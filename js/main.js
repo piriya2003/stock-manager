@@ -7,7 +7,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'F3') { e.preventDefault(); tab('outbound'); }
   if (e.key === 'F4') { e.preventDefault(); tab('maintenance'); }
   if (e.key === 'Escape') {
-    ['edit-modal','do-modal','repair-detail-modal','do-view-modal','swap-sn-modal'].forEach(id => {
+    ['edit-modal','do-modal','repair-detail-modal','do-view-modal','swap-sn-modal','grn-modal','grn-view-modal'].forEach(id => {
       document.getElementById(id).classList.remove('open');
     });
   }

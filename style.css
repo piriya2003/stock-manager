@@ -238,16 +238,16 @@ input[type=file]{display:none}
 .do-card-cust{font-size:13px;font-weight:600;color:var(--t1);flex:1}
 .do-card-meta{font-size:11px;color:var(--t3)}
 .do-summary-chip{background:var(--blue-dim);border:1px solid rgba(79,142,247,.2);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--blue);font-weight:700;font-family:var(--mono)}
-#printArea{background:#fff;color:#000;padding:20px}
-#printArea *{color:#000!important;font-family:'Sarabun',sans-serif}
+#printArea,.print-area{background:#fff;color:#000;padding:20px}
+#printArea *,.print-area *{color:#000!important;font-family:'Sarabun',sans-serif}
 .do-header-edit{padding:10px;border-radius:6px;text-align:center;cursor:text;transition:.15s;font-weight:600;font-size:13px;line-height:1.5;outline:none;border:1px dashed transparent}
 .do-header-edit:hover,.do-header-edit:focus{border-color:#aaa;background:#f9f9f9}
 .do-input{border:none;border-bottom:1px solid #999;background:transparent;padding:2px 4px;font-size:13px;color:#000;outline:none;width:auto}
 .do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
 @media print{
   body *{visibility:hidden}
-  #printArea,#printArea *{visibility:visible}
-  #printArea{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
+  #printArea,#printArea *,.print-area,.print-area *{visibility:visible}
+  #printArea,.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
   .no-print{display:none!important}
   .do-header-edit{border:none!important;background:transparent!important}
 }

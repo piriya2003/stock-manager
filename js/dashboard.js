@@ -47,7 +47,7 @@ function renderDashboard() {
   const recent = txns.slice(0, 8);
   tbody.innerHTML = !recent.length ? '<tr><td colspan="5" class="tbl-empty">ยังไม่มีประวัติ</td></tr>' :
     recent.map(t => `<tr>
-      <td class="mono" style="font-size:11px">${t.date}</td>
+      <td class="mono" style="font-size:11px">${t.date}${t.createdAt ? ' ' + new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</td>
       <td>${typeBadge(t.type)}</td>
       <td style="color:var(--t1);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td>
       <td class="sn-cell">${t.sn}</td>
@@ -63,5 +63,5 @@ function renderDashboard() {
         <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div><div style="font-size:11px;color:var(--t3)">${d.type||'โอนสินค้า'}</div></div>
         <div class="do-summary-chip">${(d.items||[]).length} ชิ้น</div>
       </div>`).join('');
-  checkAlerts(); updateDOBadge();
+  checkAlerts(); updateDOBadge(); updateGRNBadge();
 }

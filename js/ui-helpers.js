@@ -52,6 +52,7 @@ function tab(name) {
   if (name === 'report') renderReport();
   if (name === 'maintenance') { renderRepairList(); updateRepairBadges(); }
   if (name === 'do-history') renderDOHistory();
+  if (name === 'grn-history') renderGRNHistory();
   if (name === 'backup') renderBackupStats();
   if (name === 'inbound') setTimeout(() => document.getElementById('i-sn').focus(), 80);
   if (name === 'outbound') { setTimeout(() => document.getElementById('o-sn').focus(), 80); renderOutboundHistory(); }
@@ -147,6 +148,13 @@ function updateRepairBadges() {
 function updateDOBadge() {
   const badge = document.getElementById('badge-do');
   if (doHistory.length > 0) { badge.style.display = 'inline-flex'; badge.textContent = doHistory.length; }
+  else badge.style.display = 'none';
+}
+
+function updateGRNBadge() {
+  const badge = document.getElementById('badge-grn');
+  if (!badge) return;
+  if (grnHistory.length > 0) { badge.style.display = 'inline-flex'; badge.textContent = grnHistory.length; }
   else badge.style.display = 'none';
 }
 

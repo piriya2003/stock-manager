@@ -2,7 +2,7 @@
 //  BACKUP / RESTORE
 // ══════════════════════════════════════════════════════════════
 function exportBackup() {
-  const data = { version: 'supabase-1', exportedAt: nowISO(), stock, txns, masterProds, customers, repairJobs, doHistory };
+  const data = { version: 'supabase-1', exportedAt: nowISO(), stock, txns, masterProds, customers, repairJobs, doHistory, grnHistory };
   const b = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${today()}.json`; a.click();
 }
@@ -13,6 +13,7 @@ function renderBackupStats() {
     <div style="background:var(--s2);padding:10px;border-radius:4px">ประวัติเคลื่อนไหว: <b>${txns.length}</b></div>
     <div style="background:var(--s2);padding:10px;border-radius:4px">งานซ่อมรวม: <b>${repairJobs.length}</b></div>
     <div style="background:var(--s2);padding:10px;border-radius:4px">ใบ DO รวม: <b>${doHistory.length}</b></div>
+    <div style="background:var(--s2);padding:10px;border-radius:4px">ใบ GRN รวม: <b>${grnHistory.length}</b></div>
     <div style="background:var(--s2);padding:10px;border-radius:4px">ต้นแบบสินค้า: <b>${masterProds.length}</b></div>
     <div style="background:var(--s2);padding:10px;border-radius:4px">ลูกค้า: <b>${customers.length}</b></div>`;
 }

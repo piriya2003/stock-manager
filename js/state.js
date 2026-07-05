@@ -7,6 +7,7 @@ let masterProds = [];
 let customers   = [];
 let repairJobs  = [];
 let doHistory   = [];
+let grnHistory  = [];
 
 let currentUser    = null;  // username (แสดงผล)
 let currentRole    = null;  // 'admin' | 'staff'
@@ -18,8 +19,10 @@ let inSession  = [];
 let outSession = [];
 let currentRepairJobId = null;
 let currentViewDOId    = null;
+let currentViewGRNId   = null;
 let currentSwapJobId   = null;
 let doModalMode        = 'create';
+let grnModalMode       = 'create';
 
 let impRows = [];
 let stockSortCol = 'sn';

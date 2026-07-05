@@ -2,7 +2,7 @@
 //  DATA LOADING — ดึงข้อมูลทั้งหมดจาก Supabase ตอน login
 // ══════════════════════════════════════════════════════════════
 async function loadAllData() {
-  const [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes] = await Promise.all([
+  const [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes] = await Promise.all([
     supaClient.from('inventory').select('*').order('sn', { ascending: false }),
     supaClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(500),
     supaClient.from('repair_jobs').select('*, customers(name)').order('created_at', { ascending: false }),
@@ -10,14 +10,16 @@ async function loadAllData() {
     supaClient.from('do_items').select('*'),
     supaClient.from('master_products').select('*').order('name'),
     supaClient.from('customers').select('*').order('name'),
+    supaClient.from('grn_headers').select('*').order('created_at', { ascending: false }),
+    supaClient.from('grn_items').select('*'),
   ]);
 
-  [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes].forEach(r => { if (r.error) throw r.error; });
+  [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes].forEach(r => { if (r.error) throw r.error; });
 
   stock = invRes.data;
   txns  = txRes.data.map(t => ({
     date: t.tx_date, type: t.type, name: t.item_name, code: t.item_code,
-    sn: t.sn, balance: t.balance, note: t.note, user: t.performed_by,
+    sn: t.sn, balance: t.balance, note: t.note, user: t.performed_by, createdAt: t.created_at,
   }));
 
   repairJobs = repRes.data.map(j => ({
@@ -42,4 +44,15 @@ async function loadAllData() {
 
   masterProds = mpRes.data;
   customers   = custRes.data;
+
+  const itemsByGRN = {};
+  grnIRes.data.forEach(it => {
+    if (!itemsByGRN[it.grn_header_id]) itemsByGRN[it.grn_header_id] = [];
+    itemsByGRN[it.grn_header_id].push({ name: it.item_name, code: it.item_code, category: it.item_category, sn: it.sn });
+  });
+  grnHistory = grnHRes.data.map(g => ({
+    id: g.id, grnNo: g.grn_no, date: g.grn_date, supplier: g.supplier, poNo: g.po_no, lotNo: g.lot_no,
+    note: g.note, createdAt: g.created_at, createdBy: g.created_by,
+    items: itemsByGRN[g.id] || [],
+  }));
 }

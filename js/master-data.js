@@ -80,10 +80,13 @@ function updateDataLists() {
   const cats  = [...new Set([...stock.map(i => i.category), ...masterProds.map(p => p.category)])].filter(Boolean);
   const names = [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])];
   const codes = [...new Set([...stock.map(i => i.code), ...masterProds.map(p => p.code)])].filter(c => c && c !== '-');
+  const suppliers = [...new Set(stock.map(i => i.supplier).filter(Boolean))];
   const catDl  = document.getElementById('cat-dl');
   const prodDl = document.getElementById('product-dl');
   const codeDl = document.getElementById('code-dl');
+  const supDl  = document.getElementById('supplier-dl');
   if (catDl)  catDl.innerHTML  = cats.map(c => `<option value="${c}">`).join('');
   if (prodDl) prodDl.innerHTML = names.map(n => `<option value="${n}">`).join('');
   if (codeDl) codeDl.innerHTML = codes.map(c => `<option value="${c}">`).join('');
+  if (supDl)  supDl.innerHTML  = suppliers.map(s => `<option value="${s}">`).join('');
 }

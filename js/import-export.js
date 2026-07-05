@@ -8,7 +8,7 @@ function dlCSV(csv, fname) {
   const b = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname; a.click();
 }
-function exportStockCSV() { dlCSV(toCSV(stock, ['category','name','code','sn','status']), 'stock_export.csv'); }
+function exportStockCSV() { dlCSV(toCSV(stock, ['category','name','code','sn','lot_no','supplier','status','received_at','dispatched_at']), 'stock_export.csv'); }
 function exportReportCSV() { dlCSV(toCSV(txns, ['date','type','name','code','sn','balance','note','user']), 'report_export.csv'); }
 function exportRepairCSV() {
   const rows = repairJobs.map(j => ({ id: j.id, sn: j.sn, name: j.name, code: j.code, category: j.category, customer: j.customer, status: j.status, createdAt: fmtISO(j.createdAt), finishedAt: fmtISO(j.finishedAt), symptom: j.symptom, notes: j.notes||'' }));
@@ -23,6 +23,15 @@ function exportDOHistoryCSV() {
   });
   dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']), 'do_history_export.csv');
 }
+function exportGRNHistoryCSV() {
+  const rows = [];
+  grnHistory.forEach(g => {
+    (g.items||[]).forEach(item => {
+      rows.push({ grnNo: g.grnNo, date: fmtDate(g.createdAt), supplier: g.supplier||'', poNo: g.poNo||'', lotNo: g.lotNo||'', createdBy: g.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+    });
+  });
+  dlCSV(toCSV(rows, ['grnNo','date','supplier','poNo','lotNo','createdBy','itemName','itemCode','itemCategory','itemSN']), 'grn_history_export.csv');
+}
 function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); }
 
 function renderReport() {
@@ -31,7 +40,7 @@ function renderReport() {
   const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
   document.getElementById('report-tbody').innerHTML = data.map(t => `
     <tr>
-      <td class="mono">${t.date}</td><td>${typeBadge(t.type)}</td>
+      <td class="mono">${t.date}${t.createdAt ? `<div style="font-size:10px;color:var(--t3)">${new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}</td><td>${typeBadge(t.type)}</td>
       <td>${t.name}</td><td class="code-cell">${t.code}</td>
       <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td>
       <td>${t.note||''}</td><td style="font-size:11px;color:var(--t3)">${t.user||'—'}</td>

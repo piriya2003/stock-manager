@@ -21,10 +21,11 @@ function sortStock(col) {
 }
 
 function snCellHTML(item) {
+  const timeSub = `<div style="font-size:9px;color:var(--t3);margin-top:2px;font-family:var(--mono)">📥 ${fmtISO(item.received_at)}${item.dispatched_at ? ' · 📤 ' + fmtISO(item.dispatched_at) : ''}</div>`;
   if (item.prev_sn && item.prev_sn !== item.sn) {
-    return `<td class="sn-cell"><div class="sn-arrow-wrap"><span class="sn-old">${item.prev_sn}</span><span class="sn-arrow">↓ สลับ SN</span><span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span></div></td>`;
+    return `<td class="sn-cell"><div class="sn-arrow-wrap"><span class="sn-old">${item.prev_sn}</span><span class="sn-arrow">↓ สลับ SN</span><span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span></div>${timeSub}</td>`;
   }
-  return `<td class="sn-cell">${item.sn}</td>`;
+  return `<td class="sn-cell">${item.sn}${timeSub}</td>`;
 }
 
 function filterStock() {
@@ -34,7 +35,7 @@ function filterStock() {
   let data = stock.filter(i =>
     (!st || i.status === st) &&
     (!cat || i.category === cat) &&
-    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q))
+    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)))
   );
   data.sort((a, b) => {
     let va = String(a[stockSortCol] || '').toLowerCase();
@@ -46,11 +47,12 @@ function filterStock() {
     return stockSortDir === 'asc' ? va.localeCompare(vb, 'th') : vb.localeCompare(va, 'th');
   });
   const tbody = document.getElementById('stock-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map(item => `<tr>
       <td style="color:var(--blue);font-weight:500">${item.category}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
+      <td class="mono" style="font-size:11px;color:var(--t2)">${item.lot_no || '—'}</td>
       ${snCellHTML(item)}
       <td>${statusBadge(item.status)}</td>
       <td style="text-align:center">
@@ -69,9 +71,9 @@ async function returnToStock(id) {
   const item = stock.find(i => i.id === id); if (!item) return;
   const old = item.status;
   try {
-    const { error } = await supaClient.from('inventory').update({ status: 'Available' }).eq('id', id);
+    const { error } = await supaClient.from('inventory').update({ status: 'Available', dispatched_at: null }).eq('id', id);
     if (error) throw error;
-    item.status = 'Available';
+    item.status = 'Available'; item.dispatched_at = null;
     await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `คืนจากสถานะ: ${old}`);
     filterStock(); checkAlerts();
     toast(`คืนสต็อก SN: ${item.sn} สำเร็จ`, 'success');
@@ -85,6 +87,7 @@ function openEdit(id) {
   document.getElementById('edit-name').value = i.name;
   document.getElementById('edit-code').value = i.code;
   document.getElementById('edit-sn').value = i.sn;
+  document.getElementById('edit-lot').value = i.lot_no || '';
   document.getElementById('edit-status').value = i.status;
   document.getElementById('edit-modal').classList.add('open');
 }
@@ -99,6 +102,7 @@ async function saveEdit() {
     name: document.getElementById('edit-name').value,
     code: document.getElementById('edit-code').value,
     sn: newSN,
+    lot_no: document.getElementById('edit-lot').value.trim() || null,
     status: document.getElementById('edit-status').value,
   };
   if (newSN !== oldSN) payload.prev_sn = oldSN;
