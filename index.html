@@ -344,6 +344,7 @@
       <div class="sub-tabs">
         <button class="sub-tab active" id="stab-intake" onclick="repairSubTab('intake')">📥 รับเครื่อง</button>
         <button class="sub-tab" id="stab-list" onclick="repairSubTab('list')">📋 รายการซ่อม</button>
+        <button class="sub-tab" id="stab-claim" onclick="repairSubTab('claim')">🔴 เคลม</button>
       </div>
       <div id="rsub-intake" style="max-width:640px">
         <div class="scan-hint mb-4" style="background:rgba(240,96,96,.06);border-color:rgba(240,96,96,.15);color:var(--t2)">
@@ -386,11 +387,31 @@
             <option value="รอซ่อม">🟡 รอซ่อม</option>
             <option value="กำลังซ่อม">🔵 กำลังซ่อม</option>
             <option value="ซ่อมเสร็จ">🟢 ซ่อมเสร็จ</option>
-            <option value="เคลมเครื่อง">🔴 เคลมเครื่อง</option>
           </select>
           <button onclick="exportRepairCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
         <div id="repair-list-grid" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow-y:auto"></div>
+      </div>
+      <div id="rsub-claim" style="display:none">
+        <div class="flex gap-2 mb-4 flex-wrap items-center">
+          <input type="text" id="claim-q" oninput="renderClaimList()" placeholder="🔍 ค้นหา SN เดิม / SN ใหม่ / สินค้า / ลูกค้า..." style="width:280px">
+          <span class="badge b-red" id="claim-count">0 รายการ</span>
+          <button onclick="exportClaimCSV()" class="btn btn-ghost btn-sm" style="margin-left:auto">⬇ Export CSV</button>
+        </div>
+        <div class="tbl-wrap" style="max-height:calc(100vh - 280px);overflow-y:auto">
+          <table>
+            <thead><tr>
+              <th style="text-align:center;width:44px">#</th>
+              <th>SN เดิม (เคลม)</th>
+              <th>SN ใหม่ (ทดแทน)</th>
+              <th>สินค้า</th>
+              <th>ลูกค้า</th>
+              <th>เหตุผล</th>
+              <th>วันที่เคลม</th>
+            </tr></thead>
+            <tbody id="claim-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 

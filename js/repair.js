@@ -67,7 +67,7 @@ function renderRepairList() {
   updateRepairBadges();
   const q  = (document.getElementById('rep-q')?.value || '').toLowerCase();
   const sf = document.getElementById('rep-status-filter')?.value || '';
-  let data = [...repairJobs];
+  let data = repairJobs.filter(j => j.status !== 'เคลมเครื่อง'); // รายการเคลมแยกไปอยู่แท็บ "เคลม"
   if (sf) data = data.filter(j => j.status === sf);
   if (q) data = data.filter(j => String(j.sn).toLowerCase().includes(q) || j.name.toLowerCase().includes(q) || j.symptom.toLowerCase().includes(q));
   data.sort((a, b) => {
@@ -87,6 +87,35 @@ function renderRepairList() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── รายการเคลม (SN เดิม → SN ใหม่) ──
+function renderClaimList() {
+  const q = (document.getElementById('claim-q')?.value || '').toLowerCase();
+  let data = repairJobs.filter(j => j.status === 'เคลมเครื่อง');
+  if (q) data = data.filter(j =>
+    String(j.sn).toLowerCase().includes(q) ||
+    String(j.replacedSN || '').toLowerCase().includes(q) ||
+    j.name.toLowerCase().includes(q) ||
+    (j.customer || '').toLowerCase().includes(q)
+  );
+  data.sort((a, b) => new Date(b.finishedAt || 0) - new Date(a.finishedAt || 0));
+
+  const badge = document.getElementById('claim-count');
+  if (badge) badge.textContent = data.length + ' รายการ';
+  const tbody = document.getElementById('claim-tbody');
+  if (!tbody) return;
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีรายการเคลม</td></tr>'; return; }
+  tbody.innerHTML = data.map((j, i) => `
+    <tr class="do-row" onclick="openRepairDetail('${j.id}')">
+      <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${i + 1}</td>
+      <td class="sn-cell" style="color:var(--red);font-weight:600">${j.sn}</td>
+      <td class="sn-cell" style="color:var(--green);font-weight:600">${j.replacedSN || '—'}</td>
+      <td style="color:var(--t1)">${j.name}<div style="font-size:10px;color:var(--t3)">${j.code || ''}${j.category ? ' / ' + j.category : ''}</div></td>
+      <td style="color:var(--t2)">${j.customer || '—'}</td>
+      <td style="font-size:11px;color:var(--t2);max-width:220px;white-space:normal;line-height:1.5">${j.claimReason || '—'}</td>
+      <td class="mono" style="font-size:11px">${fmtISO(j.finishedAt)}</td>
+    </tr>`).join('');
 }
 
 function openRepairDetailBySN(sn) {
@@ -240,7 +269,7 @@ async function confirmSwapSN() {
     await logTransaction(today(), '🔄 เคลมสลับ SN', job.name, job.code, oldSN, getBalance(job.code), `เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`);
 
     closeModal('swap-sn-modal'); closeModal('repair-detail-modal');
-    renderRepairList(); checkAlerts();
+    renderRepairList(); renderClaimList(); checkAlerts();
     toast('สลับเปลี่ยนเครื่องเคลมสำเร็จ', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
 }

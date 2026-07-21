@@ -43,6 +43,15 @@ function exportGRNHistoryCSV() {
   });
   dlCSV(toCSV(rows, ['grnNo','date','supplier','poNo','lotNo','createdBy','itemName','itemCode','itemCategory','itemSN']), 'grn_history_export.csv');
 }
+function exportClaimCSV() {
+  const rows = repairJobs.filter(j => j.status === 'เคลมเครื่อง').map(j => ({
+    oldSN: j.sn, newSN: j.replacedSN || '', name: j.name, code: j.code || '', category: j.category || '',
+    customer: j.customer || '', reason: j.claimReason || '', claimedAt: fmtISO(j.finishedAt),
+  }));
+  if (!rows.length) return toast('ไม่มีรายการเคลม', 'info');
+  dlCSV(toCSV(rows, ['oldSN','newSN','name','code','category','customer','reason','claimedAt']), 'claim_export.csv');
+  toast(`Export ${rows.length} รายการเคลม`, 'success');
+}
 function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); }
 
 function renderReport() {

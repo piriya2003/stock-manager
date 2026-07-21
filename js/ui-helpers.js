@@ -61,9 +61,12 @@ function tab(name) {
 function repairSubTab(name) {
   document.getElementById('rsub-intake').style.display = name === 'intake' ? 'block' : 'none';
   document.getElementById('rsub-list').style.display = name === 'list' ? 'block' : 'none';
+  document.getElementById('rsub-claim').style.display = name === 'claim' ? 'block' : 'none';
   document.getElementById('stab-intake').classList.toggle('active', name === 'intake');
   document.getElementById('stab-list').classList.toggle('active', name === 'list');
+  document.getElementById('stab-claim').classList.toggle('active', name === 'claim');
   if (name === 'list') renderRepairList();
+  if (name === 'claim') renderClaimList();
   if (name === 'intake') setTimeout(() => document.getElementById('r-sn').focus(), 80);
 }
 
