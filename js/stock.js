@@ -47,8 +47,9 @@ function filterStock() {
     return stockSortDir === 'asc' ? va.localeCompare(vb, 'th') : vb.localeCompare(va, 'th');
   });
   const tbody = document.getElementById('stock-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
-  tbody.innerHTML = data.map(item => `<tr>
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
+  tbody.innerHTML = data.map((item, idx) => `<tr>
+      <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
       <td style="color:var(--blue);font-weight:500">${item.category}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
