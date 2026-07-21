@@ -1,14 +1,25 @@
 // ══════════════════════════════════════════════════════════════
 //  EXPORT (CSV) & REPORT
 // ══════════════════════════════════════════════════════════════
+function csvCell(val) {
+  const s = (val ?? '').toString();
+  // เลขล้วนที่ยาว (รหัส/SN) → บังคับให้ Excel มองเป็นข้อความ ไม่แปลงเป็น 5.67E+11
+  if (/^\d{12,}$/.test(s)) return `"=""${s}"""`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
 function toCSV(rows, headers) {
-  return [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+  return [headers.join(','), ...rows.map(r => headers.map(h => csvCell(r[h])).join(','))].join('\n');
 }
 function dlCSV(csv, fname) {
   const b = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname; a.click();
 }
-function exportStockCSV() { dlCSV(toCSV(stock, ['category','name','code','sn','lot_no','supplier','status','received_at','dispatched_at']), 'stock_export.csv'); }
+function exportStockCSV() {
+  const data = typeof getFilteredStock === 'function' ? getFilteredStock() : stock;
+  if (!data.length) return toast('ไม่มีรายการให้ export (ตามที่กรองอยู่)', 'info');
+  dlCSV(toCSV(data, ['category','name','code','sn','lot_no','supplier','status','received_at','dispatched_at']), 'stock_export.csv');
+  toast(`Export ${data.length} รายการ (ตามที่กรองอยู่)`, 'success');
+}
 function exportReportCSV() { dlCSV(toCSV(txns, ['date','type','name','code','sn','balance','note','user']), 'report_export.csv'); }
 function exportRepairCSV() {
   const rows = repairJobs.map(j => ({ id: j.id, sn: j.sn, name: j.name, code: j.code, category: j.category, customer: j.customer, status: j.status, createdAt: fmtISO(j.createdAt), finishedAt: fmtISO(j.finishedAt), symptom: j.symptom, notes: j.notes||'' }));

@@ -28,7 +28,8 @@ function snCellHTML(item) {
   return `<td class="sn-cell">${item.sn}${timeSub}</td>`;
 }
 
-function filterStock() {
+// คืนรายการสินค้าที่ผ่านการกรอง + เรียงลำดับตามที่เลือกบนหน้าจอ (ใช้ร่วมกับ export)
+function getFilteredStock() {
   const q   = (document.getElementById('s-q').value || '').toLowerCase();
   const st = document.getElementById('s-status').value;
   const cat = document.getElementById('s-cat').value;
@@ -46,6 +47,11 @@ function filterStock() {
     }
     return stockSortDir === 'asc' ? va.localeCompare(vb, 'th') : vb.localeCompare(va, 'th');
   });
+  return data;
+}
+
+function filterStock() {
+  const data = getFilteredStock();
   const tbody = document.getElementById('stock-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map((item, idx) => `<tr>
