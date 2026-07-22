@@ -51,6 +51,7 @@ function tab(name) {
   if (name === 'stock') { populateCatFilter(); filterStock(); }
   if (name === 'report') renderReport();
   if (name === 'maintenance') { renderRepairList(); updateRepairBadges(); }
+  if (name === 'claim') renderClaimList();
   if (name === 'do-history') renderDOHistory();
   if (name === 'grn-history') renderGRNHistory();
   if (name === 'backup') renderBackupStats();
@@ -61,12 +62,9 @@ function tab(name) {
 function repairSubTab(name) {
   document.getElementById('rsub-intake').style.display = name === 'intake' ? 'block' : 'none';
   document.getElementById('rsub-list').style.display = name === 'list' ? 'block' : 'none';
-  document.getElementById('rsub-claim').style.display = name === 'claim' ? 'block' : 'none';
   document.getElementById('stab-intake').classList.toggle('active', name === 'intake');
   document.getElementById('stab-list').classList.toggle('active', name === 'list');
-  document.getElementById('stab-claim').classList.toggle('active', name === 'claim');
   if (name === 'list') renderRepairList();
-  if (name === 'claim') renderClaimList();
   if (name === 'intake') setTimeout(() => document.getElementById('r-sn').focus(), 80);
 }
 
@@ -158,6 +156,14 @@ function updateGRNBadge() {
   const badge = document.getElementById('badge-grn');
   if (!badge) return;
   if (grnHistory.length > 0) { badge.style.display = 'inline-flex'; badge.textContent = grnHistory.length; }
+  else badge.style.display = 'none';
+}
+
+function updateClaimBadge() {
+  const badge = document.getElementById('badge-claim');
+  if (!badge) return;
+  const n = repairJobs.filter(j => j.status === 'เคลมเครื่อง').length;
+  if (n > 0) { badge.style.display = 'inline-flex'; badge.textContent = n; }
   else badge.style.display = 'none';
 }
 

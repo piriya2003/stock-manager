@@ -55,6 +55,10 @@
       <span class="ni-icon">🔧</span>ซ่อม
       <span class="nav-badge orange" id="badge-repair" style="display:none">0</span>
     </button>
+    <button class="nav-item" id="nav-claim" onclick="tab('claim')">
+      <span class="ni-icon">🔴</span>เคลม
+      <span class="nav-badge orange" id="badge-claim" style="display:none">0</span>
+    </button>
     <div class="nav-group-label">รายงาน & ระบบ</div>
     <button class="nav-item" id="nav-do-history" onclick="tab('do-history')">
       <span class="ni-icon">📄</span>ประวัติใบ DO
@@ -344,7 +348,6 @@
       <div class="sub-tabs">
         <button class="sub-tab active" id="stab-intake" onclick="repairSubTab('intake')">📥 รับเครื่อง</button>
         <button class="sub-tab" id="stab-list" onclick="repairSubTab('list')">📋 รายการซ่อม</button>
-        <button class="sub-tab" id="stab-claim" onclick="repairSubTab('claim')">🔴 เคลม</button>
       </div>
       <div id="rsub-intake" style="max-width:640px">
         <div class="scan-hint mb-4" style="background:rgba(240,96,96,.06);border-color:rgba(240,96,96,.15);color:var(--t2)">
@@ -392,26 +395,30 @@
         </div>
         <div id="repair-list-grid" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow-y:auto"></div>
       </div>
-      <div id="rsub-claim" style="display:none">
-        <div class="flex gap-2 mb-4 flex-wrap items-center">
-          <input type="text" id="claim-q" oninput="renderClaimList()" placeholder="🔍 ค้นหา SN เดิม / SN ใหม่ / สินค้า / ลูกค้า..." style="width:280px">
+    </div>
+
+    <div id="tab-claim" class="tab-content">
+      <div class="page-header">
+        <div class="page-title">🔴 รายการเคลม</div>
+        <div class="flex gap-2 flex-wrap items-center">
+          <input type="text" id="claim-q" oninput="renderClaimList()" placeholder="🔍 ค้นหา SN เดิม / SN ทดแทน / สินค้า / ลูกค้า..." style="width:280px">
           <span class="badge b-red" id="claim-count">0 รายการ</span>
-          <button onclick="exportClaimCSV()" class="btn btn-ghost btn-sm" style="margin-left:auto">⬇ Export CSV</button>
+          <button onclick="exportClaimCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
-        <div class="tbl-wrap" style="max-height:calc(100vh - 280px);overflow-y:auto">
-          <table>
-            <thead><tr>
-              <th style="text-align:center;width:44px">#</th>
-              <th>SN เดิม (เคลม)</th>
-              <th>SN ใหม่ (ทดแทน)</th>
-              <th>สินค้า</th>
-              <th>ลูกค้า</th>
-              <th>เหตุผล</th>
-              <th>วันที่เคลม</th>
-            </tr></thead>
-            <tbody id="claim-tbody"></tbody>
-          </table>
-        </div>
+      </div>
+      <div class="tbl-wrap" style="max-height:calc(100vh - 210px);overflow-y:auto">
+        <table>
+          <thead><tr>
+            <th style="text-align:center;width:44px">#</th>
+            <th>SN เดิม (รับเคลม)</th>
+            <th>SN ทดแทน</th>
+            <th>สินค้า</th>
+            <th>ลูกค้า</th>
+            <th>เหตุผลที่เคลม</th>
+            <th>วันที่เคลม</th>
+          </tr></thead>
+          <tbody id="claim-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -666,15 +673,18 @@
       <button class="modal-close" onclick="closeModal('swap-sn-modal')">✕</button>
     </div>
     <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--t2);margin-bottom:18px;line-height:1.7">
-      ⚠️ ใช้เมื่อ <b style="color:var(--orange)">ซ่อมไม่ได้</b> และต้องส่งเครื่องใหม่ทดแทน<br>
-      ระบบจะ: นำ <b style="color:var(--red)">SN เดิม</b> ออกจากระบบ (สถานะ "เคลม/ชำรุด") แล้วส่ง <b style="color:var(--green)">SN ใหม่</b> ให้ลูกค้าแทน
+      ⚠️ ใช้เมื่อ <b style="color:var(--orange)">ซ่อมไม่ได้</b> แล้วเคลมเครื่อง — เลือกได้ว่าจะ<b style="color:var(--green)">เปลี่ยนเป็น SN ใหม่</b> หรือ<b style="color:var(--blue)">ใช้ SN เดิม</b>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div style="background:var(--s2);border-radius:var(--r);padding:12px 14px">
         <div style="font-size:11px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">📦 เครื่องที่ส่งมาเคลม (SN เดิม)</div>
         <div id="swap-old-info" style="font-size:13px;color:var(--t1)">—</div>
       </div>
-      <div class="form-row">
+      <div class="sub-tabs" style="width:100%">
+        <button class="sub-tab active" id="swap-mode-new" onclick="setSwapMode('new')" style="flex:1">🔄 เปลี่ยน SN ใหม่</button>
+        <button class="sub-tab" id="swap-mode-same" onclick="setSwapMode('same')" style="flex:1">📍 ใช้ SN เดิม</button>
+      </div>
+      <div class="form-row" id="swap-new-section">
         <label class="field-label" style="color:var(--green)">สแกน SN เครื่องใหม่ที่จะส่งให้ลูกค้าแทน *</label>
         <input type="text" id="swap-new-sn" class="scan-field" placeholder="สแกนหรือพิมพ์ SN เครื่องใหม่..." oninput="onSwapNewSNInput()">
         <div id="swap-new-lookup" style="display:none;margin-top:6px" class="detail-section">

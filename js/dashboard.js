@@ -63,5 +63,5 @@ function renderDashboard() {
         <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div><div style="font-size:11px;color:var(--t3)">${d.type||'โอนสินค้า'}</div></div>
         <div class="do-summary-chip">${(d.items||[]).length} ชิ้น</div>
       </div>`).join('');
-  checkAlerts(); updateDOBadge(); updateGRNBadge();
+  checkAlerts(); updateDOBadge(); updateGRNBadge(); updateClaimBadge();
 }

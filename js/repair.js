@@ -103,19 +103,26 @@ function renderClaimList() {
 
   const badge = document.getElementById('claim-count');
   if (badge) badge.textContent = data.length + ' รายการ';
+  updateClaimBadge();
   const tbody = document.getElementById('claim-tbody');
   if (!tbody) return;
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีรายการเคลม</td></tr>'; return; }
-  tbody.innerHTML = data.map((j, i) => `
+  tbody.innerHTML = data.map((j, i) => {
+    const sameSN = !j.replacedSN || String(j.replacedSN) === String(j.sn);
+    const replaceCell = sameSN
+      ? `<span class="badge b-gray">📍 ใช้ SN เดิม</span>`
+      : `<span class="sn-cell" style="color:var(--green);font-weight:600">${j.replacedSN}</span>`;
+    return `
     <tr class="do-row" onclick="openRepairDetail('${j.id}')">
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${i + 1}</td>
       <td class="sn-cell" style="color:var(--red);font-weight:600">${j.sn}</td>
-      <td class="sn-cell" style="color:var(--green);font-weight:600">${j.replacedSN || '—'}</td>
+      <td>${replaceCell}</td>
       <td style="color:var(--t1)">${j.name}<div style="font-size:10px;color:var(--t3)">${j.code || ''}${j.category ? ' / ' + j.category : ''}</div></td>
       <td style="color:var(--t2)">${j.customer || '—'}</td>
       <td style="font-size:11px;color:var(--t2);max-width:220px;white-space:normal;line-height:1.5">${j.claimReason || '—'}</td>
       <td class="mono" style="font-size:11px">${fmtISO(j.finishedAt)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openRepairDetailBySN(sn) {
@@ -217,7 +224,15 @@ function openSwapSNModal(jobId) {
   document.getElementById('swap-new-lookup').style.display = 'none';
   document.getElementById('swap-reason').value = '';
   document.getElementById('swap-msg').textContent = '';
+  setSwapMode('new');
   document.getElementById('swap-sn-modal').classList.add('open');
+}
+
+function setSwapMode(mode) {
+  swapMode = mode;
+  document.getElementById('swap-mode-new').classList.toggle('active', mode === 'new');
+  document.getElementById('swap-mode-same').classList.toggle('active', mode === 'same');
+  document.getElementById('swap-new-section').style.display = mode === 'new' ? 'flex' : 'none';
 }
 
 function onSwapNewSNInput() {
@@ -236,16 +251,39 @@ function onSwapNewSNInput() {
 
 async function confirmSwapSN() {
   const job    = repairJobs.find(j => j.id === currentSwapJobId);
-  const newSN  = filterBarcode(document.getElementById('swap-new-sn').value, 'swap-msg');
-  if (!newSN) { document.getElementById('swap-new-sn').value = ''; return; }
   const reason = document.getElementById('swap-reason').value.trim();
   if (!reason) return toast('กรุณากรอกเหตุผลการเคลม', 'error');
+  const oldSN = String(job.sn);
+  const oldItem = stock.find(i => String(i.sn) === oldSN);
+
+  // ── โหมด "ใช้ SN เดิม" — ไม่มีเครื่องใหม่ เครื่องเดิมกลับไปสถานะ Sold (ส่งคืนลูกค้า) ──
+  if (swapMode === 'same') {
+    try {
+      if (oldItem) {
+        const { error } = await supaClient.from('inventory').update({ status: 'Sold', claim_reason: reason }).eq('id', oldItem.id);
+        if (error) throw error;
+        Object.assign(oldItem, { status: 'Sold', claim_reason: reason });
+      }
+      const { error: jobErr } = await supaClient.from('repair_jobs').update({
+        status: 'เคลมเครื่อง', finished_at: nowISO(), replaced_sn: null, claim_reason: reason,
+      }).eq('id', job.id);
+      if (jobErr) throw jobErr;
+      Object.assign(job, { status: 'เคลมเครื่อง', finishedAt: nowISO(), replacedSN: '', claimReason: reason });
+
+      await logTransaction(today(), '📍 เคลม (SN เดิม)', job.name, job.code, oldSN, getBalance(job.code), `เคลมโดยใช้ SN เดิม — เหตุผล: ${reason}`);
+      closeModal('swap-sn-modal'); closeModal('repair-detail-modal');
+      renderRepairList(); renderClaimList(); checkAlerts();
+      toast('บันทึกเคลม (ใช้ SN เดิม) สำเร็จ', 'success');
+    } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
+    return;
+  }
+
+  // ── โหมด "เปลี่ยน SN ใหม่" ──
+  const newSN  = filterBarcode(document.getElementById('swap-new-sn').value, 'swap-msg');
+  if (!newSN) { document.getElementById('swap-new-sn').value = ''; return; }
 
   const newItem = stock.find(i => String(i.sn) === newSN && i.status === 'Available');
   if (!newItem) return toast('เครื่องใหม่ไม่พร้อมใช้งานหรือไม่พบ SN', 'error');
-
-  const oldSN = String(job.sn);
-  const oldItem = stock.find(i => String(i.sn) === oldSN);
 
   try {
     if (oldItem) {

@@ -21,6 +21,7 @@ let currentRepairJobId = null;
 let currentViewDOId    = null;
 let currentViewGRNId   = null;
 let currentSwapJobId   = null;
+let swapMode           = 'new';  // 'new' = เปลี่ยน SN ใหม่ | 'same' = ใช้ SN เดิม
 let doModalMode        = 'create';
 let grnModalMode       = 'create';
 
