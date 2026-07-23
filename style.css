@@ -301,8 +301,13 @@ input[type=file]{display:none}
 .do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
 @media print{
   body *{visibility:hidden}
+  /* ยุบพื้นที่ของแอปทั้งหมด กันหน้าว่างตามท้าย (element ที่ซ่อนแบบ visibility ยังกินพื้นที่อยู่) */
+  #app{display:none!important}
+  /* ยกเลิก fixed/flex/overflow ของกล่อง modal ที่เปิดอยู่ ไม่งั้น Chrome พิมพ์เนื้อหาใน position:fixed ออกมาเป็นหน้าว่าง */
+  .modal-bg.open{position:static!important;display:block!important;background:none!important;padding:0!important;overflow:visible!important}
+  .modal-bg.open>.modal{position:static!important;display:block!important;max-height:none!important;overflow:visible!important;box-shadow:none!important;border:0!important;width:100%!important;max-width:none!important}
   #printArea,#printArea *,.print-area,.print-area *{visibility:visible}
-  #printArea,.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;overflow:visible!important;max-height:none!important}
+  #printArea,.print-area{position:absolute!important;left:0;top:0;width:100%;background:#fff;color:#000;overflow:visible!important;max-height:none!important;padding:0!important}
   .no-print{display:none!important}
   .do-header-edit{border:none!important;background:transparent!important}
 }
