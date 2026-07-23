@@ -302,7 +302,7 @@ input[type=file]{display:none}
 @media print{
   body *{visibility:hidden}
   #printArea,#printArea *,.print-area,.print-area *{visibility:visible}
-  #printArea,.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
+  #printArea,.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;overflow:visible!important;max-height:none!important}
   .no-print{display:none!important}
   .do-header-edit{border:none!important;background:transparent!important}
 }

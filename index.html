@@ -554,15 +554,15 @@
 </div>
 
 <div class="modal-bg" id="do-modal">
-  <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
-    <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+  <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:90vh">
+    <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb;flex-shrink:0">
       <div>
         <span style="font-weight:700;font-size:14px;color:#111">📄 ใบส่งของ (DO)</span>
         <span id="do-modal-badge" style="display:none;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;font-family:monospace">ดูประวัติ</span>
       </div>
       <button onclick="closeDOModal()" class="modal-close" style="color:#666;background:#fff;border-color:#e5e7eb">✕</button>
     </div>
-    <div id="printArea" style="padding:20px;background:#fff;color:#000">
+    <div id="printArea" style="padding:20px;background:#fff;color:#000;flex:1 1 auto;overflow-y:auto;min-height:0">
       <div class="do-header-edit" id="do-header-text" contenteditable="true">
         <div>องค์การเภสัชกรรม</div>
         <div>The Government Pharmaceutical Organization</div>
@@ -589,7 +589,7 @@
         <tbody id="do-items"></tbody>
       </table>
     </div>
-    <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center">
+    <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       <div id="do-modal-hint" style="font-size:11px;color:#888"></div>
       <div style="display:flex;gap:8px">
         <button onclick="closeDOModal()" style="background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)">ปิด</button>
@@ -601,15 +601,15 @@
 </div>
 
 <div class="modal-bg" id="grn-modal">
-  <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden">
-    <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+  <div class="modal modal-lg" style="background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:90vh">
+    <div class="modal-header no-print" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f9fafb;flex-shrink:0">
       <div>
         <span style="font-weight:700;font-size:14px;color:#111">📦 ใบรับเข้าสินค้า (GRN)</span>
         <span id="grn-modal-badge" style="display:none;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;font-family:monospace">ดูประวัติ</span>
       </div>
       <button onclick="closeGRNModal()" class="modal-close" style="color:#666;background:#fff;border-color:#e5e7eb">✕</button>
     </div>
-    <div class="print-area" style="padding:20px;background:#fff;color:#000">
+    <div class="print-area" style="padding:20px;background:#fff;color:#000;flex:1 1 auto;overflow-y:auto;min-height:0">
       <div style="font-size:15px;font-weight:700;text-align:center;margin-bottom:4px">ใบรับเข้าสินค้า (Goods Receive Note)</div>
       <div style="display:flex;justify-content:space-between;font-size:13px;margin:12px 0">
         <div>เลขที่: <input id="grn-no" class="do-input do-number-input"></div>
@@ -629,7 +629,7 @@
         <tbody id="grn-items"></tbody>
       </table>
     </div>
-    <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center">
+    <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       <div id="grn-modal-hint" style="font-size:11px;color:#888"></div>
       <div style="display:flex;gap:8px">
         <button onclick="closeGRNModal()" style="background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)">ปิด</button>
