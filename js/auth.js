@@ -64,6 +64,7 @@ async function finishLogin(session) {
 
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
+  restoreOutSession();
   showSync('success', '✓ โหลดข้อมูลสำเร็จ');
 
   refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();
@@ -90,6 +91,7 @@ async function doLogout() {
   document.getElementById('f-user').value = '';
   document.getElementById('f-pass').value = '';
   inSession = []; outSession = [];
+  try { localStorage.removeItem('shq_out_session'); } catch (e) {}
 }
 
 function showForgotPassword() {

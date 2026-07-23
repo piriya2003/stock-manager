@@ -18,7 +18,7 @@ async function doOutbound() {
     const { error } = await supaClient.from('inventory').update({ status: 'Sold', dispatched_at: dispatchedAt }).eq('id', item.id);
     if (error) throw error;
     item.status = 'Sold'; item.dispatched_at = dispatchedAt;
-    outSession.push(item);
+    outSession.push(item); persistOutSession();
     await logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.code), `→ ${custName}`);
     document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus();
     inlineMsg('o-msg', `✅ ตัด: ${sn} → ${custName} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`, true);
@@ -33,10 +33,34 @@ function renderOutSession() {
   ).join('');
 }
 
-function renderOutboundHistory() {
+// ── จำเซสชั่นการสแกนลง localStorage (กันหายเมื่อรีเฟรช) ──
+function persistOutSession() {
+  try {
+    const slim = outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+    localStorage.setItem('shq_out_session', JSON.stringify(slim));
+  } catch (e) { /* localStorage เต็ม/ปิด — ข้ามได้ */ }
+}
+function restoreOutSession() {
+  try {
+    const raw = localStorage.getItem('shq_out_session');
+    outSession = raw ? (JSON.parse(raw) || []) : [];
+  } catch (e) { outSession = []; }
+}
+function clearOutSession() {
+  if (outSession.length && !confirm(`ล้างรายการในเซสชั่น (${outSession.length} ชิ้น)?\n(ไม่กระทบสต็อก — แค่ล้างรายการที่รอออก DO)`)) return;
+  outSession = []; persistOutSession(); renderOutSession();
+}
+
+// ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
+function getFilteredSoldItems() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
   let soldItems = stock.filter(i => i.status === 'Sold');
   if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
+  return soldItems;
+}
+
+function renderOutboundHistory() {
+  const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
   const groups = {};

@@ -23,6 +23,8 @@ let currentViewGRNId   = null;
 let currentSwapJobId   = null;
 let swapMode           = 'new';  // 'new' = เปลี่ยน SN ใหม่ | 'same' = ใช้ SN เดิม
 let doModalMode        = 'create';
+let doItems            = [];      // รายการสินค้าที่กำลังจะออก DO (จากเซสชั่นสด หรือจากประวัติ)
+let doFromLiveSession  = true;    // true = มาจากเซสชั่นสแกนสด, false = มาจากประวัติที่ขายไปแล้ว
 let grnModalMode       = 'create';
 
 let impRows = [];

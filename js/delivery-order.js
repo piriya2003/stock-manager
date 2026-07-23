@@ -8,6 +8,20 @@ function genDONo() {
 }
 
 function openDOModal() {
+  doFromLiveSession = true;
+  doItems = outSession.slice();
+  prepDOModal();
+}
+
+function openDOFromHistory() {
+  const items = getFilteredSoldItems();
+  if (!items.length) return toast('ไม่มีรายการสินค้าที่ขายออก (ตามที่ค้นหาอยู่)', 'error');
+  doFromLiveSession = false;
+  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  prepDOModal();
+}
+
+function prepDOModal() {
   doModalMode = 'create';
   document.getElementById('do-modal-badge').style.display = 'none';
   document.getElementById('do-modal-hint').textContent = 'กรอกข้อมูลและกด "บันทึก DO" เพื่อบันทึกประวัติ';
@@ -24,11 +38,11 @@ function openDOModal() {
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
 
   const items = document.getElementById('do-items');
-  if (!outSession.length) {
-    items.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:12px;color:#888">ไม่มีรายการในเซสชั่นนี้</td></tr>';
+  if (!doItems.length) {
+    items.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';
   } else {
     const grp = {};
-    outSession.forEach(i => {
+    doItems.forEach(i => {
       if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
       grp[i.name].qty++; grp[i.name].sns.push(i.sn);
     });
@@ -54,7 +68,7 @@ async function saveDO() {
 
   if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
   if (!custVal) return toast('กรุณาระบุชื่อลูกค้า', 'error');
-  if (!outSession.length) return toast('ไม่มีรายการสินค้าในเซสชั่น', 'error');
+  if (!doItems.length) return toast('ไม่มีรายการสินค้าในใบ DO', 'error');
 
   try {
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
@@ -66,7 +80,7 @@ async function saveDO() {
       throw hErr;
     }
 
-    const itemRows = outSession.map(i => ({
+    const itemRows = doItems.map(i => ({
       do_header_id: header.id, item_name: i.name, item_code: i.code, item_category: i.category, sn: String(i.sn),
     }));
     const { error: iErr } = await supaClient.from('do_items').insert(itemRows);
@@ -75,7 +89,7 @@ async function saveDO() {
     doHistory.unshift({
       id: header.id, doNo, date: today(), type: typ, customer: custVal,
       salesperson: salesVal, machine: machineVal, headerText,
-      items: outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) })),
+      items: doItems.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) })),
       createdAt: header.created_at, createdBy: currentUserId,
     });
     updateDOBadge();
@@ -85,7 +99,7 @@ async function saveDO() {
     saveBtn.style.background = '#2dd4a0';
     toast(`บันทึกใบ DO: ${doNo} สำเร็จ`, 'success');
     setTimeout(() => { saveBtn.textContent = '💾 บันทึก DO'; saveBtn.style.background = '#22d3ee'; }, 3000);
-    outSession = []; renderOutSession();
+    if (doFromLiveSession) { outSession = []; persistOutSession(); renderOutSession(); }
   } catch (err) { toast('บันทึก DO ล้มเหลว: ' + err.message, 'error'); }
 }
 

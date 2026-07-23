@@ -316,14 +316,20 @@
           </div>
         </div>
         <div class="mt-4">
-          <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">รายการโอน/ขายในเซสชั่นนี้ (<span id="o-session-count">0</span> รายการ)</div>
+          <div class="flex items-center justify-between" style="margin-bottom:8px">
+            <div style="font-size:12px;font-weight:600;color:var(--t2)">รายการโอน/ขายในเซสชั่นนี้ (<span id="o-session-count">0</span> รายการ)</div>
+            <button onclick="clearOutSession()" class="btn btn-ghost btn-sm">🗑 ล้างเซสชั่น</button>
+          </div>
           <div id="o-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
         </div>
       </div>
       <hr class="divider" style="margin:24px 0">
       <div class="page-header mb-3">
         <div class="page-title" style="font-size:15px">📦 รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
-        <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:240px">
+        <div class="flex gap-2 flex-wrap items-center">
+          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:240px">
+          <button onclick="openDOFromHistory()" class="btn btn-primary btn-sm" title="สร้างใบ DO จากรายการที่ค้นหาอยู่">📄 สร้าง DO จากรายการนี้</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">สรุปจำนวนรวม: <span id="o-hist-total" style="color:var(--orange);font-weight:700;font-family:var(--mono)">0</span> ชิ้น</span></div>
