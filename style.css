@@ -299,6 +299,10 @@ input[type=file]{display:none}
 .do-header-edit:hover,.do-header-edit:focus{border-color:#aaa;background:#f9f9f9}
 .do-input{border:none;border-bottom:1px solid #999;background:transparent;padding:2px 4px;font-size:13px;color:#000;outline:none;width:auto}
 .do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
+/* ช่องกรอกในเอกสาร DO/GRN เป็นกระดาษสีขาวเสมอ — ไม่ให้ธีมมืดทำให้ช่อง/โฟกัสกลายเป็นกล่องดำจนตัวอักษรจม */
+#printArea input,.print-area input{background:#fff!important;color:#111!important}
+#printArea input:focus,.print-area input:focus{background:#fff!important;color:#111!important;box-shadow:0 0 0 2px rgba(84,155,255,.25)!important}
+#printArea .do-number-input,.print-area .do-number-input{background:#fffbeb!important}
 @media print{
   body *{visibility:hidden}
   /* บังคับพื้นหลังขาว-ตัวอักษรดำเสมอ ไม่งั้นธีมมืดจะพิมพ์พื้นดำทับข้อความ */
