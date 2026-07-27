@@ -11,6 +11,7 @@ let grnHistory  = [];
 
 let currentUser    = null;  // username (แสดงผล)
 let currentRole    = null;  // 'admin' | 'staff'
+let currentPosition = null; // ตำแหน่งงาน (เช่น HR, Executive) — แสดงแทน role label ถ้ามี
 let currentUserId  = null;  // uuid จาก auth.users
 let loginTime      = null;
 let sessionTimerInterval = null;

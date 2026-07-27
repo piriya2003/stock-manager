@@ -49,11 +49,19 @@ async function finishLogin(session) {
   currentUser = profile.username;
   currentRole = profile.role;
 
+  // ดึงตำแหน่งงาน (position) แบบ best-effort — ถ้ายังไม่มีคอลัมน์นี้ก็ข้ามไป ไม่ทำให้ login พัง
+  currentPosition = null;
+  try {
+    const posRes = await supaClient.from('users').select('position').eq('id', currentUserId).single();
+    if (!posRes.error && posRes.data && posRes.data.position) currentPosition = posRes.data.position;
+  } catch (e) { /* ยังไม่มีคอลัมน์ position — ใช้ role label แทน */ }
+
+  const roleLabel = currentRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('user-name-display').textContent = currentUser;
   document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
-  document.getElementById('user-role-display').textContent = currentRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
+  document.getElementById('user-role-display').textContent = currentPosition || roleLabel;
   document.getElementById('f-pass').value = '';
 
   const isAdmin = currentRole === 'admin';
