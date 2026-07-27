@@ -55,7 +55,8 @@ function prepDOModal() {
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
-  const sns = `<div class="sn-grid">${v.sns.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
+  const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียง SN น้อย→มาก
+  const sns = `<div class="sn-grid">${sorted.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
   return `<tr>
       <td class="c">${i + 1}</td>
       <td><b>${name}</b>${modelLine}${sns}</td>
@@ -113,7 +114,70 @@ async function saveDO() {
 }
 
 function closeDOModal() { document.getElementById('do-modal').classList.remove('open'); }
-function printDO() { window.print(); }
+function gatherDOData() {
+  const g = id => document.getElementById(id);
+  return {
+    cust:  g('do-cust').value || '',
+    addr:  g('do-cust-addr') ? g('do-cust-addr').innerHTML : '',
+    no:    g('do-no').value || '',
+    staff: g('do-salesperson').value || '',
+    po:    g('do-machine').value || '',
+    date:  g('do-date').textContent || '',
+    note:  g('do-header-text').innerHTML || '',
+    items: g('do-items').innerHTML || '',
+  };
+}
+
+// สร้าง HTML ของใบ DO 1 ฉบับ (label = 'ต้นฉบับ' หรือ 'สำเนา') จากข้อมูลปัจจุบัน
+function doDocHTML(label, d) {
+  return `<table class="do-page"><thead><tr><td>
+      <div class="do-lh">
+        <div class="do-lh-logo">SGDATAPOS</div>
+        <div class="do-lh-info">
+          SGDATAPOS (Thailand) Co. Ltd (Head Office)<br>
+          113/30 M.1 A. Muang, Chonburi 20000 Thailand<br>
+          เอสจี.ดาต้า.พอส. (ไทยแลนด์) จำกัด (สำนักงานใหญ่)<br>
+          113/30 หมู่ 1 ต.อ่างศิลา อ.เมือง จ.ชลบุรี 20000<br>
+          โทร. (66) 0802493954
+        </div>
+      </div>
+      <div class="do-taxid">หมายเลขประจำตัวผู้เสียภาษีอากร &nbsp;&nbsp; TAX ID 0205561043127</div>
+      <div class="do-doc-title"><div>${label}</div><div>ใบส่งสินค้า</div><div class="en">TAX INVOICE / DELIVERY NOTE / INVOICE</div></div>
+    </td></tr></thead><tbody><tr><td>
+      <table class="do-info"><tbody><tr>
+        <td class="do-to">
+          <div style="display:flex;gap:6px"><span style="flex-shrink:0;font-weight:600">TO:</span><span>${d.cust}</span></div>
+          <div class="do-addr" style="color:#000">${d.addr}</div>
+        </td>
+        <td class="do-meta"><table><tbody>
+          <tr><td class="k">No.</td><td>${d.no}</td></tr>
+          <tr><td class="k">Staff</td><td>${d.staff}</td></tr>
+          <tr><td class="k">PO Number</td><td>${d.po}</td></tr>
+          <tr><td class="k">Date Issued</td><td>${d.date}</td></tr>
+        </tbody></table></td>
+      </tr></tbody></table>
+      <table class="do-items-tbl">
+        <thead><tr><th style="width:56px">Product No.</th><th>Product Description</th><th style="width:46px">Qty</th><th style="width:64px">Unit Price</th><th style="width:72px">Amount</th></tr></thead>
+        <tbody>${d.items}</tbody>
+      </table>
+      <div class="do-note">หมายเหตุ: <span>${d.note}</span></div>
+      <table class="do-sign"><tbody><tr>
+        <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
+        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
+      </tr></tbody></table>
+    </td></tr></tbody></table>`;
+}
+
+// พิมพ์ 2 ฉบับ: ต้นฉบับ + สำเนา (คนละหน้า) แล้วคืนสภาพช่องแก้ไขเดิม
+function printDO() {
+  const pa = document.getElementById('printArea');
+  pa.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value)); // เก็บค่าที่พิมพ์ไว้ใน attribute
+  const saved = pa.innerHTML;
+  const d = gatherDOData();
+  pa.innerHTML = doDocHTML('ต้นฉบับ', d) + `<div class="do-copy2">${doDocHTML('สำเนา', d)}</div>`;
+  window.print();
+  pa.innerHTML = saved; // คืนฟอร์มที่แก้ไขได้ (window.print บล็อกจนปิด dialog)
+}
 
 function renderDOHistory() {
   const q  = (document.getElementById('doh-q').value || '').toLowerCase();

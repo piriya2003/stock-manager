@@ -340,6 +340,7 @@ input[type=file]{display:none}
 .do-doc .do-sign td{width:50%;text-align:center;font-size:11px;padding:0 22px;vertical-align:top}
 .do-doc .do-sign .sig-line{border-top:1px solid #000;margin:34px 20px 5px}
 .do-doc .do-sign .d{font-size:10px}
+.do-doc .do-copy2{break-before:page;page-break-before:always}
 @media print{
   body *{visibility:hidden}
   /* บังคับพื้นหลังขาว-ตัวอักษรดำเสมอ ไม่งั้นธีมมืดจะพิมพ์พื้นดำทับข้อความ */
