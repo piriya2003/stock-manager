@@ -167,7 +167,7 @@ function reopenGRNForPrint(id) {
   document.getElementById('grn-supplier').value = d.supplier || '';
   document.getElementById('grn-po').value = d.poNo || '';
   document.getElementById('grn-lot').value = d.lotNo || '';
-  document.getElementById('grn-date').textContent = fmtDate(d.createdAt);
+  document.getElementById('grn-date').textContent = fmtISO(d.createdAt);
 
   const grp = {};
   (d.items||[]).forEach(i => {

@@ -187,7 +187,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
-  document.getElementById('do-date').textContent = fmtDate(d.createdAt);
+  document.getElementById('do-date').textContent = fmtISO(d.createdAt);
 
   const grp = {};
   (d.items||[]).forEach(i => {

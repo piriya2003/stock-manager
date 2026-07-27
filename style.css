@@ -301,6 +301,8 @@ input[type=file]{display:none}
 .do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
 @media print{
   body *{visibility:hidden}
+  /* บังคับพื้นหลังขาว-ตัวอักษรดำเสมอ ไม่งั้นธีมมืดจะพิมพ์พื้นดำทับข้อความ */
+  html,body{background:#fff!important;background-image:none!important}
   /* ยุบพื้นที่ของแอปทั้งหมด กันหน้าว่างตามท้าย (element ที่ซ่อนแบบ visibility ยังกินพื้นที่อยู่) */
   #app{display:none!important}
   /* ยกเลิก fixed/flex/overflow ของกล่อง modal ที่เปิดอยู่ ไม่งั้น Chrome พิมพ์เนื้อหาใน position:fixed ออกมาเป็นหน้าว่าง */
