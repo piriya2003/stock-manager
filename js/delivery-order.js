@@ -37,23 +37,32 @@ function prepDOModal() {
   const custObj = customers.find(c => c.id === custSel.value);
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
 
+  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = ''; addr.contentEditable = 'true'; }
   const items = document.getElementById('do-items');
   if (!doItems.length) {
-    items.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';
+    items.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';
   } else {
     const grp = {};
     doItems.forEach(i => {
       if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
       grp[i.name].qty++; grp[i.name].sns.push(i.sn);
     });
-    items.innerHTML = Object.entries(grp).map(([name, v], i) => `
-      <tr style="border-bottom:1px solid #eee">
-        <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${name}<div style="font-size:10px;color:#888;white-space:nowrap">${v.code} / ${v.category}</div></td>
-        <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-        <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.join(', ')}</td>
-      </tr>`).join('');
+    items.innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   }
   document.getElementById('do-modal').classList.add('open');
+}
+
+// แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
+function doItemRow(name, v, i) {
+  const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
+  const sns = v.sns.map(sn => `<div class="sn">SN : ${sn}</div>`).join('');
+  return `<tr>
+      <td class="c">${i + 1}</td>
+      <td><b>${name}</b>${modelLine}${sns}</td>
+      <td class="c">${v.qty}</td>
+      <td></td>
+      <td></td>
+    </tr>`;
 }
 
 async function saveDO() {
@@ -188,18 +197,14 @@ function reopenDOForPrint(id) {
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
   document.getElementById('do-date').textContent = fmtISO(d.createdAt);
+  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = ''; addr.contentEditable = 'false'; }
 
   const grp = {};
   (d.items||[]).forEach(i => {
     if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
     grp[i.name].qty++; grp[i.name].sns.push(i.sn);
   });
-  document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => `
-    <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px">${i+1}. ${name}<div style="font-size:10px;color:#888">${v.code} / ${v.category}</div></td>
-      <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.join(', ')}</td>
-    </tr>`).join('');
+  document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   document.getElementById('do-modal').classList.add('open');
 }
 

@@ -562,32 +562,52 @@
       </div>
       <button onclick="closeDOModal()" class="modal-close" style="color:#666;background:#fff;border-color:#e5e7eb">✕</button>
     </div>
-    <div id="printArea" style="padding:20px;background:#fff;color:#000;flex:1 1 auto;overflow-y:auto;min-height:0">
-      <div class="do-header-edit" id="do-header-text" contenteditable="true">
-        <div>องค์การเภสัชกรรม</div>
-        <div>The Government Pharmaceutical Organization</div>
-        <div>แผนกร้านค้า 5 สาขารังสิต (สาขาที่ 00005)</div>
-        <div>โทร 02-536-3526, 02-536-4086</div>
-        <div>ใบเสร็จรับเงิน / ใบกำกับภาษีอย่างย่อ</div>
-        <div>หมายเลขผู้เสียภาษี : 099-4-000165315</div>
+    <div id="printArea" class="do-doc" style="padding:16px 18px;background:#fff;color:#000;flex:1 1 auto;overflow-y:auto;min-height:0">
+      <div class="do-lh">
+        <div class="do-lh-logo">SGDATAPOS</div>
+        <div class="do-lh-info">
+          SGDATAPOS (Thailand) Co. Ltd (Head Office)<br>
+          113/30 M.1 A. Muang, Chonburi 20000 Thailand<br>
+          เอสจี.ดาต้า.พอส. (ไทยแลนด์) จำกัด (สำนักงานใหญ่)<br>
+          113/30 หมู่ 1 ต.อ่างศิลา อ.เมือง จ.ชลบุรี 20000<br>
+          โทร. (66) 0802493954
+        </div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin:12px 0">
-        <div>เลขที่: <input id="do-no" class="do-input do-number-input"></div>
-        <div>วันที่: <span id="do-date" style="font-weight:600"></span></div>
+      <div class="do-taxid">หมายเลขประจำตัวผู้เสียภาษีอากร &nbsp;&nbsp; TAX ID 0205561043127</div>
+      <div class="do-doc-title">
+        <div>ต้นฉบับ</div>
+        <div>ใบส่งสินค้า</div>
+        <div class="en">TAX INVOICE / DELIVERY NOTE / INVOICE</div>
       </div>
-      <div style="border-bottom:1px dashed #ccc;padding-bottom:12px;margin-bottom:14px;font-size:13px;display:flex;flex-direction:column;gap:7px">
-        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">ลูกค้า:</label><input class="do-input" id="do-cust" style="flex:1;border:1px solid #f06060;padding:4px 8px"></div>
-        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">พนักงานขาย:</label><input class="do-input" id="do-salesperson" style="flex:1;border:1px solid #f06060;padding:4px 8px" value="กองกษาปณ์ สาขาที่00001"></div>
-        <div style="display:flex;gap:8px;align-items:center"><label style="width:80px;flex-shrink:0;color:#555">เครื่องขาย:</label><input class="do-input" id="do-machine" style="flex:1;border:1px solid #f06060;padding:4px 8px" value="1000"></div>
-      </div>
-      <table style="width:100%;font-size:12px;border-collapse:collapse">
-        <thead style="border-bottom:1px solid #000"><tr>
-          <th style="text-align:left;padding:5px 8px">#รายการสินค้า</th>
-          <th style="text-align:center;padding:5px 8px;width:80px">จำนวน</th>
-          <th style="text-align:left;padding:5px 8px;color:#666;font-size:11px">Serial Numbers</th>
+      <table class="do-info"><tbody><tr>
+        <td class="do-to">
+          <div style="display:flex;gap:6px"><span style="flex-shrink:0;font-weight:600">TO:</span><input id="do-cust" class="do-flat"></div>
+          <div id="do-cust-addr" contenteditable="true" class="do-addr" data-ph="ที่อยู่ / เลขผู้เสียภาษีลูกค้า (พิมพ์ได้)"></div>
+        </td>
+        <td class="do-meta">
+          <table><tbody>
+            <tr><td class="k">No.</td><td><input id="do-no" class="do-flat"></td></tr>
+            <tr><td class="k">Staff</td><td><input id="do-salesperson" class="do-flat"></td></tr>
+            <tr><td class="k">PO Number</td><td><input id="do-machine" class="do-flat"></td></tr>
+            <tr><td class="k">Date Issued</td><td><span id="do-date"></span></td></tr>
+          </tbody></table>
+        </td>
+      </tr></tbody></table>
+      <table class="do-items-tbl">
+        <thead><tr>
+          <th style="width:56px">Product No.</th>
+          <th>Product Description</th>
+          <th style="width:46px">Qty</th>
+          <th style="width:64px">Unit Price</th>
+          <th style="width:72px">Amount</th>
         </tr></thead>
         <tbody id="do-items"></tbody>
       </table>
+      <div class="do-note">หมายเหตุ: <span id="do-header-text" contenteditable="true"></span></div>
+      <table class="do-sign"><tbody><tr>
+        <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
+        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
+      </tr></tbody></table>
     </div>
     <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       <div id="do-modal-hint" style="font-size:11px;color:#888"></div>
