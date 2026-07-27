@@ -57,10 +57,13 @@ async function finishLogin(session) {
   document.getElementById('f-pass').value = '';
 
   const isAdmin = currentRole === 'admin';
-  ['nav-overview', 'nav-report', 'nav-backup', 'nav-import'].forEach(id => {
+  // แดชบอร์ดให้ทุกคนเห็น — ส่วนรายงาน/Backup/Import ยังเฉพาะ admin
+  ['nav-report', 'nav-backup', 'nav-import'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isAdmin ? 'flex' : 'none';
   });
+  const navOv = document.getElementById('nav-overview');
+  if (navOv) navOv.style.display = 'flex';
 
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
@@ -68,7 +71,7 @@ async function finishLogin(session) {
   showSync('success', '✓ โหลดข้อมูลสำเร็จ');
 
   refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();
-  tab(isAdmin ? 'overview' : 'inbound');
+  tab('overview');
   checkAlerts(); updateDOBadge(); updateGRNBadge(); updateClaimBadge();
   startSessionTimer();
   toast('เข้าสู่ระบบสำเร็จ', 'success');
