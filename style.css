@@ -305,6 +305,11 @@ input[type=file]{display:none}
 #printArea .do-number-input,.print-area .do-number-input{background:#fffbeb!important}
 /* ── ใบส่งสินค้า (DO) สไตล์ SGDATAPOS ── */
 .do-doc{font-family:'Sarabun',sans-serif;color:#000;font-size:12px;line-height:1.45}
+/* ตารางครอบทั้งใบ — thead = หัวกระดาษ (เบราว์เซอร์พิมพ์ซ้ำทุกหน้าให้อัตโนมัติ) */
+.do-doc .do-page{width:100%;border-collapse:collapse}
+.do-doc .do-page>thead{display:table-header-group}
+.do-doc .do-page>thead>tr>td{padding:0 0 4px;border:none}
+.do-doc .do-page>tbody>tr>td{padding:0;border:none}
 .do-doc .do-lh{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .do-doc .do-lh-logo{font-size:30px;font-weight:800;letter-spacing:.05em}
 .do-doc .do-lh-info{font-size:10px;line-height:1.5;text-align:right}
@@ -327,7 +332,8 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl td{padding:5px 7px;vertical-align:top;font-size:11px}
 .do-doc .do-items-tbl td.c{text-align:center}
 .do-doc .do-items-tbl td b{font-size:12px}
-.do-doc .do-items-tbl .sn{padding-left:10px;font-family:var(--mono);font-size:10.5px}
+.do-doc .do-items-tbl .sn-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;margin-top:2px}
+.do-doc .do-items-tbl .sn{padding-left:8px;font-family:var(--mono);font-size:10.5px}
 .do-doc .do-note{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
 .do-doc .do-sign{margin-top:30px}

@@ -55,7 +55,7 @@ function prepDOModal() {
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
-  const sns = v.sns.map(sn => `<div class="sn">SN : ${sn}</div>`).join('');
+  const sns = `<div class="sn-grid">${v.sns.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
   return `<tr>
       <td class="c">${i + 1}</td>
       <td><b>${name}</b>${modelLine}${sns}</td>

@@ -563,6 +563,7 @@
       <button onclick="closeDOModal()" class="modal-close" style="color:#666;background:#fff;border-color:#e5e7eb">✕</button>
     </div>
     <div id="printArea" class="do-doc" style="padding:16px 18px;background:#fff;color:#000;flex:1 1 auto;overflow-y:auto;min-height:0">
+    <table class="do-page"><thead><tr><td>
       <div class="do-lh">
         <div class="do-lh-logo">SGDATAPOS</div>
         <div class="do-lh-info">
@@ -579,6 +580,7 @@
         <div>ใบส่งสินค้า</div>
         <div class="en">TAX INVOICE / DELIVERY NOTE / INVOICE</div>
       </div>
+    </td></tr></thead><tbody><tr><td>
       <table class="do-info"><tbody><tr>
         <td class="do-to">
           <div style="display:flex;gap:6px"><span style="flex-shrink:0;font-weight:600">TO:</span><input id="do-cust" class="do-flat"></div>
@@ -608,6 +610,7 @@
         <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
         <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
       </tr></tbody></table>
+    </td></tr></tbody></table>
     </div>
     <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       <div id="do-modal-hint" style="font-size:11px;color:#888"></div>
