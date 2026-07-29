@@ -26,6 +26,53 @@ async function doOutbound() {
   } catch (err) { inlineMsg('o-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
 }
 
+// ตัดสต็อกหลายรายการทีเดียว จากรายการ SN (ไม่ต้องสแกน)
+async function doOutboundBulk() {
+  const dt   = document.getElementById('o-date').value || today();
+  const typ  = document.getElementById('o-type').value;
+  const custId = document.getElementById('o-cust').value;
+  const custObj = customers.find(c => c.id === custId);
+  const custName = custObj ? custObj.name : '—';
+
+  const raw = document.getElementById('o-bulk').value || '';
+  const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];
+  if (!list.length) return inlineMsg('o-bulk-msg', '❌ กรุณาวาง/พิมพ์รายการ SN ก่อน', false);
+
+  const toSell = [], notFound = [], notAvail = [];
+  list.forEach(sn => {
+    const item = stock.find(i => String(i.sn) === sn && i.status === 'Available');
+    if (item) toSell.push(item);
+    else if (stock.find(i => String(i.sn) === sn)) notAvail.push(sn);
+    else notFound.push(sn);
+  });
+
+  if (!toSell.length) return inlineMsg('o-bulk-msg', `❌ ไม่มี SN ที่ตัดได้ (ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`, false);
+
+  try {
+    const dispatchedAt = nowISO();
+    const { error } = await supaClient.from('inventory')
+      .update({ status: 'Sold', dispatched_at: dispatchedAt })
+      .in('id', toSell.map(i => i.id));
+    if (error) throw error;
+
+    for (const item of toSell) {
+      item.status = 'Sold'; item.dispatched_at = dispatchedAt;
+      outSession.push(item);
+      await logTransaction(dt, typ, item.name, item.code, item.sn, getBalance(item.code), `→ ${custName}`);
+    }
+    persistOutSession();
+    renderOutSession(); renderOutboundHistory(); checkAlerts();
+    document.getElementById('o-bulk').value = '';
+
+    let msg = `✅ ตัดสต็อก ${toSell.length} รายการ → ${custName}`;
+    if (notFound.length || notAvail.length) msg += `  (ข้าม: ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`;
+    inlineMsg('o-bulk-msg', msg, true);
+    toast(`ตัดสต็อก ${toSell.length} รายการสำเร็จ`, 'success');
+    if (notFound.length) console.warn('SN ไม่พบในระบบ:', notFound.join(', '));
+    if (notAvail.length) console.warn('SN ไม่พร้อมตัด (ขาย/ซ่อม/เคลมไปแล้ว):', notAvail.join(', '));
+  } catch (err) { inlineMsg('o-bulk-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
+}
+
 function renderOutSession() {
   document.getElementById('o-session-count').textContent = outSession.length;
   document.getElementById('o-session').innerHTML = outSession.slice().reverse().map(i =>

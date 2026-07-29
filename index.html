@@ -315,6 +315,17 @@
             <div class="inline-msg" id="o-msg"></div>
           </div>
         </div>
+        <div class="scan-hint mt-4" style="background:rgba(84,155,255,.06);border-color:rgba(84,155,255,.15)">📋 หรือ <b>ตัดหลายรายการทีเดียว</b> โดยไม่ต้องสแกน — วาง/พิมพ์ Serial Number (คัดลอกจาก Excel ได้) แล้วกดตัดสต็อกทั้งหมด</div>
+        <div class="card">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-row">
+              <label class="field-label" style="color:var(--blue)">รายการ SN หลายตัว — คั่นด้วยขึ้นบรรทัด / เว้นวรรค / คอมมา</label>
+              <textarea id="o-bulk" rows="5" placeholder="เช่น&#10;SK46025110001&#10;SK46025110002&#10;SK46025110003" style="resize:vertical;font-family:var(--mono);font-size:13px"></textarea>
+            </div>
+            <button onclick="doOutboundBulk()" class="btn btn-primary btn-full">📤 ตัดสต็อกทั้งหมด (ไม่ต้องสแกน)</button>
+            <div class="inline-msg" id="o-bulk-msg"></div>
+          </div>
+        </div>
         <div class="mt-4">
           <div class="flex items-center justify-between" style="margin-bottom:8px">
             <div style="font-size:12px;font-weight:600;color:var(--t2)">รายการโอน/ขายในเซสชั่นนี้ (<span id="o-session-count">0</span> รายการ)</div>
