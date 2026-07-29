@@ -342,6 +342,8 @@ input[type=file]{display:none}
 .do-doc .do-sign .d{font-size:10px}
 .do-doc .do-copy2{break-before:page;page-break-before:always}
 @media print{
+  /* margin:0 ทำให้เบราว์เซอร์ไม่มีที่ว่างใส่ หัว/ท้ายกระดาษ (วันที่ · ชื่อเว็บ · URL) */
+  @page{margin:0}
   body *{visibility:hidden}
   /* บังคับพื้นหลังขาว-ตัวอักษรดำเสมอ ไม่งั้นธีมมืดจะพิมพ์พื้นดำทับข้อความ */
   html,body{background:#fff!important;background-image:none!important}
@@ -355,7 +357,7 @@ input[type=file]{display:none}
   .no-print{display:none!important}
   .do-header-edit{border:none!important;background:transparent!important}
   /* ── ทำให้ช่องกรอกดูเป็นเอกสารทางการ: ไม่มีกรอบสี ไม่มีกล่องพื้นสี ── */
-  #printArea,.print-area{padding:6mm 8mm!important;font-family:'Sarabun',sans-serif!important}
+  #printArea,.print-area{padding:10mm 9mm!important;font-family:'Sarabun',sans-serif!important}
   #printArea input,.print-area input,.do-input,.do-number-input{
     border:none!important;background:transparent!important;box-shadow:none!important;
     padding:0!important;color:#000!important;font-family:'Sarabun',sans-serif!important;font-size:13px!important}

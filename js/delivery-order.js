@@ -32,7 +32,7 @@ function prepDOModal() {
   document.getElementById('do-salesperson').readOnly = false;
   document.getElementById('do-machine').readOnly = false;
   document.getElementById('do-no').value = genDONo();
-  document.getElementById('do-date').textContent = nowStr();
+  document.getElementById('do-date').textContent = fmtDate(nowISO());
   const custSel = document.getElementById('o-cust');
   const custObj = customers.find(c => c.id === custSel.value);
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
@@ -260,7 +260,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
-  document.getElementById('do-date').textContent = fmtISO(d.createdAt);
+  document.getElementById('do-date').textContent = fmtDate(d.createdAt);
   const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = ''; addr.contentEditable = 'false'; }
 
   const grp = {};

@@ -18,7 +18,7 @@ function openGRNModal() {
   document.getElementById('grn-po').readOnly = false;
   document.getElementById('grn-lot').readOnly = false;
   document.getElementById('grn-no').value = genGRNNo();
-  document.getElementById('grn-date').textContent = nowStr();
+  document.getElementById('grn-date').textContent = fmtDate(nowISO());
   document.getElementById('grn-supplier').value = document.getElementById('i-supplier').value.trim();
   document.getElementById('grn-po').value = document.getElementById('i-po').value.trim();
   document.getElementById('grn-lot').value = document.getElementById('i-lot').value.trim();
@@ -167,7 +167,7 @@ function reopenGRNForPrint(id) {
   document.getElementById('grn-supplier').value = d.supplier || '';
   document.getElementById('grn-po').value = d.poNo || '';
   document.getElementById('grn-lot').value = d.lotNo || '';
-  document.getElementById('grn-date').textContent = fmtISO(d.createdAt);
+  document.getElementById('grn-date').textContent = fmtDate(d.createdAt);
 
   const grp = {};
   (d.items||[]).forEach(i => {
