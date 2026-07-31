@@ -14,7 +14,8 @@ async function doOutbound() {
   if (!item) { inlineMsg('o-msg', `❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`, false); document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
 
   try {
-    const dispatchedAt = nowISO();
+    if (!outSession.length) sessionDispatchTime = nowISO();  // เริ่มชุดใหม่
+    const dispatchedAt = sessionDispatchTime;
     const { error } = await supaClient.from('inventory').update({ status: 'Sold', dispatched_at: dispatchedAt }).eq('id', item.id);
     if (error) throw error;
     item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
@@ -50,7 +51,8 @@ async function doOutboundBulk() {
   if (!toSell.length) return inlineMsg('o-bulk-msg', `❌ ไม่มี SN ที่ตัดได้ (ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`, false);
 
   try {
-    const dispatchedAt = nowISO();
+    if (!outSession.length) sessionDispatchTime = nowISO();  // เริ่มชุดใหม่
+    const dispatchedAt = sessionDispatchTime;
     const { error } = await supaClient.from('inventory')
       .update({ status: 'Sold', dispatched_at: dispatchedAt })
       .in('id', toSell.map(i => i.id));
@@ -85,7 +87,7 @@ function renderOutSession() {
 // ── จำเซสชั่นการสแกนลง localStorage (กันหายเมื่อรีเฟรช) ──
 function persistOutSession() {
   try {
-    const slim = outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+    const slim = outSession.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn), dispatched_at: i.dispatched_at, dispatched_to: i.dispatched_to }));
     localStorage.setItem('shq_out_session', JSON.stringify(slim));
   } catch (e) { /* localStorage เต็ม/ปิด — ข้ามได้ */ }
 }
@@ -94,10 +96,18 @@ function restoreOutSession() {
     const raw = localStorage.getItem('shq_out_session');
     outSession = raw ? (JSON.parse(raw) || []) : [];
   } catch (e) { outSession = []; }
+  sessionDispatchTime = outSession[0] ? outSession[0].dispatched_at : null;
 }
 function clearOutSession() {
   if (outSession.length && !confirm(`ล้างรายการในเซสชั่น (${outSession.length} ชิ้น)?\n(ไม่กระทบสต็อก — แค่ล้างรายการที่รอออก DO)`)) return;
-  outSession = []; persistOutSession(); renderOutSession();
+  outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession();
+}
+
+// เลขชุดจ่ายจากเวลา: HHMM DD MM YYYY เช่น 16:30 04/09/2026 → 163004092026
+function genBatchNo(iso) {
+  if (!iso) return '';
+  const n = new Date(iso), p = x => String(x).padStart(2, '0');
+  return p(n.getHours()) + p(n.getMinutes()) + p(n.getDate()) + p(n.getMonth() + 1) + n.getFullYear();
 }
 
 // ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
@@ -123,25 +133,47 @@ function renderOutboundHistory() {
   const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
-  const groups = {};
+  // จัดกลุ่มเป็น "ชุดการจ่าย" ตามเวลาที่จ่ายออก (dispatched_at)
+  const batches = {};
   soldItems.forEach(item => {
-    const key = item.name + '|' + item.code;
-    if (!groups[key]) groups[key] = { name: item.name, code: item.code, category: item.category, count: 0, sns: [], lots: new Set() };
-    groups[key].count++; groups[key].sns.push(item.sn);
-    if (item.lot_no) groups[key].lots.add(item.lot_no);
+    const key = item.dispatched_at || 'no-batch';
+    if (!batches[key]) batches[key] = { key, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
+    batches[key].items.push(item);
   });
+  const batchList = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
 
   const tbody = document.getElementById('o-hist-tbody');
   if (!tbody) return;
-  const groupVals = Object.values(groups);
-  if (!groupVals.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>'; return; }
-  tbody.innerHTML = groupVals.map(g => `
-    <tr>
-      <td style="color:var(--t1);font-weight:500">${g.name}</td>
-      <td><div class="code-cell">${g.code}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${g.category}${g.lots.size ? ' · ล็อต: ' + [...g.lots].join(', ') : ''}</div></td>
-      <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700;font-size:14px">${g.count}</td>
-      <td style="font-size:11px;color:var(--t2);font-family:var(--mono);max-width:300px;line-height:1.6;white-space:normal">
-        ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('')}
-      </td>
-    </tr>`).join('');
+  if (!batchList.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>'; return; }
+
+  let html = '';
+  batchList.forEach(b => {
+    const time = b.at ? (fmtDate(b.at) + ' ' + new Date(b.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) : '';
+    const head = b.at
+      ? `🧾 ชุด #${genBatchNo(b.at)} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
+      : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
+    html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <span style="font-size:12px;font-weight:700;color:var(--t1)">${head}</span>
+        <button onclick="openDOFromBatch('${b.key}')" class="btn btn-primary btn-sm">📄 สร้าง DO ชุดนี้</button>
+      </div></td></tr>`;
+
+    const prod = {};
+    b.items.forEach(item => {
+      const k = item.name + '|' + item.code;
+      if (!prod[k]) prod[k] = { name: item.name, code: item.code, category: item.category, sns: [], lots: new Set() };
+      prod[k].sns.push(item.sn);
+      if (item.lot_no) prod[k].lots.add(item.lot_no);
+    });
+    Object.values(prod).forEach(g => {
+      html += `<tr>
+        <td style="color:var(--t1);font-weight:500">${g.name}</td>
+        <td><div class="code-cell">${g.code}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${g.category}${g.lots.size ? ' · ล็อต: ' + [...g.lots].join(', ') : ''}</div></td>
+        <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700;font-size:14px">${g.sns.length}</td>
+        <td style="font-size:11px;color:var(--t2);font-family:var(--mono);max-width:300px;line-height:1.6;white-space:normal">
+          ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('')}
+        </td></tr>`;
+    });
+  });
+  tbody.innerHTML = html;
 }

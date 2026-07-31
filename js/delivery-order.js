@@ -24,6 +24,16 @@ function openDOFromHistory() {
   if (histCust) document.getElementById('do-cust').value = histCust;
 }
 
+// สร้าง DO เฉพาะ "ชุดการจ่าย" เดียว (ตามเวลาที่จ่ายออก)
+function openDOFromBatch(batchKey) {
+  const items = stock.filter(i => i.status === 'Sold' && (i.dispatched_at || 'no-batch') === batchKey);
+  if (!items.length) return toast('ไม่พบรายการในชุดนี้', 'error');
+  doFromLiveSession = false;
+  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  prepDOModal();
+  if (items[0].dispatched_to) document.getElementById('do-cust').value = items[0].dispatched_to;
+}
+
 function prepDOModal() {
   doModalMode = 'create';
   document.getElementById('do-modal-badge').style.display = 'none';
@@ -112,7 +122,7 @@ async function saveDO() {
     saveBtn.style.background = '#2dd4a0';
     toast(`บันทึกใบ DO: ${doNo} สำเร็จ`, 'success');
     setTimeout(() => { saveBtn.textContent = '💾 บันทึก DO'; saveBtn.style.background = '#22d3ee'; }, 3000);
-    if (doFromLiveSession) { outSession = []; persistOutSession(); renderOutSession(); }
+    if (doFromLiveSession) { outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession(); }
   } catch (err) { toast('บันทึก DO ล้มเหลว: ' + err.message, 'error'); }
 }
 

@@ -18,6 +18,7 @@ let sessionTimerInterval = null;
 
 let inSession  = [];
 let outSession = [];
+let sessionDispatchTime = null;  // เวลาเริ่มชุดจ่ายปัจจุบัน — สินค้าชุดเดียวกันใช้เวลาเดียวกัน (คีย์ของ "ชุดการจ่าย")
 let currentRepairJobId = null;
 let currentViewDOId    = null;
 let currentViewGRNId   = null;

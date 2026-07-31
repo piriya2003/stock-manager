@@ -101,7 +101,7 @@ async function doLogout() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('f-user').value = '';
   document.getElementById('f-pass').value = '';
-  inSession = []; outSession = [];
+  inSession = []; outSession = []; sessionDispatchTime = null;
   try { localStorage.removeItem('shq_out_session'); } catch (e) {}
 }
 
