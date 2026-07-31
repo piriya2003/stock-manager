@@ -17,7 +17,8 @@ async function doOutbound() {
     const dispatchedAt = nowISO();
     const { error } = await supaClient.from('inventory').update({ status: 'Sold', dispatched_at: dispatchedAt }).eq('id', item.id);
     if (error) throw error;
-    item.status = 'Sold'; item.dispatched_at = dispatchedAt;
+    item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
+    recordDispatchTo([item.id], custName);
     outSession.push(item); persistOutSession();
     await logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.code), `→ ${custName}`);
     document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus();
@@ -56,10 +57,11 @@ async function doOutboundBulk() {
     if (error) throw error;
 
     for (const item of toSell) {
-      item.status = 'Sold'; item.dispatched_at = dispatchedAt;
+      item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
       outSession.push(item);
       await logTransaction(dt, typ, item.name, item.code, item.sn, getBalance(item.code), `→ ${custName}`);
     }
+    recordDispatchTo(toSell.map(i => i.id), custName);
     persistOutSession();
     renderOutSession(); renderOutboundHistory(); checkAlerts();
     document.getElementById('o-bulk').value = '';
@@ -102,10 +104,19 @@ function clearOutSession() {
 function getFilteredSoldItems() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
   const d = document.getElementById('o-hist-date')?.value || '';
+  const cust = document.getElementById('o-hist-cust')?.value || '';
   let soldItems = stock.filter(i => i.status === 'Sold');
   if (d) soldItems = soldItems.filter(i => i.dispatched_at && new Date(i.dispatched_at).toLocaleDateString('en-CA') === d);
+  if (cust) soldItems = soldItems.filter(i => i.dispatched_to === cust);
   if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
   return soldItems;
+}
+
+// บันทึกลูกค้าปลายทางลงสินค้า (best-effort — ถ้ายังไม่มีคอลัมน์ dispatched_to ก็ข้ามไป ไม่ทำให้การตัดสต็อกพัง)
+function recordDispatchTo(ids, custName) {
+  if (!ids.length) return;
+  supaClient.from('inventory').update({ dispatched_to: custName }).in('id', ids)
+    .then(() => {}, () => {});
 }
 
 function renderOutboundHistory() {

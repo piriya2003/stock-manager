@@ -74,6 +74,13 @@ function refreshCustomerSelects() {
     s.innerHTML = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     if (customers.some(c => c.id === prev)) s.value = prev;
   });
+  // ตัวกรองลูกค้าในหน้าประวัติ — เก็บค่าเป็น "ชื่อลูกค้า" (ตรงกับ dispatched_to)
+  const hist = document.getElementById('o-hist-cust');
+  if (hist) {
+    const prev = hist.value;
+    hist.innerHTML = '<option value="">— ทุกลูกค้า —</option>' + customers.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    hist.value = prev;
+  }
 }
 
 function updateDataLists() {

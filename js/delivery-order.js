@@ -15,10 +15,13 @@ function openDOModal() {
 
 function openDOFromHistory() {
   const items = getFilteredSoldItems();
-  if (!items.length) return toast('ไม่มีรายการสินค้าที่ขายออก (ตามที่ค้นหาอยู่)', 'error');
+  if (!items.length) return toast('ไม่มีรายการสินค้าที่ขายออก (ตามที่กรองอยู่)', 'error');
   doFromLiveSession = false;
   doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
   prepDOModal();
+  // เติมชื่อลูกค้าจากตัวกรองลูกค้าในหน้าประวัติ (ถ้าเลือกไว้)
+  const histCust = document.getElementById('o-hist-cust')?.value;
+  if (histCust) document.getElementById('do-cust').value = histCust;
 }
 
 function prepDOModal() {

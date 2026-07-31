@@ -137,6 +137,7 @@ create table if not exists inventory (
   replaced_by_sn  text,
   received_at     timestamptz not null default now(),  -- เวลารับเข้าคลัง
   dispatched_at   timestamptz,                         -- เวลาออกจากคลัง
+  dispatched_to   text,                                -- ลูกค้า/สาขาปลายทางที่จ่ายออก
   lot_no          text,
   supplier        text,
   po_no           text,
