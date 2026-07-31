@@ -101,7 +101,9 @@ function clearOutSession() {
 // ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
 function getFilteredSoldItems() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
+  const d = document.getElementById('o-hist-date')?.value || '';
   let soldItems = stock.filter(i => i.status === 'Sold');
+  if (d) soldItems = soldItems.filter(i => i.dispatched_at && new Date(i.dispatched_at).toLocaleDateString('en-CA') === d);
   if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
   return soldItems;
 }

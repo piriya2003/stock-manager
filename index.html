@@ -338,10 +338,14 @@
       <div class="page-header mb-3">
         <div class="page-title" style="font-size:15px">📦 รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
         <div class="flex gap-2 flex-wrap items-center">
-          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:240px">
-          <button onclick="openDOFromHistory()" class="btn btn-primary btn-sm" title="สร้างใบ DO จากรายการที่ค้นหาอยู่">📄 สร้าง DO จากรายการนี้</button>
+          <label class="field-label" style="margin:0">วันที่จ่ายออก</label>
+          <input type="date" id="o-hist-date" onchange="renderOutboundHistory()" style="width:150px">
+          <button onclick="document.getElementById('o-hist-date').value='';renderOutboundHistory()" class="btn btn-ghost btn-sm" title="ล้างวันที่ (แสดงทุกวัน)">ทุกวัน</button>
+          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
+          <button onclick="openDOFromHistory()" class="btn btn-primary btn-sm" title="สร้างใบ DO เฉพาะรายการที่กรองอยู่ (วันที่/ค้นหา)">📄 สร้าง DO จากรายการนี้</button>
         </div>
       </div>
+      <div style="font-size:11px;color:var(--t3);margin:-8px 0 12px">💡 เลือก "วันที่จ่ายออก" เพื่อแยกใบ DO ตามวัน — จะได้ไม่รวมของหลายวันไว้ในใบเดียว</div>
       <div class="card">
         <div class="card-header"><span class="card-title">สรุปจำนวนรวม: <span id="o-hist-total" style="color:var(--orange);font-weight:700;font-family:var(--mono)">0</span> ชิ้น</span></div>
         <div class="tbl-wrap" style="max-height:400px;overflow-y:auto">
