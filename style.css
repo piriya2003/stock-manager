@@ -357,7 +357,14 @@ input[type=file]{display:none}
   .no-print{display:none!important}
   .do-header-edit{border:none!important;background:transparent!important}
   /* ── ทำให้ช่องกรอกดูเป็นเอกสารทางการ: ไม่มีกรอบสี ไม่มีกล่องพื้นสี ── */
-  #printArea,.print-area{padding:10mm 9mm!important;font-family:'Sarabun',sans-serif!important}
+  #printArea,.print-area{font-family:'Sarabun',sans-serif!important}
+  .print-area{padding:10mm 9mm!important}
+  /* DO พิมพ์หลายแผ่น — ระยะขอบ "บน" ต้องอยู่ในหัวกระดาษ (thead) ที่พิมพ์ซ้ำทุกหน้า
+     ถ้าใส่ที่กล่อง (#printArea หรือ .do-sheet) จะได้ขอบบนเฉพาะหน้าแรกของกล่องนั้น
+     ทำให้แผ่นถัดไปหัวจดหมายติดขอบกระดาษ */
+  #printArea{padding:0!important}
+  #printArea .do-sheet{padding:0 9mm 10mm}
+  #printArea .do-page>thead>tr>td{padding-top:10mm!important}
   #printArea input,.print-area input,.do-input,.do-number-input{
     border:none!important;background:transparent!important;box-shadow:none!important;
     padding:0!important;color:#000!important;font-family:'Sarabun',sans-serif!important;font-size:13px!important}

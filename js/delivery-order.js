@@ -187,7 +187,9 @@ function printDO() {
   pa.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value)); // เก็บค่าที่พิมพ์ไว้ใน attribute
   const saved = pa.innerHTML;
   const d = gatherDOData();
-  pa.innerHTML = doDocHTML('ต้นฉบับ', d) + `<div class="do-copy2">${doDocHTML('สำเนา', d)}</div>`;
+  // ห่อแต่ละฉบับด้วย .do-sheet เพื่อให้ระยะขอบกระดาษอยู่ที่ "ใบ" ไม่ใช่กล่องรวม (หัวจดหมายจะได้สูงเท่ากันทุกแผ่น)
+  pa.innerHTML = `<div class="do-sheet">${doDocHTML('ต้นฉบับ', d)}</div>`
+               + `<div class="do-sheet do-copy2">${doDocHTML('สำเนา', d)}</div>`;
   window.print();
   pa.innerHTML = saved; // คืนฟอร์มที่แก้ไขได้ (window.print บล็อกจนปิด dialog)
 }
