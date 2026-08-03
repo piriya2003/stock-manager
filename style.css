@@ -312,6 +312,7 @@ input[type=file]{display:none}
 .do-doc .do-page>tbody>tr>td{padding:0;border:none}
 .do-doc .do-lh{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .do-doc .do-lh-logo{font-size:30px;font-weight:800;letter-spacing:.05em}
+.do-doc .do-lh-logo img{height:34px;width:auto;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .do-doc .do-lh-info{font-size:10px;line-height:1.5;text-align:right}
 .do-doc .do-taxid{font-size:10px;margin:6px 0 2px}
 .do-doc .do-doc-title{text-align:center;margin:8px 0 10px;font-weight:700}

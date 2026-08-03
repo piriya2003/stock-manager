@@ -145,7 +145,7 @@ function gatherDOData() {
 function doDocHTML(label, d) {
   return `<table class="do-page"><thead><tr><td>
       <div class="do-lh">
-        <div class="do-lh-logo">SGDATAPOS</div>
+        <div class="do-lh-logo"><img src="logo.png" alt="SGDATAPOS"></div>
         <div class="do-lh-info">
           SGDATAPOS (Thailand) Co. Ltd (Head Office)<br>
           113/30 M.1 A. Muang, Chonburi 20000 Thailand<br>
