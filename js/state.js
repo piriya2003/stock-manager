@@ -19,6 +19,7 @@ let sessionTimerInterval = null;
 let inSession  = [];
 let outSession = [];
 let sessionDispatchTime = null;  // เวลาเริ่มชุดจ่ายปัจจุบัน — สินค้าชุดเดียวกันใช้เวลาเดียวกัน (คีย์ของ "ชุดการจ่าย")
+let outboundBatches     = [];    // ชุดการจ่ายที่แสดงอยู่ในหน้าประวัติ (ใช้อ้างอิงตอนกดสร้าง DO ของชุดนั้น)
 let currentRepairJobId = null;
 let currentViewDOId    = null;
 let currentViewGRNId   = null;

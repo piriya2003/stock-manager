@@ -133,29 +133,32 @@ function renderOutboundHistory() {
   const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
-  // จัดกลุ่มเป็น "ชุดการจ่าย" ตามเวลาที่จ่ายออก (dispatched_at)
+  // จัดกลุ่มเป็น "ชุดการจ่าย" ตามเลขชุด (นาทีที่จ่าย) + ลูกค้า
+  // ใช้ความละเอียดระดับนาทีให้ตรงกับเลขชุดที่แสดง — ของเก่าที่สแกนทีละชิ้น (วินาทีต่างกัน) จะได้รวมเป็นชุดเดียว
   const batches = {};
   soldItems.forEach(item => {
-    const key = item.dispatched_at || 'no-batch';
-    if (!batches[key]) batches[key] = { key, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
+    const no  = item.dispatched_at ? genBatchNo(item.dispatched_at) : '';
+    const key = no ? no + '|' + (item.dispatched_to || '') : 'no-batch';
+    if (!batches[key]) batches[key] = { no, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
     batches[key].items.push(item);
   });
-  const batchList = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  outboundBatches = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const batchList = outboundBatches;
 
   const tbody = document.getElementById('o-hist-tbody');
   if (!tbody) return;
   if (!batchList.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>'; return; }
 
   let html = '';
-  batchList.forEach(b => {
+  batchList.forEach((b, bi) => {
     const time = b.at ? (fmtDate(b.at) + ' ' + new Date(b.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) : '';
     const head = b.at
-      ? `🧾 ชุด #${genBatchNo(b.at)} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
+      ? `🧾 ชุด #${b.no} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
       : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <span style="font-size:12px;font-weight:700;color:var(--t1)">${head}</span>
-        <button onclick="openDOFromBatch('${b.key}')" class="btn btn-primary btn-sm">📄 สร้าง DO ชุดนี้</button>
+        <button onclick="openDOFromBatch(${bi})" class="btn btn-primary btn-sm">📄 สร้าง DO ชุดนี้</button>
       </div></td></tr>`;
 
     const prod = {};

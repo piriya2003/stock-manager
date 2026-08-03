@@ -25,13 +25,13 @@ function openDOFromHistory() {
 }
 
 // สร้าง DO เฉพาะ "ชุดการจ่าย" เดียว (ตามเวลาที่จ่ายออก)
-function openDOFromBatch(batchKey) {
-  const items = stock.filter(i => i.status === 'Sold' && (i.dispatched_at || 'no-batch') === batchKey);
-  if (!items.length) return toast('ไม่พบรายการในชุดนี้', 'error');
+function openDOFromBatch(batchIndex) {
+  const b = outboundBatches[batchIndex];
+  if (!b || !b.items.length) return toast('ไม่พบรายการในชุดนี้', 'error');
   doFromLiveSession = false;
-  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  doItems = b.items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
   prepDOModal();
-  if (items[0].dispatched_to) document.getElementById('do-cust').value = items[0].dispatched_to;
+  if (b.cust) document.getElementById('do-cust').value = b.cust;
 }
 
 function prepDOModal() {
