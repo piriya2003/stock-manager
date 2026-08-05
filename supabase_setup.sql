@@ -216,8 +216,9 @@ create table if not exists do_headers (
   do_no         text not null unique,
   do_date       date not null default current_date,
   type          do_type not null default 'โอนสินค้า',
-  customer_id   uuid references customers(id),
-  customer_name text not null,
+  customer_id      uuid references customers(id),
+  customer_name    text not null,
+  customer_address text,                              -- ที่อยู่ / เลขผู้เสียภาษี ที่พิมพ์บนใบ DO
   salesperson   text,
   machine       text,
   header_text   text,

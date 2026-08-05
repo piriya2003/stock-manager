@@ -14,3 +14,6 @@ create policy "Authenticated users can update do_items"
 drop policy if exists "Authenticated users can update do_headers" on public.do_headers;
 create policy "Authenticated users can update do_headers"
   on public.do_headers for update to authenticated using (true) with check (true);
+
+-- ที่อยู่ / เลขผู้เสียภาษีของลูกค้า ที่พิมพ์บนใบ DO (เดิมไม่ได้เก็บ เปิดใบเก่ามาแล้วช่องนี้จะว่าง)
+alter table public.do_headers add column if not exists customer_address text;

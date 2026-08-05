@@ -37,7 +37,7 @@ async function loadAllData() {
   });
   doHistory = doHRes.data.map(d => ({
     id: d.id, doNo: d.do_no, date: d.do_date, type: d.type,
-    customer: d.customer_name, salesperson: d.salesperson, machine: d.machine,
+    customer: d.customer_name, customerAddress: d.customer_address, salesperson: d.salesperson, machine: d.machine,
     headerText: d.header_text, createdAt: d.created_at, createdBy: d.created_by,
     items: itemsByHeader[d.id] || [],
   }));

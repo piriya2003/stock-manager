@@ -168,10 +168,13 @@ async function saveDO() {
     priceByName[tr.dataset.name] = { price: isFinite(price) ? price : null, amount: isFinite(amount) ? amount : null };
   });
 
+  const custAddr = document.getElementById('do-cust-addr')?.innerText.trim() || '';
+
   try {
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
       do_no: doNo, do_date: today(), type: typ, customer_id: custId, customer_name: custVal,
-      salesperson: salesVal, machine: machineVal, header_text: headerText, created_by: currentUserId,
+      customer_address: custAddr, salesperson: salesVal, machine: machineVal,
+      header_text: headerText, created_by: currentUserId,
     }).select().single();
     if (hErr) {
       if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
@@ -186,7 +189,7 @@ async function saveDO() {
     if (iErr) throw iErr;
 
     doHistory.unshift({
-      id: header.id, doNo, date: today(), type: typ, customer: custVal,
+      id: header.id, doNo, date: today(), type: typ, customer: custVal, customerAddress: custAddr,
       salesperson: salesVal, machine: machineVal, headerText,
       items: (insertedItems || doItems).map(i => ({
         id: i.id, name: i.item_name ?? i.name, code: i.item_code ?? i.code, category: i.item_category ?? i.category,
@@ -211,7 +214,7 @@ function gatherDOData() {
   const g = id => document.getElementById(id);
   return {
     cust:  g('do-cust').value || '',
-    addr:  g('do-cust-addr') ? g('do-cust-addr').innerHTML : '',
+    addr:  g('do-cust-addr') ? g('do-cust-addr').innerText : '',
     no:    g('do-no').value || '',
     staff: g('do-salesperson').value || '',
     po:    g('do-machine').value || '',
@@ -343,6 +346,7 @@ function openDOView(id) {
   document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('dov-type').value = d.type || 'โอนสินค้า';
   document.getElementById('dov-cust').value = d.customer || '';
+  document.getElementById('dov-addr').value = d.customerAddress || '';
   document.getElementById('dov-user').textContent = d.createdBy || '—';
   document.getElementById('dov-sales').value = d.salesperson || '';
   document.getElementById('dov-po').value = d.machine || '';
@@ -417,6 +421,7 @@ async function saveDOViewPrices() {
     do_no: doNo,
     type: document.getElementById('dov-type').value,
     customer_name: cust,
+    customer_address: document.getElementById('dov-addr').value.trim(),
     salesperson: document.getElementById('dov-sales').value.trim(),
     machine: document.getElementById('dov-po').value.trim(),
     header_text: document.getElementById('dov-note').value,
@@ -453,6 +458,7 @@ async function saveDOViewPrices() {
     const d = doHistory.find(x => x.id === currentViewDOId);
     if (d) {
       d.doNo = doNo; d.type = headerPayload.type; d.customer = cust;
+      d.customerAddress = headerPayload.customer_address;
       d.salesperson = headerPayload.salesperson; d.machine = headerPayload.machine;
       d.headerText = headerPayload.header_text;
       dovGroups.forEach(g => {
@@ -478,7 +484,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
   document.getElementById('do-date').textContent = fmtDate(d.createdAt);
-  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = ''; addr.contentEditable = 'false'; }
+  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = d.customerAddress || ''; addr.contentEditable = 'false'; }
 
   const grp = {};
   (d.items||[]).forEach(i => {

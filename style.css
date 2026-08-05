@@ -324,7 +324,7 @@ input[type=file]{display:none}
 .do-doc .do-info .do-to{width:58%}
 .do-doc .do-meta table,.do-doc .do-meta td{border:none;padding:1px 5px;font-size:11px}
 .do-doc .do-meta td.k{white-space:nowrap;width:82px}
-.do-doc .do-addr{min-height:38px;font-size:11px;outline:none;margin-top:5px;line-height:1.5}
+.do-doc .do-addr{min-height:38px;font-size:11px;outline:none;margin-top:5px;line-height:1.5;white-space:pre-wrap}
 .do-doc .do-addr:empty:before{content:attr(data-ph);color:#bbb}
 .do-doc .do-flat{border:none;background:transparent;font-size:12px;color:#000;padding:0 2px;outline:none;width:100%;font-family:'Sarabun',sans-serif}
 .do-doc .do-items-tbl{margin-top:10px}
