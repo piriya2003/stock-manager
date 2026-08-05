@@ -70,13 +70,23 @@ function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียง SN น้อย→มาก
   const sns = `<div class="sn-grid">${sorted.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
-  return `<tr>
+  return `<tr data-qty="${v.qty}">
       <td class="c">${i + 1}</td>
       <td><b>${name}</b>${modelLine}${sns}</td>
       <td class="c">${v.qty}</td>
-      <td></td>
-      <td></td>
+      <td><input class="do-num" data-role="price" inputmode="decimal" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
+      <td><input class="do-num" data-role="amount" inputmode="decimal" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
     </tr>`;
+}
+
+// ใส่ราคาต่อหน่วย → คำนวณจำนวนเงินให้ (ยังพิมพ์ทับช่องจำนวนเงินเองได้)
+function calcDOAmount(inp) {
+  const tr = inp.closest('tr'); if (!tr) return;
+  const amt = tr.querySelector('input[data-role="amount"]'); if (!amt) return;
+  const qty = parseFloat(tr.dataset.qty || '');
+  const price = parseFloat(String(inp.value).replace(/,/g, ''));
+  if (!isFinite(qty) || !isFinite(price)) { amt.value = ''; return; }
+  amt.value = (qty * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 async function saveDO() {

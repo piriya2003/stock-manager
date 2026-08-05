@@ -335,6 +335,10 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl td b{font-size:12px}
 .do-doc .do-items-tbl .sn-grid{display:grid;grid-template-columns:repeat(2,max-content);column-gap:24px;justify-content:start;margin-top:2px}
 .do-doc .do-items-tbl .sn{padding-left:8px;font-family:var(--mono);font-size:10.5px}
+/* ช่องราคา/จำนวนเงิน — พิมพ์แก้ได้ (บนจอมีเส้นประบอกว่าแก้ได้ เวลาพิมพ์เป็นตัวเลขเปล่าๆ) */
+.do-doc .do-items-tbl .do-num{width:100%;box-sizing:border-box;border:none;border-bottom:1px dotted #c4c4c4;background:transparent!important;color:#111!important;
+  text-align:right;font-family:'Sarabun',sans-serif;font-size:11px;padding:1px 2px;outline:none}
+.do-doc .do-items-tbl .do-num:focus{background:#fffbe6!important;border-bottom-color:#f59e0b;box-shadow:none!important}
 .do-doc .do-note{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
 .do-doc .do-sign{margin-top:30px}
@@ -370,6 +374,8 @@ input[type=file]{display:none}
     border:none!important;background:transparent!important;box-shadow:none!important;
     padding:0!important;color:#000!important;font-family:'Sarabun',sans-serif!important;font-size:13px!important}
   .do-number-input{font-weight:700!important;font-size:14px!important;letter-spacing:.02em}
+  /* ช่องราคา/จำนวนเงิน: พิมพ์เป็นตัวเลขเปล่า ไม่มีเส้นประ ชิดขวาให้ตรงคอลัมน์ */
+  #printArea .do-num{font-size:11px!important;text-align:right!important;border:none!important}
 }
 .kbd{display:inline-flex;align-items:center;justify-content:center;background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:1px 5px;font-size:10px;font-family:var(--mono);color:var(--t3);min-width:20px}
 hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
