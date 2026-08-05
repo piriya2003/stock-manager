@@ -369,6 +369,10 @@ input[type=file]{display:none}
   #printArea,#printArea *,.print-area,.print-area *{visibility:visible}
   #printArea,.print-area{position:absolute!important;left:0;top:0;width:100%;background:#fff;color:#000;overflow:visible!important;max-height:none!important;padding:0!important}
   .no-print{display:none!important}
+  /* border-collapse ทำให้เส้นกรอบหายไปทั้งตารางบนหน้าที่ตารางถูกตัดขึ้นหน้าใหม่ (บั๊กของ Chrome
+     เวลาคำนวณเส้นกรอบร่วมของตาราง border-collapse ที่ถูกบังคับตัดหน้ากลางตาราง) — เปลี่ยนเป็น
+     separate เฉพาะตอนพิมพ์ ให้แต่ละช่องวาดกรอบของตัวเอง เส้นจะไม่หายแม้ขึ้นหน้าใหม่ */
+  #printArea table{border-collapse:separate!important;border-spacing:0!important}
   .do-header-edit{border:none!important;background:transparent!important}
   /* ── ทำให้ช่องกรอกดูเป็นเอกสารทางการ: ไม่มีกรอบสี ไม่มีกล่องพื้นสี ── */
   #printArea,.print-area{font-family:'Sarabun',sans-serif!important}
