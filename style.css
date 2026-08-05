@@ -315,45 +315,47 @@ input[type=file]{display:none}
 .do-doc .do-lh-logo img{height:34px;width:auto;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .do-doc .do-lh-info{font-size:10px;line-height:1.5;text-align:right}
 .do-doc .do-taxid{font-size:10px;margin:6px 0 2px}
-.do-doc .do-doc-title{text-align:center;margin:8px 0 10px;font-weight:700}
-.do-doc .do-doc-title>div:first-child{font-size:13px}
-.do-doc .do-doc-title .en{font-weight:400;font-size:11px;letter-spacing:.02em;margin-top:2px}
+.do-doc .do-doc-title{text-align:center;margin:10px 0 8px;font-weight:700}
+.do-doc .do-doc-title>div{font-size:12.5px;line-height:1.7}
 .do-doc table{width:100%;border-collapse:collapse}
 .do-doc .do-info,.do-doc .do-info>tbody>tr>td{border:1px solid #000}
-.do-doc .do-info>tbody>tr>td{vertical-align:top;padding:7px 9px}
+.do-doc .do-info>tbody>tr>td{vertical-align:top;padding:6px 9px;font-size:11px}
 .do-doc .do-info .do-to{width:58%}
-.do-doc .do-meta table,.do-doc .do-meta td{border:none;padding:1px 5px;font-size:11px}
-.do-doc .do-meta td.k{white-space:nowrap;width:82px}
-.do-doc .do-addr{min-height:38px;font-size:11px;outline:none;margin-top:5px;line-height:1.5;white-space:pre-wrap}
+.do-doc .do-to-body{padding-left:18px}
+.do-doc .do-meta-k{width:78px;white-space:nowrap;border-right:none!important}
+.do-doc .do-meta-v{border-left:1px solid #000}
+.do-doc .do-meta-k>div,.do-doc .do-meta-v>div{line-height:1.75;min-height:18px}
+.do-doc .do-addr{min-height:34px;font-size:11px;outline:none;line-height:1.6;white-space:pre-wrap}
 .do-doc .do-addr:empty:before{content:attr(data-ph);color:#bbb}
 .do-doc .do-flat{border:none;background:transparent;font-size:12px;color:#000;padding:0 2px;outline:none;width:100%;font-family:'Sarabun',sans-serif}
 .do-doc .do-items-tbl{margin-top:10px}
 .do-doc .do-items-tbl th,.do-doc .do-items-tbl td{border:1px solid #000}
-.do-doc .do-items-tbl th{background:#ececec;font-size:10.5px;padding:5px 6px;text-align:center;line-height:1.3;font-weight:700}
-.do-doc .do-items-tbl td{padding:5px 7px;vertical-align:top;font-size:11px}
-.do-doc .do-items-tbl td.c{text-align:center}
-.do-doc .do-items-tbl td b{font-size:12px}
-.do-doc .do-items-tbl .sn-grid{display:grid;grid-template-columns:repeat(2,max-content);column-gap:24px;justify-content:start;margin-top:2px}
-.do-doc .do-items-tbl .sn{padding-left:8px;font-family:var(--mono);font-size:10.5px}
+.do-doc .do-items-tbl th{font-size:10.5px;padding:4px 4px;text-align:center;line-height:1.35;font-weight:700}
+.do-doc .do-items-tbl th .th-th,.do-doc .do-items-tbl th .th-en{display:block;white-space:nowrap}
+.do-doc .do-items-tbl td{padding:6px 7px;vertical-align:top;font-size:11px}
+.do-doc .do-items-tbl td.c{text-align:center;font-weight:600}
+.do-doc .do-items-tbl td b{font-size:11.5px;line-height:1.5}
+.do-doc .do-items-tbl .do-model{font-weight:700;font-size:11.5px;line-height:1.5}
+.do-doc .do-items-tbl .sn{font-size:10.5px;line-height:1.55}
 /* ช่องราคา/จำนวนเงิน — พิมพ์แก้ได้ (บนจอมีเส้นประบอกว่าแก้ได้ เวลาพิมพ์เป็นตัวเลขเปล่าๆ) */
 .do-doc .do-items-tbl .do-num{width:100%;box-sizing:border-box;border:none;border-bottom:1px dotted #c4c4c4;background:transparent!important;color:#111!important;
-  text-align:right;font-family:'Sarabun',sans-serif;font-size:11px;padding:1px 2px;outline:none}
+  text-align:right;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:1px 2px;outline:none}
 .do-doc .do-items-tbl .do-num:focus{background:#fffbe6!important;border-bottom-color:#f59e0b;box-shadow:none!important}
 .do-doc .do-note{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
-/* สรุปยอดเงิน (Total / VAT / Grand Total) */
-.do-doc .do-totals{border:1px solid #000;border-top:none}
-.do-doc .do-totals td{border-top:1px solid #000;padding:5px 9px;font-size:11px}
-.do-doc .do-totals td.do-totals-note{border-top:none;border-right:1px solid #000;width:58%;vertical-align:top;padding:6px 10px}
-.do-doc .do-totals td.k{text-align:right;font-weight:600;width:26%}
-.do-doc .do-totals td.v{text-align:right;font-family:var(--mono);font-weight:700;width:16%;white-space:nowrap}
-.do-doc .do-baht-row{font-weight:600;margin-bottom:6px}
-.do-doc .do-pay-info{color:#333;line-height:1.6}
-.do-doc .do-received{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px}
-.do-doc .do-sign{margin-top:30px}
+/* สรุปยอดเงิน (Sub-Total / VAT / Total) — กล่องเล็กชิดขวาใต้ตาราง ตามใบจริง
+   break-inside:avoid กันบล็อกยอดถูกตัดคาบเกี่ยว 2 หน้า */
+.do-doc .do-totals{border-collapse:collapse;break-inside:avoid;page-break-inside:avoid}
+.do-doc .do-totals td{border:1px solid #000;border-top:none;padding:3px 7px;font-size:11px}
+.do-doc .do-totals td.do-totals-pad{border-left:1px solid #000;border-right:1px solid #000;border-bottom:1px solid #000}
+.do-doc .do-totals td.k{font-weight:700;width:126px}
+.do-doc .do-totals td.v{text-align:right;font-weight:700;width:96px;white-space:nowrap}
+.do-doc .do-note{border:none;padding:8px 2px 0;font-size:11px;min-height:0}
+.do-doc .do-received{border:none;padding:16px 2px 0;font-size:11px}
+.do-doc .do-sign{margin-top:34px}
 .do-doc .do-sign td{width:50%;text-align:center;font-size:11px;padding:0 22px;vertical-align:top}
-.do-doc .do-sign .sig-line{border-top:1px solid #000;margin:34px 20px 5px}
-.do-doc .do-sign .d{font-size:10px}
+.do-doc .do-sign .sig-line{border-top:1px solid #000;margin:30px 20px 5px}
+.do-doc .do-sign .d{font-size:11px}
 .do-doc .do-copy2{break-before:page;page-break-before:always}
 @media print{
   /* margin:0 ทำให้เบราว์เซอร์ไม่มีที่ว่างใส่ หัว/ท้ายกระดาษ (วันที่ · ชื่อเว็บ · URL) */

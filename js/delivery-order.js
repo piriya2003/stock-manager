@@ -45,7 +45,7 @@ function prepDOModal() {
   document.getElementById('do-salesperson').readOnly = false;
   document.getElementById('do-machine').readOnly = false;
   document.getElementById('do-no').value = genDONo();
-  document.getElementById('do-date').textContent = fmtDate(nowISO());
+  document.getElementById('do-date').textContent = fmtDODate(nowISO());
   const custSel = document.getElementById('o-cust');
   const custObj = customers.find(c => c.id === custSel.value);
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
@@ -66,11 +66,46 @@ function prepDOModal() {
   document.getElementById('do-modal').classList.add('open');
 }
 
+// วันที่บนใบ DO รูปแบบ 24-Jul-2026 (ตามใบจริง)
+function fmtDODate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  return `${String(d.getDate()).padStart(2, '0')}-${m}-${d.getFullYear()}`;
+}
+
+// ยุบ Serial ที่เรียงติดกันเป็นช่วง เช่น A001,A002,A003 → "A001 - A003" (ตามรูปแบบใบจริง)
+function collapseSNRanges(sns) {
+  const parsed = sns.map(sn => {
+    const s = String(sn);
+    const m = s.match(/^(.*?)(\d+)$/);
+    return m ? { s, prefix: m[1], num: BigInt(m[2]), digits: m[2].length } : { s, prefix: null, num: 0n, digits: 0 };
+  });
+  parsed.sort((a, b) => {
+    if (a.prefix === null || b.prefix === null) return a.s.localeCompare(b.s);
+    if (a.prefix !== b.prefix) return a.prefix.localeCompare(b.prefix);
+    if (a.digits !== b.digits) return a.digits - b.digits;
+    return a.num < b.num ? -1 : a.num > b.num ? 1 : 0;
+  });
+
+  const out = [];
+  let i = 0;
+  while (i < parsed.length) {
+    const start = parsed[i];
+    if (start.prefix === null) { out.push(start.s); i++; continue; }
+    let j = i;
+    while (j + 1 < parsed.length && parsed[j + 1].prefix === start.prefix
+      && parsed[j + 1].digits === parsed[j].digits && parsed[j + 1].num === parsed[j].num + 1n) j++;
+    out.push(i === j ? start.s : `${start.s} - ${parsed[j].s}`);
+    i = j + 1;
+  }
+  return out;
+}
+
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
-  const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
-  const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียง SN น้อย→มาก
-  const sns = `<div class="sn-grid">${sorted.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
+  const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${v.code}</div>` : (v.category ? `<div class="do-model">${v.category}</div>` : '');
+  const sns = collapseSNRanges(v.sns).map(s => `<div class="sn">Serial NO : ${s}</div>`).join('');
   const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
   return `<tr data-qty="${v.qty}" data-name="${String(name).replace(/"/g, '&quot;')}">
@@ -109,40 +144,8 @@ function recalcDOTotals() {
   set('do-total', fmtMoney(total));
   set('do-vat', fmtMoney(vat));
   set('do-grand', fmtMoney(grand));
-  set('do-baht-text', any && grand > 0 ? bahtText(grand) : '—');
 }
 
-// อ่านจำนวนเงินเป็นตัวอักษรไทย เช่น 413458.70 → สี่แสนหนึ่งหมื่นสามพันสี่ร้อยห้าสิบแปดบาทเจ็ดสิบสตางค์
-function bahtText(num) {
-  const n = Math.round((Number(num) || 0) * 100) / 100;
-  if (!n) return 'ศูนย์บาทถ้วน';
-  const abs = Math.abs(n);
-  const baht = Math.floor(abs);
-  const satang = Math.round((abs - baht) * 100);
-  let s = baht > 0 ? readThaiInt(baht) + 'บาท' : '';
-  s += satang > 0 ? readThaiInt(satang) + 'สตางค์' : 'ถ้วน';
-  return (n < 0 ? 'ลบ' : '') + s;
-}
-function readThaiInt(n) {
-  const d = ['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
-  const u = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน'];
-  n = Math.floor(n);
-  if (n === 0) return 'ศูนย์';
-  if (n >= 1000000) {
-    const m = Math.floor(n / 1000000), rest = n % 1000000;
-    return readThaiInt(m) + 'ล้าน' + (rest > 0 ? readThaiInt(rest) : '');
-  }
-  const str = String(n); let out = '';
-  for (let i = 0; i < str.length; i++) {
-    const dig = Number(str[i]), pos = str.length - i - 1;
-    if (!dig) continue;
-    if (pos === 0 && dig === 1 && str.length > 1) out += 'เอ็ด';
-    else if (pos === 1 && dig === 1) out += 'สิบ';
-    else if (pos === 1 && dig === 2) out += 'ยี่สิบ';
-    else out += d[dig] + u[pos];
-  }
-  return out;
-}
 
 async function saveDO() {
   const doNo       = document.getElementById('do-no').value.trim();
@@ -224,7 +227,6 @@ function gatherDOData() {
     total: g('do-total') ? g('do-total').textContent : fmtMoney(0),
     vat:   g('do-vat') ? g('do-vat').textContent : fmtMoney(0),
     grand: g('do-grand') ? g('do-grand').textContent : fmtMoney(0),
-    bahtText: g('do-baht-text') ? g('do-baht-text').textContent : '—',
   };
 }
 
@@ -242,45 +244,36 @@ function doDocHTML(label, d) {
         </div>
       </div>
       <div class="do-taxid">หมายเลขประจำตัวผู้เสียภาษีอากร &nbsp;&nbsp; TAX ID 0205561043127</div>
-      <div class="do-doc-title"><div>${label}</div><div>ใบส่งสินค้า</div><div class="en">TAX INVOICE / DELIVERY NOTE / INVOICE</div></div>
+      <div class="do-doc-title"><div>${label}</div><div>ใบส่งสินค้า</div></div>
     </td></tr></thead><tbody><tr><td>
       <table class="do-info"><tbody><tr>
         <td class="do-to">
-          <div style="display:flex;gap:6px"><span style="flex-shrink:0;font-weight:600">TO:</span><span>${d.cust}</span></div>
-          <div class="do-addr" style="color:#000">${d.addr}</div>
+          <div style="font-weight:600">TO :</div>
+          <div class="do-to-body"><div>${d.cust}</div><div class="do-addr">${d.addr}</div></div>
         </td>
-        <td class="do-meta"><table><tbody>
-          <tr><td class="k">No.</td><td>${d.no}</td></tr>
-          <tr><td class="k">Staff</td><td>${d.staff}</td></tr>
-          <tr><td class="k">PO Number</td><td>${d.po}</td></tr>
-          <tr><td class="k">Date Issued</td><td>${d.date}</td></tr>
-        </tbody></table></td>
+        <td class="do-meta-k"><div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div></td>
+        <td class="do-meta-v"><div>${d.no}</div><div>${d.staff}</div><div>${d.po}</div><div>${d.date}</div></td>
       </tr></tbody></table>
       <table class="do-items-tbl">
-        <thead><tr><th style="width:56px">Product No.</th><th>Product Description</th><th style="width:46px">Qty</th><th style="width:64px">Unit Price</th><th style="width:72px">Amount</th></tr></thead>
+        <thead><tr>
+          <th style="width:58px"><span class="th-th">รหัสสินค้า</span><span class="th-en">Product No.</span></th>
+          <th><span class="th-th">รายการสินค้า</span><span class="th-en">Product Description</span></th>
+          <th style="width:52px"><span class="th-th">จำนวน</span><span class="th-en">Qty</span></th>
+          <th style="width:78px"><span class="th-th">หน่วยละ</span><span class="th-en">Unit Price</span></th>
+          <th style="width:96px"><span class="th-th">จำนวนเงิน</span><span class="th-en">Amount</span></th>
+        </tr></thead>
         <tbody>${d.items}</tbody>
       </table>
       <table class="do-totals"><tbody>
-        <tr>
-          <td class="do-totals-note" rowspan="3">
-            <div class="do-baht-row">จำนวนเงิน(ตัวอักษร) <span>${d.bahtText}</span></div>
-            <div class="do-pay-info">
-              โปรดชำระโดยเงินสด/สั่งจ่ายเช็คในนาม / Payments should be made to:<br>
-              บจก. เอสจีดาต้าพอส (ไทยแลนด์)<br>
-              ธนาคารกสิกรไทย สาขา ถนนพระยาสัจจา ชลบุรี เลขที่บัญชี 049-1-85819-2
-            </div>
-          </td>
-          <td class="k">จำนวนเงินรวม/Total</td>
-          <td class="v">${d.total}</td>
-        </tr>
-        <tr><td class="k">ภาษีมูลค่าเพิ่ม/VAT 7%</td><td class="v">${d.vat}</td></tr>
-        <tr><td class="k">จำนวนเงินสุทธิ/Grand Total</td><td class="v">${d.grand}</td></tr>
+        <tr><td class="do-totals-pad" rowspan="3"></td><td class="k">Sub-Total</td><td class="v">${d.total}</td></tr>
+        <tr><td class="k">VAT 7%</td><td class="v">${d.vat}</td></tr>
+        <tr><td class="k">Total</td><td class="v">${d.grand}</td></tr>
       </tbody></table>
-      <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย / Received the above goods in good order &amp; condition</div>
-      <div class="do-note">หมายเหตุ: <span>${d.note}</span></div>
+      ${d.note && d.note.trim() ? `<div class="do-note">หมายเหตุ: <span>${d.note}</span></div>` : ''}
+      <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย &nbsp;/ Received the above goods in good order &amp; condition</div>
       <table class="do-sign"><tbody><tr>
-        <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
-        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
+        <td><div class="sig-line"></div>ผู้อนุมัติ / Approver<br><span class="d">วันที่</span></td>
+        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่</span></td>
       </tr></tbody></table>
     </td></tr></tbody>
     <tfoot><tr><td class="do-page-foot"></td></tr></tfoot>
@@ -483,7 +476,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
-  document.getElementById('do-date').textContent = fmtDate(d.createdAt);
+  document.getElementById('do-date').textContent = fmtDODate(d.createdAt);
   const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = d.customerAddress || ''; addr.contentEditable = 'false'; }
 
   const grp = {};

@@ -592,56 +592,48 @@
       </div>
       <div class="do-taxid">หมายเลขประจำตัวผู้เสียภาษีอากร &nbsp;&nbsp; TAX ID 0205561043127</div>
       <div class="do-doc-title">
-        <div>ต้นฉบับ</div>
+        <div id="do-copy-label">ต้นฉบับ</div>
         <div>ใบส่งสินค้า</div>
-        <div class="en">TAX INVOICE / DELIVERY NOTE / INVOICE</div>
       </div>
     </td></tr></thead><tbody><tr><td>
       <table class="do-info"><tbody><tr>
         <td class="do-to">
-          <div style="display:flex;gap:6px"><span style="flex-shrink:0;font-weight:600">TO:</span><input id="do-cust" class="do-flat"></div>
-          <div id="do-cust-addr" contenteditable="true" class="do-addr" data-ph="ที่อยู่ / เลขผู้เสียภาษีลูกค้า (พิมพ์ได้)"></div>
+          <div style="font-weight:600">TO :</div>
+          <div class="do-to-body">
+            <input id="do-cust" class="do-flat">
+            <div id="do-cust-addr" contenteditable="true" class="do-addr" data-ph="ที่อยู่ / เลขผู้เสียภาษีลูกค้า (พิมพ์ได้)"></div>
+          </div>
         </td>
-        <td class="do-meta">
-          <table><tbody>
-            <tr><td class="k">No.</td><td><input id="do-no" class="do-flat"></td></tr>
-            <tr><td class="k">Staff</td><td><input id="do-salesperson" class="do-flat"></td></tr>
-            <tr><td class="k">PO Number</td><td><input id="do-machine" class="do-flat"></td></tr>
-            <tr><td class="k">Date Issued</td><td><span id="do-date"></span></td></tr>
-          </tbody></table>
+        <td class="do-meta-k">
+          <div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div>
+        </td>
+        <td class="do-meta-v">
+          <div><input id="do-no" class="do-flat"></div>
+          <div><input id="do-salesperson" class="do-flat"></div>
+          <div><input id="do-machine" class="do-flat"></div>
+          <div><span id="do-date"></span></div>
         </td>
       </tr></tbody></table>
       <table class="do-items-tbl">
         <thead><tr>
-          <th style="width:56px">Product No.</th>
-          <th>Product Description</th>
-          <th style="width:46px">Qty</th>
-          <th style="width:64px">Unit Price</th>
-          <th style="width:72px">Amount</th>
+          <th style="width:58px"><span class="th-th">รหัสสินค้า</span><span class="th-en">Product No.</span></th>
+          <th><span class="th-th">รายการสินค้า</span><span class="th-en">Product Description</span></th>
+          <th style="width:52px"><span class="th-th">จำนวน</span><span class="th-en">Qty</span></th>
+          <th style="width:78px"><span class="th-th">หน่วยละ</span><span class="th-en">Unit Price</span></th>
+          <th style="width:96px"><span class="th-th">จำนวนเงิน</span><span class="th-en">Amount</span></th>
         </tr></thead>
         <tbody id="do-items"></tbody>
       </table>
       <table class="do-totals"><tbody>
-        <tr>
-          <td class="do-totals-note" rowspan="3">
-            <div class="do-baht-row">จำนวนเงิน(ตัวอักษร) <span id="do-baht-text">—</span></div>
-            <div class="do-pay-info">
-              โปรดชำระโดยเงินสด/สั่งจ่ายเช็คในนาม / Payments should be made to:<br>
-              บจก. เอสจีดาต้าพอส (ไทยแลนด์)<br>
-              ธนาคารกสิกรไทย สาขา ถนนพระยาสัจจา ชลบุรี เลขที่บัญชี 049-1-85819-2
-            </div>
-          </td>
-          <td class="k">จำนวนเงินรวม/Total</td>
-          <td class="v" id="do-total">฿0.00</td>
-        </tr>
-        <tr><td class="k">ภาษีมูลค่าเพิ่ม/VAT 7%</td><td class="v" id="do-vat">฿0.00</td></tr>
-        <tr><td class="k">จำนวนเงินสุทธิ/Grand Total</td><td class="v" id="do-grand">฿0.00</td></tr>
+        <tr><td class="do-totals-pad" rowspan="3"></td><td class="k">Sub-Total</td><td class="v" id="do-total">฿0.00</td></tr>
+        <tr><td class="k">VAT 7%</td><td class="v" id="do-vat">฿0.00</td></tr>
+        <tr><td class="k">Total</td><td class="v" id="do-grand">฿0.00</td></tr>
       </tbody></table>
-      <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย / Received the above goods in good order &amp; condition</div>
       <div class="do-note">หมายเหตุ: <span id="do-header-text" contenteditable="true"></span></div>
+      <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย &nbsp;/ Received the above goods in good order &amp; condition</div>
       <table class="do-sign"><tbody><tr>
-        <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
-        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
+        <td><div class="sig-line"></div>ผู้อนุมัติ / Approver<br><span class="d">วันที่</span></td>
+        <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่</span></td>
       </tr></tbody></table>
     </td></tr></tbody>
     <tfoot><tr><td class="do-page-foot"></td></tr></tfoot>
