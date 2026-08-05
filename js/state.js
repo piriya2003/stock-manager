@@ -22,6 +22,7 @@ let sessionDispatchTime = null;  // เวลาเริ่มชุดจ่�
 let outboundBatches     = [];    // ชุดการจ่ายที่แสดงอยู่ในหน้าประวัติ (ใช้อ้างอิงตอนกดสร้าง DO ของชุดนั้น)
 let currentRepairJobId = null;
 let currentViewDOId    = null;
+let dovGroups          = [];    // กลุ่มสินค้า (ตามชื่อ) ที่กำลังดู/แก้ราคาอยู่ในหน้าประวัติ DO
 let currentViewGRNId   = null;
 let currentSwapJobId   = null;
 let swapMode           = 'new';  // 'new' = เปลี่ยน SN ใหม่ | 'same' = ใช้ SN เดิม

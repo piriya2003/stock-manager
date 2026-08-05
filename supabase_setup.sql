@@ -231,7 +231,9 @@ create table if not exists do_items (
   item_name     text not null,
   item_code     text,
   item_category text,
-  sn            text not null
+  sn            text not null,
+  unit_price    numeric,
+  amount        numeric
 );
 
 create index if not exists idx_do_items_header  on do_items(do_header_id);

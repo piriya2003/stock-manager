@@ -844,15 +844,21 @@
         <div id="dov-summary" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
-    <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น)</div>
-    <div class="tbl-wrap" style="max-height:280px;overflow-y:auto;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น) — แก้ราคาแล้วกด "บันทึกราคา" เพื่อจำไว้</div>
+    <div class="tbl-wrap" style="max-height:280px;overflow-y:auto;margin-bottom:12px">
       <table>
-        <thead><tr><th>#</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>รหัส</th><th>Serial Number</th></tr></thead>
+        <thead><tr><th>#</th><th>สินค้า (SN)</th><th style="text-align:center">จำนวน</th><th>ราคาต่อหน่วย</th><th>จำนวนเงิน</th></tr></thead>
         <tbody id="dov-items-tbody"></tbody>
       </table>
     </div>
+    <div style="display:flex;justify-content:flex-end;gap:24px;margin-bottom:16px;font-size:12px;flex-wrap:wrap">
+      <div>รวม: <b class="mono" id="dov-total">฿0.00</b></div>
+      <div>VAT 7%: <b class="mono" id="dov-vat">฿0.00</b></div>
+      <div>สุทธิ: <b class="mono" style="color:var(--blue)" id="dov-grand">฿0.00</b></div>
+    </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeModal('do-view-modal')" class="btn btn-ghost">ปิด</button>
+      <button onclick="saveDOViewPrices()" class="btn btn-success">💾 บันทึกราคา</button>
       <button onclick="reopenDOForPrint(currentViewDOId)" class="btn btn-primary">🖨️ เปิด & พิมพ์ใบ DO</button>
     </div>
   </div>

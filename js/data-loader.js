@@ -33,7 +33,7 @@ async function loadAllData() {
   const itemsByHeader = {};
   doIRes.data.forEach(it => {
     if (!itemsByHeader[it.do_header_id]) itemsByHeader[it.do_header_id] = [];
-    itemsByHeader[it.do_header_id].push({ name: it.item_name, code: it.item_code, category: it.item_category, sn: it.sn });
+    itemsByHeader[it.do_header_id].push({ id: it.id, name: it.item_name, code: it.item_code, category: it.item_category, sn: it.sn, unitPrice: it.unit_price, amount: it.amount });
   });
   doHistory = doHRes.data.map(d => ({
     id: d.id, doNo: d.do_no, date: d.do_date, type: d.type,

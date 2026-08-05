@@ -71,12 +71,14 @@ function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div>Model: ${v.code}</div>` : (v.category ? `<div>${v.category}</div>` : '');
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียง SN น้อย→มาก
   const sns = `<div class="sn-grid">${sorted.map(sn => `<span class="sn">SN : ${sn}</span>`).join('')}</div>`;
-  return `<tr data-qty="${v.qty}">
+  const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
+  const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+  return `<tr data-qty="${v.qty}" data-name="${String(name).replace(/"/g, '&quot;')}">
       <td class="c">${i + 1}</td>
       <td><b>${name}</b>${modelLine}${sns}</td>
       <td class="c">${v.qty}</td>
-      <td><input class="do-num" data-role="price" inputmode="decimal" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
-      <td><input class="do-num" data-role="amount" inputmode="decimal" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
+      <td><input class="do-num" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
+      <td><input class="do-num" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
     </tr>`;
 }
 
@@ -156,6 +158,16 @@ async function saveDO() {
   if (!custVal) return toast('กรุณาระบุชื่อลูกค้า', 'error');
   if (!doItems.length) return toast('ไม่มีรายการสินค้าในใบ DO', 'error');
 
+  // อ่านราคาต่อหน่วย/จำนวนเงินจากแต่ละแถวสินค้า (ต่อกลุ่ม) เพื่อแนบไปกับทุก SN ในกลุ่มนั้น
+  const priceByName = {};
+  document.querySelectorAll('#do-items tr[data-name]').forEach(tr => {
+    const priceInp = tr.querySelector('input[data-role="price"]');
+    const amtInp = tr.querySelector('input[data-role="amount"]');
+    const price = priceInp && priceInp.value !== '' ? parseFloat(String(priceInp.value).replace(/,/g, '')) : null;
+    const amount = amtInp && amtInp.value !== '' ? parseFloat(String(amtInp.value).replace(/,/g, '')) : null;
+    priceByName[tr.dataset.name] = { price: isFinite(price) ? price : null, amount: isFinite(amount) ? amount : null };
+  });
+
   try {
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
       do_no: doNo, do_date: today(), type: typ, customer_id: custId, customer_name: custVal,
@@ -168,14 +180,19 @@ async function saveDO() {
 
     const itemRows = doItems.map(i => ({
       do_header_id: header.id, item_name: i.name, item_code: i.code, item_category: i.category, sn: String(i.sn),
+      unit_price: priceByName[i.name]?.price ?? null, amount: priceByName[i.name]?.amount ?? null,
     }));
-    const { error: iErr } = await supaClient.from('do_items').insert(itemRows);
+    const { data: insertedItems, error: iErr } = await supaClient.from('do_items').insert(itemRows).select();
     if (iErr) throw iErr;
 
     doHistory.unshift({
       id: header.id, doNo, date: today(), type: typ, customer: custVal,
       salesperson: salesVal, machine: machineVal, headerText,
-      items: doItems.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) })),
+      items: (insertedItems || doItems).map(i => ({
+        id: i.id, name: i.item_name ?? i.name, code: i.item_code ?? i.code, category: i.item_category ?? i.category,
+        sn: String(i.sn), unitPrice: i.unit_price ?? priceByName[i.item_name ?? i.name]?.price ?? null,
+        amount: i.amount ?? priceByName[i.item_name ?? i.name]?.amount ?? null,
+      })),
       createdAt: header.created_at, createdBy: currentUserId,
     });
     updateDOBadge();
@@ -329,24 +346,89 @@ function openDOView(id) {
   document.getElementById('dov-user').textContent = d.createdBy || '—';
   document.getElementById('dov-sales').textContent = d.salesperson || '—';
 
+  // จัดกลุ่มตามสินค้า (เหมือนในใบพิมพ์) — แก้ราคาต่อกลุ่ม ไม่ใช่ต่อ SN
   const grp = {};
-  (d.items||[]).forEach(i => { grp[i.name] = (grp[i.name] || 0) + 1; });
-  document.getElementById('dov-summary').innerHTML = Object.entries(grp).map(([name, qty]) => `
+  (d.items||[]).forEach(i => {
+    if (!grp[i.name]) grp[i.name] = { name: i.name, code: i.code, category: i.category, sns: [], ids: [], unitPrice: i.unitPrice, amount: i.amount };
+    grp[i.name].sns.push(i.sn);
+    if (i.id != null) grp[i.name].ids.push(i.id);
+  });
+  dovGroups = Object.values(grp);
+  dovGroups.forEach(g => g.sns.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })));
+
+  document.getElementById('dov-summary').innerHTML = dovGroups.map(g => `
     <div style="display:flex;justify-content:space-between;font-size:12px">
-      <span style="color:var(--t2)">${name}</span>
-      <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${qty} ชิ้น</span>
+      <span style="color:var(--t2)">${g.name}</span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${g.sns.length} ชิ้น</span>
     </div>`).join('');
 
   document.getElementById('dov-item-count').textContent = (d.items||[]).length;
-  document.getElementById('dov-items-tbody').innerHTML = (d.items||[]).map((item, i) => `
-    <tr>
-      <td style="text-align:center;font-size:11px;color:var(--t3)">${i+1}</td>
-      <td style="color:var(--t1)">${item.name}</td>
-      <td style="color:var(--blue)">${item.category||'—'}</td>
-      <td class="code-cell">${item.code}</td>
-      <td class="sn-cell">${item.sn}</td>
-    </tr>`).join('');
+  document.getElementById('dov-items-tbody').innerHTML = dovGroups.map((g, gi) => {
+    const priceVal = g.unitPrice != null ? Number(g.unitPrice).toFixed(2) : '';
+    const amtVal = g.amount != null ? Number(g.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${g.code}</div>` : '';
+    return `<tr data-gi="${gi}">
+      <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
+      <td style="color:var(--t1)"><b>${g.name}</b>${modelLine}<div style="font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--mono)">${g.sns.join(', ')}</div></td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.sns.length}</td>
+      <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
+      <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>
+    </tr>`;
+  }).join('');
+  recalcDOViewTotals();
   document.getElementById('do-view-modal').classList.add('open');
+}
+
+// ใส่ราคาต่อหน่วยในหน้าประวัติ → คำนวณจำนวนเงินให้ (แก้ทับเองได้)
+function calcDOViewAmount(gi, inp) {
+  const tr = inp.closest('tr'); if (!tr) return;
+  const amt = tr.querySelector('input[data-role="amount"]'); if (!amt) return;
+  const g = dovGroups[gi]; if (!g) return;
+  const price = parseFloat(String(inp.value).replace(/,/g, ''));
+  if (!isFinite(price)) amt.value = '';
+  else amt.value = (g.sns.length * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  recalcDOViewTotals();
+}
+
+function recalcDOViewTotals() {
+  let total = 0;
+  document.querySelectorAll('#dov-items-tbody input[data-role="amount"]').forEach(el => {
+    const v = parseFloat(String(el.value).replace(/,/g, ''));
+    if (isFinite(v)) total += v;
+  });
+  const vat = Math.round(total * DO_VAT_RATE) / 100;
+  const grand = Math.round((total + vat) * 100) / 100;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('dov-total', fmtMoney(total));
+  set('dov-vat', fmtMoney(vat));
+  set('dov-grand', fmtMoney(grand));
+}
+
+// บันทึกราคาต่อหน่วย/จำนวนเงินของแต่ละกลุ่มสินค้ากลับลง Supabase (ทุก SN ในกลุ่มเดียวกัน)
+async function saveDOViewPrices() {
+  if (!dovGroups.length) return;
+  const rows = [...document.querySelectorAll('#dov-items-tbody tr[data-gi]')];
+  try {
+    for (const tr of rows) {
+      const gi = Number(tr.dataset.gi);
+      const g = dovGroups[gi]; if (!g || !g.ids.length) continue;
+      const priceInp = tr.querySelector('input[data-role="price"]');
+      const amtInp = tr.querySelector('input[data-role="amount"]');
+      const price = priceInp.value !== '' ? parseFloat(String(priceInp.value).replace(/,/g, '')) : null;
+      const amount = amtInp.value !== '' ? parseFloat(String(amtInp.value).replace(/,/g, '')) : null;
+      g.unitPrice = isFinite(price) ? price : null;
+      g.amount = isFinite(amount) ? amount : null;
+      const { error } = await supaClient.from('do_items').update({ unit_price: g.unitPrice, amount: g.amount }).in('id', g.ids);
+      if (error) throw error;
+    }
+    const d = doHistory.find(x => x.id === currentViewDOId);
+    if (d) {
+      dovGroups.forEach(g => {
+        (d.items || []).forEach(item => { if (item.name === g.name) { item.unitPrice = g.unitPrice; item.amount = g.amount; } });
+      });
+    }
+    toast('บันทึกราคาสำเร็จ', 'success');
+  } catch (err) { toast('บันทึกราคาล้มเหลว: ' + err.message, 'error'); }
 }
 
 function reopenDOForPrint(id) {
@@ -366,10 +448,11 @@ function reopenDOForPrint(id) {
 
   const grp = {};
   (d.items||[]).forEach(i => {
-    if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
+    if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category, unitPrice: i.unitPrice, amount: i.amount };
     grp[i.name].qty++; grp[i.name].sns.push(i.sn);
   });
   document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
+  recalcDOTotals();
   document.getElementById('do-modal').classList.add('open');
 }
 
