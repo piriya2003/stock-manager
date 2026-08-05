@@ -418,8 +418,11 @@ async function saveDOViewPrices() {
       const amount = amtInp.value !== '' ? parseFloat(String(amtInp.value).replace(/,/g, '')) : null;
       g.unitPrice = isFinite(price) ? price : null;
       g.amount = isFinite(amount) ? amount : null;
-      const { error } = await supaClient.from('do_items').update({ unit_price: g.unitPrice, amount: g.amount }).in('id', g.ids);
+      const { data, error } = await supaClient.from('do_items')
+        .update({ unit_price: g.unitPrice, amount: g.amount }).in('id', g.ids).select('id');
       if (error) throw error;
+      // RLS ที่ไม่มี policy สำหรับ update จะคืน 200 พร้อม 0 แถว โดยไม่แจ้ง error — ต้องเช็คเอง
+      if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขราคา (ยังไม่ได้ตั้ง update policy ให้ do_items ใน Supabase)');
     }
     const d = doHistory.find(x => x.id === currentViewDOId);
     if (d) {

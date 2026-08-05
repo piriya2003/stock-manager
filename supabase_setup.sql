@@ -299,9 +299,11 @@ create policy "delete do_headers" on do_headers for delete to authenticated usin
 
 drop policy if exists "read do_items"   on do_items;
 drop policy if exists "insert do_items" on do_items;
+drop policy if exists "update do_items" on do_items;
 drop policy if exists "delete do_items" on do_items;
 create policy "read do_items"   on do_items for select to authenticated using (true);
 create policy "insert do_items" on do_items for insert to authenticated with check (true);
+create policy "update do_items" on do_items for update to authenticated using (true) with check (true);  -- แก้ราคาต่อหน่วย/จำนวนเงิน
 create policy "delete do_items" on do_items for delete to authenticated using (public.is_admin());
 
 -- ── grn_headers / grn_items: อ่าน/เพิ่มได้ / ลบเฉพาะ admin ──

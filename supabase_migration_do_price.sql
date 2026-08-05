@@ -4,3 +4,8 @@
 -- ══════════════════════════════════════════════════════════════
 alter table public.do_items add column if not exists unit_price numeric;
 alter table public.do_items add column if not exists amount numeric;
+
+-- ต้องมี policy "update" ด้วย ไม่งั้นการแก้ราคาจะถูก RLS ปฏิเสธเงียบๆ (คืน 200 แต่ไม่มีแถวถูกแก้)
+drop policy if exists "Authenticated users can update do_items" on public.do_items;
+create policy "Authenticated users can update do_items"
+  on public.do_items for update to authenticated using (true) with check (true);
