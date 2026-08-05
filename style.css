@@ -341,6 +341,15 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl .do-num:focus{background:#fffbe6!important;border-bottom-color:#f59e0b;box-shadow:none!important}
 .do-doc .do-note{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
+/* สรุปยอดเงิน (Total / VAT / Grand Total) */
+.do-doc .do-totals{border:1px solid #000;border-top:none}
+.do-doc .do-totals td{border-top:1px solid #000;padding:5px 9px;font-size:11px}
+.do-doc .do-totals td.do-totals-note{border-top:none;border-right:1px solid #000;width:58%;vertical-align:top;padding:6px 10px}
+.do-doc .do-totals td.k{text-align:right;font-weight:600;width:26%}
+.do-doc .do-totals td.v{text-align:right;font-family:var(--mono);font-weight:700;width:16%;white-space:nowrap}
+.do-doc .do-baht-row{font-weight:600;margin-bottom:6px}
+.do-doc .do-pay-info{color:#333;line-height:1.6}
+.do-doc .do-received{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px}
 .do-doc .do-sign{margin-top:30px}
 .do-doc .do-sign td{width:50%;text-align:center;font-size:11px;padding:0 22px;vertical-align:top}
 .do-doc .do-sign .sig-line{border-top:1px solid #000;margin:34px 20px 5px}

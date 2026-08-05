@@ -62,6 +62,7 @@ function prepDOModal() {
     });
     items.innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   }
+  recalcDOTotals();
   document.getElementById('do-modal').classList.add('open');
 }
 
@@ -75,7 +76,7 @@ function doItemRow(name, v, i) {
       <td><b>${name}</b>${modelLine}${sns}</td>
       <td class="c">${v.qty}</td>
       <td><input class="do-num" data-role="price" inputmode="decimal" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
-      <td><input class="do-num" data-role="amount" inputmode="decimal" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
+      <td><input class="do-num" data-role="amount" inputmode="decimal" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
     </tr>`;
 }
 
@@ -85,8 +86,60 @@ function calcDOAmount(inp) {
   const amt = tr.querySelector('input[data-role="amount"]'); if (!amt) return;
   const qty = parseFloat(tr.dataset.qty || '');
   const price = parseFloat(String(inp.value).replace(/,/g, ''));
-  if (!isFinite(qty) || !isFinite(price)) { amt.value = ''; return; }
-  amt.value = (qty * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!isFinite(qty) || !isFinite(price)) amt.value = '';
+  else amt.value = (qty * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  recalcDOTotals();
+}
+
+const DO_VAT_RATE = 7;   // ภาษีมูลค่าเพิ่ม (%)
+function fmtMoney(n) { return '฿' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+// รวมยอด → VAT → ยอดสุทธิ → จำนวนเงินตัวอักษร
+function recalcDOTotals() {
+  let total = 0, any = false;
+  document.querySelectorAll('#do-items input[data-role="amount"]').forEach(el => {
+    const v = parseFloat(String(el.value).replace(/,/g, ''));
+    if (isFinite(v)) { total += v; any = true; }
+  });
+  const vat = Math.round(total * DO_VAT_RATE) / 100;
+  const grand = Math.round((total + vat) * 100) / 100;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('do-total', fmtMoney(total));
+  set('do-vat', fmtMoney(vat));
+  set('do-grand', fmtMoney(grand));
+  set('do-baht-text', any && grand > 0 ? bahtText(grand) : '—');
+}
+
+// อ่านจำนวนเงินเป็นตัวอักษรไทย เช่น 413458.70 → สี่แสนหนึ่งหมื่นสามพันสี่ร้อยห้าสิบแปดบาทเจ็ดสิบสตางค์
+function bahtText(num) {
+  const n = Math.round((Number(num) || 0) * 100) / 100;
+  if (!n) return 'ศูนย์บาทถ้วน';
+  const abs = Math.abs(n);
+  const baht = Math.floor(abs);
+  const satang = Math.round((abs - baht) * 100);
+  let s = baht > 0 ? readThaiInt(baht) + 'บาท' : '';
+  s += satang > 0 ? readThaiInt(satang) + 'สตางค์' : 'ถ้วน';
+  return (n < 0 ? 'ลบ' : '') + s;
+}
+function readThaiInt(n) {
+  const d = ['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+  const u = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน'];
+  n = Math.floor(n);
+  if (n === 0) return 'ศูนย์';
+  if (n >= 1000000) {
+    const m = Math.floor(n / 1000000), rest = n % 1000000;
+    return readThaiInt(m) + 'ล้าน' + (rest > 0 ? readThaiInt(rest) : '');
+  }
+  const str = String(n); let out = '';
+  for (let i = 0; i < str.length; i++) {
+    const dig = Number(str[i]), pos = str.length - i - 1;
+    if (!dig) continue;
+    if (pos === 0 && dig === 1 && str.length > 1) out += 'เอ็ด';
+    else if (pos === 1 && dig === 1) out += 'สิบ';
+    else if (pos === 1 && dig === 2) out += 'ยี่สิบ';
+    else out += d[dig] + u[pos];
+  }
+  return out;
 }
 
 async function saveDO() {
@@ -148,6 +201,10 @@ function gatherDOData() {
     date:  g('do-date').textContent || '',
     note:  g('do-header-text').innerHTML || '',
     items: g('do-items').innerHTML || '',
+    total: g('do-total') ? g('do-total').textContent : fmtMoney(0),
+    vat:   g('do-vat') ? g('do-vat').textContent : fmtMoney(0),
+    grand: g('do-grand') ? g('do-grand').textContent : fmtMoney(0),
+    bahtText: g('do-baht-text') ? g('do-baht-text').textContent : '—',
   };
 }
 
@@ -183,6 +240,23 @@ function doDocHTML(label, d) {
         <thead><tr><th style="width:56px">Product No.</th><th>Product Description</th><th style="width:46px">Qty</th><th style="width:64px">Unit Price</th><th style="width:72px">Amount</th></tr></thead>
         <tbody>${d.items}</tbody>
       </table>
+      <table class="do-totals"><tbody>
+        <tr>
+          <td class="do-totals-note" rowspan="3">
+            <div class="do-baht-row">จำนวนเงิน(ตัวอักษร) <span>${d.bahtText}</span></div>
+            <div class="do-pay-info">
+              โปรดชำระโดยเงินสด/สั่งจ่ายเช็คในนาม / Payments should be made to:<br>
+              บจก. เอสจีดาต้าพอส (ไทยแลนด์)<br>
+              ธนาคารกสิกรไทย สาขา ถนนพระยาสัจจา ชลบุรี เลขที่บัญชี 049-1-85819-2
+            </div>
+          </td>
+          <td class="k">จำนวนเงินรวม/Total</td>
+          <td class="v">${d.total}</td>
+        </tr>
+        <tr><td class="k">ภาษีมูลค่าเพิ่ม/VAT 7%</td><td class="v">${d.vat}</td></tr>
+        <tr><td class="k">จำนวนเงินสุทธิ/Grand Total</td><td class="v">${d.grand}</td></tr>
+      </tbody></table>
+      <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย / Received the above goods in good order &amp; condition</div>
       <div class="do-note">หมายเหตุ: <span>${d.note}</span></div>
       <table class="do-sign"><tbody><tr>
         <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
