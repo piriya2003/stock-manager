@@ -262,7 +262,9 @@ function doDocHTML(label, d) {
         <td><div class="sig-line"></div>ผู้ส่งสินค้า / Approver<br><span class="d">วันที่ ____/____/____</span></td>
         <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่ ____/____/____</span></td>
       </tr></tbody></table>
-    </td></tr></tbody></table>`;
+    </td></tr></tbody>
+    <tfoot><tr><td class="do-page-foot"></td></tr></tfoot>
+    </table>`;
 }
 
 // พิมพ์ 2 ฉบับ: ต้นฉบับ + สำเนา (คนละหน้า) แล้วคืนสภาพช่องแก้ไขเดิม

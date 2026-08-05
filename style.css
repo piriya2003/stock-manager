@@ -377,8 +377,11 @@ input[type=file]{display:none}
      ถ้าใส่ที่กล่อง (#printArea หรือ .do-sheet) จะได้ขอบบนเฉพาะหน้าแรกของกล่องนั้น
      ทำให้แผ่นถัดไปหัวจดหมายติดขอบกระดาษ */
   #printArea{padding:0!important}
-  #printArea .do-sheet{padding:0 9mm 10mm}
+  #printArea .do-sheet{padding:0 9mm}
   #printArea .do-page>thead>tr>td{padding-top:10mm!important}
+  /* ระยะขอบ "ล่าง" ก็ต้องอยู่ใน tfoot ที่พิมพ์ซ้ำท้ายทุกหน้า ด้วยเหตุผลเดียวกับ thead ด้านบน
+     ไม่งั้นตารางจะพิมพ์ชนขอบล่างกระดาษในทุกหน้ายกเว้นหน้าสุดท้ายของกล่อง */
+  #printArea .do-page>tfoot>tr>td.do-page-foot{height:10mm!important;padding:0!important;border:none!important}
   #printArea input,.print-area input,.do-input,.do-number-input{
     border:none!important;background:transparent!important;box-shadow:none!important;
     padding:0!important;color:#000!important;font-family:'Sarabun',sans-serif!important;font-size:13px!important}
