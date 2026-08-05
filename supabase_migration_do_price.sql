@@ -9,3 +9,8 @@ alter table public.do_items add column if not exists amount numeric;
 drop policy if exists "Authenticated users can update do_items" on public.do_items;
 create policy "Authenticated users can update do_items"
   on public.do_items for update to authenticated using (true) with check (true);
+
+-- แก้ข้อมูลหัวใบ DO (เลขที่ / ลูกค้า / พนักงานขาย / PO / หมายเหตุ) ย้อนหลัง — ต้องมี policy update เช่นกัน
+drop policy if exists "Authenticated users can update do_headers" on public.do_headers;
+create policy "Authenticated users can update do_headers"
+  on public.do_headers for update to authenticated using (true) with check (true);

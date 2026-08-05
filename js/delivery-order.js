@@ -339,12 +339,14 @@ function openDOView(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
   currentViewDOId = id;
   document.getElementById('dov-no').textContent = 'เลขที่: ' + d.doNo;
-  document.getElementById('dov-no2').textContent = d.doNo;
+  document.getElementById('dov-no2').value = d.doNo;
   document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('dov-type').innerHTML = doTypeBadge(d.type);
-  document.getElementById('dov-cust').textContent = d.customer;
+  document.getElementById('dov-type').value = d.type || 'โอนสินค้า';
+  document.getElementById('dov-cust').value = d.customer || '';
   document.getElementById('dov-user').textContent = d.createdBy || '—';
-  document.getElementById('dov-sales').textContent = d.salesperson || '—';
+  document.getElementById('dov-sales').value = d.salesperson || '';
+  document.getElementById('dov-po').value = d.machine || '';
+  document.getElementById('dov-note').value = d.headerText || '';
 
   // จัดกลุ่มตามสินค้า (เหมือนในใบพิมพ์) — แก้ราคาต่อกลุ่ม ไม่ใช่ต่อ SN
   const grp = {};
@@ -404,11 +406,34 @@ function recalcDOViewTotals() {
   set('dov-grand', fmtMoney(grand));
 }
 
-// บันทึกราคาต่อหน่วย/จำนวนเงินของแต่ละกลุ่มสินค้ากลับลง Supabase (ทุก SN ในกลุ่มเดียวกัน)
+// บันทึกการแก้ไขใบ DO ย้อนหลัง: ข้อมูลหัวใบ + ราคาต่อหน่วย/จำนวนเงินของแต่ละกลุ่มสินค้า
 async function saveDOViewPrices() {
-  if (!dovGroups.length) return;
+  if (!currentViewDOId) return;
+  const doNo = document.getElementById('dov-no2').value.trim();
+  const cust = document.getElementById('dov-cust').value.trim();
+  if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
+  if (!cust) return toast('กรุณาระบุชื่อลูกค้า', 'error');
+  const headerPayload = {
+    do_no: doNo,
+    type: document.getElementById('dov-type').value,
+    customer_name: cust,
+    salesperson: document.getElementById('dov-sales').value.trim(),
+    machine: document.getElementById('dov-po').value.trim(),
+    header_text: document.getElementById('dov-note').value,
+  };
+
   const rows = [...document.querySelectorAll('#dov-items-tbody tr[data-gi]')];
   try {
+    // ── หัวใบ ──
+    const { data: hData, error: hErr } = await supaClient.from('do_headers')
+      .update(headerPayload).eq('id', currentViewDOId).select('id');
+    if (hErr) {
+      if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
+      throw hErr;
+    }
+    if (!hData || !hData.length) throw new Error('ไม่มีสิทธิ์แก้ไขหัวใบ DO (ยังไม่ได้ตั้ง update policy ให้ do_headers ใน Supabase)');
+
+    // ── ราคาแต่ละกลุ่มสินค้า ──
     for (const tr of rows) {
       const gi = Number(tr.dataset.gi);
       const g = dovGroups[gi]; if (!g || !g.ids.length) continue;
@@ -424,14 +449,20 @@ async function saveDOViewPrices() {
       // RLS ที่ไม่มี policy สำหรับ update จะคืน 200 พร้อม 0 แถว โดยไม่แจ้ง error — ต้องเช็คเอง
       if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขราคา (ยังไม่ได้ตั้ง update policy ให้ do_items ใน Supabase)');
     }
+    // อัปเดตแคชในเครื่องให้ตรงกับที่บันทึกไป
     const d = doHistory.find(x => x.id === currentViewDOId);
     if (d) {
+      d.doNo = doNo; d.type = headerPayload.type; d.customer = cust;
+      d.salesperson = headerPayload.salesperson; d.machine = headerPayload.machine;
+      d.headerText = headerPayload.header_text;
       dovGroups.forEach(g => {
         (d.items || []).forEach(item => { if (item.name === g.name) { item.unitPrice = g.unitPrice; item.amount = g.amount; } });
       });
     }
-    toast('บันทึกราคาสำเร็จ', 'success');
-  } catch (err) { toast('บันทึกราคาล้มเหลว: ' + err.message, 'error'); }
+    document.getElementById('dov-no').textContent = 'เลขที่: ' + doNo;
+    renderDOHistory();
+    toast('บันทึกการแก้ไขสำเร็จ', 'success');
+  } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
 }
 
 function reopenDOForPrint(id) {

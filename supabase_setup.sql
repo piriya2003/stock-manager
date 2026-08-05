@@ -292,9 +292,11 @@ create policy "delete repair_jobs" on repair_jobs for delete to authenticated us
 -- ── do_headers / do_items: อ่าน/เพิ่มได้ / ลบเฉพาะ admin ──
 drop policy if exists "read do_headers"   on do_headers;
 drop policy if exists "insert do_headers" on do_headers;
+drop policy if exists "update do_headers" on do_headers;
 drop policy if exists "delete do_headers" on do_headers;
 create policy "read do_headers"   on do_headers for select to authenticated using (true);
 create policy "insert do_headers" on do_headers for insert to authenticated with check (true);
+create policy "update do_headers" on do_headers for update to authenticated using (true) with check (true);  -- แก้ข้อมูลหัวใบ DO ย้อนหลัง
 create policy "delete do_headers" on do_headers for delete to authenticated using (public.is_admin());
 
 drop policy if exists "read do_items"   on do_items;
