@@ -328,10 +328,14 @@ input[type=file]{display:none}
 .do-doc .do-addr{min-height:34px;font-size:11px;outline:none;line-height:1.6;white-space:pre-wrap}
 .do-doc .do-addr:empty:before{content:attr(data-ph);color:#bbb}
 .do-doc .do-flat{border:none;background:transparent;font-size:12px;color:#000;padding:0 2px;outline:none;width:100%;font-family:'Sarabun',sans-serif}
-.do-doc .do-items-tbl{margin-top:10px;border:1px solid #000}
-.do-doc .do-items-tbl th{border:1px solid #000}
-/* ไม่มีเส้นคั่นแนวนอนระหว่างสินค้า — เหลือแค่เส้นแบ่งคอลัมน์กับกรอบนอก (ตามใบจริง) */
-.do-doc .do-items-tbl td{border-left:1px solid #000;border-right:1px solid #000;border-top:none;border-bottom:none}
+/* ตารางสินค้า: ใช้ border-collapse:separate เพราะ collapse ทำให้เส้นกรอบหายเมื่อตารางถูกตัดข้ามหน้า
+   แต่ละช่องวาดเฉพาะ "เส้นขวา" ช่องเดียว (ช่องสุดท้ายไม่มี) เส้นแบ่งคอลัมน์จึงเป็นเส้นเดี่ยวไม่ซ้อนกัน
+   และไม่มีเส้นคั่นแนวนอนระหว่างสินค้า — เหลือแค่เส้นใต้หัวตารางกับกรอบนอก (ตามใบจริง) */
+.do-doc .do-items-tbl{margin-top:10px;border:1px solid #000;border-collapse:separate;border-spacing:0}
+.do-doc .do-items-tbl th{border-right:1px solid #000;border-bottom:1px solid #000}
+.do-doc .do-items-tbl th:last-child{border-right:none}
+.do-doc .do-items-tbl td{border-right:1px solid #000;border-top:none;border-bottom:none;border-left:none}
+.do-doc .do-items-tbl td:last-child{border-right:none}
 .do-doc .do-items-tbl th{font-size:10.5px;padding:4px 4px;text-align:center;line-height:1.35;font-weight:700}
 .do-doc .do-items-tbl th .th-th,.do-doc .do-items-tbl th .th-en{display:block;white-space:nowrap}
 .do-doc .do-items-tbl td{padding:6px 7px;vertical-align:top;font-size:11px}
