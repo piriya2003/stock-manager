@@ -74,38 +74,11 @@ function fmtDODate(iso) {
   return `${String(d.getDate()).padStart(2, '0')}-${m}-${d.getFullYear()}`;
 }
 
-// ยุบ Serial ที่เรียงติดกันเป็นช่วง เช่น A001,A002,A003 → "A001 - A003" (ตามรูปแบบใบจริง)
-function collapseSNRanges(sns) {
-  const parsed = sns.map(sn => {
-    const s = String(sn);
-    const m = s.match(/^(.*?)(\d+)$/);
-    return m ? { s, prefix: m[1], num: BigInt(m[2]), digits: m[2].length } : { s, prefix: null, num: 0n, digits: 0 };
-  });
-  parsed.sort((a, b) => {
-    if (a.prefix === null || b.prefix === null) return a.s.localeCompare(b.s);
-    if (a.prefix !== b.prefix) return a.prefix.localeCompare(b.prefix);
-    if (a.digits !== b.digits) return a.digits - b.digits;
-    return a.num < b.num ? -1 : a.num > b.num ? 1 : 0;
-  });
-
-  const out = [];
-  let i = 0;
-  while (i < parsed.length) {
-    const start = parsed[i];
-    if (start.prefix === null) { out.push(start.s); i++; continue; }
-    let j = i;
-    while (j + 1 < parsed.length && parsed[j + 1].prefix === start.prefix
-      && parsed[j + 1].digits === parsed[j].digits && parsed[j + 1].num === parsed[j].num + 1n) j++;
-    out.push(i === j ? start.s : `${start.s} - ${parsed[j].s}`);
-    i = j + 1;
-  }
-  return out;
-}
-
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${v.code}</div>` : (v.category ? `<div class="do-model">${v.category}</div>` : '');
-  const sns = collapseSNRanges(v.sns).map(s => `<div class="sn">Serial NO : ${s}</div>`).join('');
+  const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียงน้อย→มาก แสดงครบทุกเลข
+  const sns = sorted.map(s => `<div class="sn">Serial NO : ${s}</div>`).join('');
   const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
   return `<tr data-qty="${v.qty}" data-name="${String(name).replace(/"/g, '&quot;')}">
