@@ -236,6 +236,7 @@ function doDocHTML(label, d) {
           <th style="width:96px"><span class="th-th">จำนวนเงิน</span><span class="th-en">Amount</span></th>
         </tr></thead>
         <tbody>${d.items}</tbody>
+        <tfoot><tr><td colspan="5"></td></tr></tfoot>
       </table>
       <table class="do-totals"><tbody>
         <tr><td class="do-totals-pad" rowspan="3"></td><td class="k">Sub-Total</td><td class="v">${d.total}</td></tr>
