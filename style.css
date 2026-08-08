@@ -360,9 +360,14 @@ input[type=file]{display:none}
 .do-doc .do-note{border:var(--do-bw) solid var(--do-bc);border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
 /* สรุปยอดเงิน (Sub-Total / VAT / Total) — กล่องเล็กชิดขวาใต้ตาราง ตามใบจริง
-   break-inside:avoid กันบล็อกยอดถูกตัดคาบเกี่ยว 2 หน้า */
-.do-doc .do-totals{border-collapse:collapse;break-inside:avoid;page-break-inside:avoid}
+   break-inside:avoid กันบล็อกยอดถูกตัดคาบเกี่ยว 2 หน้า
+   กล่องยอดต้องมี "เส้นบน" ของตัวเอง ไม่งั้นเวลาบล็อกยอดถูกดันไปขึ้นหน้าใหม่
+   (ตารางสินค้าจบไปตั้งแต่หน้าก่อน) จะไม่มีอะไรมาปิดขอบบนให้ กล่องเลยเปิดโล่ง
+   ส่วน margin-top ติดลบ = ดึงเส้นบนนี้ไปทับเส้นล่างของตารางสินค้าพอดีตอนอยู่หน้าเดียวกัน
+   จะได้ไม่กลายเป็นเส้นคู่ */
+.do-doc .do-totals{border-collapse:collapse;break-inside:avoid;page-break-inside:avoid;margin-top:calc(var(--do-bw) * -1)}
 .do-doc .do-totals td{border:var(--do-bw) solid var(--do-bc);border-top:none;padding:3px 7px;font-size:11px}
+.do-doc .do-totals tr:first-child td{border-top:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-totals td.do-totals-pad{border-left:var(--do-bw) solid var(--do-bc);border-right:var(--do-bw) solid var(--do-bc);border-bottom:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-totals td.k{font-weight:700;width:126px}
 .do-doc .do-totals td.v{text-align:right;font-weight:700;width:96px;white-space:nowrap}
