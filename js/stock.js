@@ -129,6 +129,94 @@ async function saveEdit() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+//  เปลี่ยนชื่อสินค้าทีเดียวทั้งคลัง (ไม่ต้องไล่แก้ทีละ SN)
+// ══════════════════════════════════════════════════════════════
+function openBulkRename() {
+  const sel = document.getElementById('rn-old');
+  const counts = new Map();
+  stock.forEach(i => counts.set(i.name, (counts.get(i.name) || 0) + 1));
+  if (!counts.size) return toast('ยังไม่มีสินค้าในคลัง', 'error');
+  // สร้าง option ด้วย DOM ไม่ใช่ innerHTML — ชื่อสินค้ามี & : / " ปนอยู่บ่อย
+  sel.innerHTML = '';
+  [...counts.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(n => {
+    const o = document.createElement('option');
+    o.value = n; o.textContent = `${n}  (${counts.get(n)} ชิ้น)`;
+    sel.appendChild(o);
+  });
+  // ถ้าหน้าคลังกรองไว้จนเหลือชื่อเดียว ถือว่านั่นคือชื่อที่ตั้งใจจะแก้
+  const shown = [...new Set(getFilteredStock().map(i => i.name))];
+  if (shown.length === 1) sel.value = shown[0];
+  document.getElementById('rn-new').value = '';
+  previewBulkRename();
+  document.getElementById('rename-modal').classList.add('open');
+}
+
+function previewBulkRename() {
+  const oldName = document.getElementById('rn-old').value;
+  const newName = document.getElementById('rn-new').value.trim();
+  const n = stock.filter(i => i.name === oldName).length;
+  const box = document.getElementById('rn-preview');
+  const btn = document.getElementById('rn-apply');
+  box.innerHTML = '';
+  const ready = newName && newName !== oldName;
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '' : '.5';
+  if (!ready) {
+    box.textContent = newName ? 'ชื่อใหม่ซ้ำกับชื่อเดิม' : `เลือกชื่อเดิมแล้วพิมพ์ชื่อใหม่ — ชื่อนี้มีอยู่ ${n} รายการ`;
+    return;
+  }
+  const head = document.createElement('div');
+  head.innerHTML = `จะเปลี่ยนทั้งหมด <b style="color:var(--blue)">${n}</b> รายการ`;
+  const from = document.createElement('div'); from.style.cssText = 'color:var(--t3);text-decoration:line-through'; from.textContent = oldName;
+  const to   = document.createElement('div'); to.style.cssText   = 'color:var(--green);font-weight:600'; to.textContent = '↓ ' + newName;
+  box.append(head, from, to);
+}
+
+async function applyBulkRename() {
+  const oldName = document.getElementById('rn-old').value;
+  const newName = document.getElementById('rn-new').value.trim();
+  if (!newName) return toast('กรุณาใส่ชื่อใหม่', 'error');
+  if (newName === oldName) return toast('ชื่อใหม่ซ้ำกับชื่อเดิม', 'error');
+  const targets = stock.filter(i => i.name === oldName);
+  if (!targets.length) return toast('ไม่พบสินค้าชื่อนี้ในคลัง', 'error');
+  if (!confirm(`เปลี่ยนชื่อสินค้า ${targets.length} รายการ\n\n${oldName}\n↓\n${newName}\n\nยืนยันหรือไม่?`)) return;
+
+  const btn = document.getElementById('rn-apply');
+  btn.disabled = true;
+  showSync('syncing', 'กำลังเปลี่ยนชื่อสินค้า...');
+  try {
+    const { error } = await supaClient.from('inventory').update({ name: newName }).eq('name', oldName);
+    if (error) throw error;
+    targets.forEach(i => { i.name = newName; });
+    await renameMasterProduct(oldName, newName);
+    await logTransaction(today(), '🏷️ เปลี่ยนชื่อสินค้า', newName, targets[0].code, `${targets.length} รายการ`,
+                         getBalance(targets[0].code), `เปลี่ยนชื่อ: ${oldName} → ${newName}`);
+    closeModal('rename-modal');
+    populateCatFilter(); filterStock(); updateDataLists(); renderMasterProducts();
+    showSync('success', '✓ เปลี่ยนชื่อสำเร็จ');
+    toast(`เปลี่ยนชื่อ ${targets.length} รายการเป็น "${newName}" สำเร็จ`, 'success');
+  } catch (err) {
+    showSync('error', '✗ เปลี่ยนชื่อล้มเหลว');
+    toast('เปลี่ยนชื่อล้มเหลว: ' + err.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ต้นแบบสินค้าไม่มีสิทธิ์ UPDATE บน Supabase (มีแค่ insert/delete) — เลยใช้ลบตัวเก่าแล้วเพิ่มตัวใหม่แทน
+async function renameMasterProduct(oldName, newName) {
+  const olds = masterProds.filter(p => p.name === oldName);
+  if (!olds.length) return;
+  const ids = olds.map(p => p.id);
+  const { error: dErr } = await supaClient.from('master_products').delete().in('id', ids);
+  if (dErr) throw dErr;
+  masterProds = masterProds.filter(p => !ids.includes(p.id));
+  if (masterProds.some(p => p.name === newName)) return;   // มีต้นแบบชื่อใหม่อยู่แล้ว ไม่ต้องเพิ่มซ้ำ
+  const { data, error } = await supaClient.from('master_products')
+    .insert({ category: olds[0].category || 'ไม่ระบุ', name: newName, code: olds[0].code }).select().single();
+  if (error) throw error;
+  masterProds.push(data);
+}
+
 async function delItem(id) {
   const item = stock.find(x => x.id === id); if (!item) return;
   if (!confirm(`ลบสินค้า SN: ${item.sn}?\n(ไม่สามารถกู้คืนได้)`)) return;

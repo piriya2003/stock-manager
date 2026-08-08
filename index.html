@@ -154,6 +154,7 @@
             <option value="Repair">รับซ่อม</option>
             <option value="Claimed">เคลม/ชำรุด</option>
           </select>
+          <button id="bulk-rename-btn" onclick="openBulkRename()" class="btn btn-ghost btn-sm">🏷️ เปลี่ยนชื่อสินค้า</button>
           <button onclick="exportStockCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
       </div>
@@ -727,6 +728,32 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
       <button onclick="closeModal('edit-modal')" class="btn btn-ghost">ยกเลิก</button>
       <button onclick="saveEdit()" class="btn btn-primary">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="rename-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏷️ เปลี่ยนชื่อสินค้าทั้งหมด</span>
+      <button class="modal-close" onclick="closeModal('rename-modal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-row"><label class="field-label">ชื่อเดิม (เลือกจากที่มีในคลัง)</label>
+        <select id="rn-old" onchange="previewBulkRename()"></select>
+      </div>
+      <div class="form-row"><label class="field-label">ชื่อใหม่</label>
+        <input type="text" id="rn-new" list="product-dl" oninput="previewBulkRename()" placeholder="พิมพ์ชื่อใหม่ที่ต้องการ...">
+      </div>
+      <div id="rn-preview" style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--t2);line-height:1.7"></div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.6">
+        * เปลี่ยนชื่อในคลังสินค้าทุกชิ้นที่ใช้ชื่อเดิม (รวมของที่ขาย/ซ่อม/เคลมไปแล้ว) และชื่อในต้นแบบสินค้า<br>
+        * ใบ DO / GRN ที่ออกไปแล้วยังเก็บชื่อเดิมไว้ตามที่พิมพ์จริง ไม่ถูกแก้ย้อนหลัง
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button onclick="closeModal('rename-modal')" class="btn btn-ghost">ยกเลิก</button>
+      <button id="rn-apply" onclick="applyBulkRename()" class="btn btn-primary">เปลี่ยนชื่อ</button>
     </div>
   </div>
 </div>

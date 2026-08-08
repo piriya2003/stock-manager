@@ -72,6 +72,9 @@ async function finishLogin(session) {
   });
   const navOv = document.getElementById('nav-overview');
   if (navOv) navOv.style.display = 'flex';
+  // เปลี่ยนชื่อสินค้าทีเดียวทั้งคลัง — กระทบทุกชิ้นที่ใช้ชื่อนั้น เลยให้เฉพาะ admin
+  const renameBtn = document.getElementById('bulk-rename-btn');
+  if (renameBtn) renameBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
