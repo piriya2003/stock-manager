@@ -304,7 +304,11 @@ input[type=file]{display:none}
 #printArea input:focus,.print-area input:focus{background:#fff!important;color:#111!important;box-shadow:0 0 0 2px rgba(84,155,255,.25)!important}
 #printArea .do-number-input,.print-area .do-number-input{background:#fffbeb!important}
 /* ── ใบส่งสินค้า (DO) สไตล์ SGDATAPOS ── */
-.do-doc{font-family:'Sarabun',sans-serif;color:#000;font-size:12px;line-height:1.45}
+/* เส้นตารางทั้งใบคุมจาก 2 ตัวแปรนี้ (แก้ที่เดียวเปลี่ยนทุกเส้น)
+   --do-bw ต้องเป็น 1px เสมอ! เคยลองใช้ .5px แล้วเส้นหายเป็นช่วงๆ ในหน้าตัวอย่างก่อนพิมพ์
+   (เส้นบางกว่า 1 พิกเซลโดนปัดทิ้งตอนย่อ/ขยายหน้าจอ) ถ้าอยากได้เส้นจางลงให้ปรับสีที่ --do-bc แทน
+   เข้มขึ้น = #777 · จางลง = #bbb */
+.do-doc{--do-bw:1px;--do-bc:#a6a6a6;font-family:'Sarabun',sans-serif;color:#000;font-size:12px;line-height:1.45}
 /* ตารางครอบทั้งใบ — thead = หัวกระดาษ (เบราว์เซอร์พิมพ์ซ้ำทุกหน้าให้อัตโนมัติ) */
 .do-doc .do-page{width:100%;border-collapse:collapse}
 .do-doc .do-page>thead{display:table-header-group}
@@ -318,12 +322,12 @@ input[type=file]{display:none}
 .do-doc .do-doc-title{text-align:center;margin:10px 0 8px;font-weight:700}
 .do-doc .do-doc-title>div{font-size:12.5px;line-height:1.7}
 .do-doc table{width:100%;border-collapse:collapse}
-.do-doc .do-info,.do-doc .do-info>tbody>tr>td{border:1px solid #000}
+.do-doc .do-info,.do-doc .do-info>tbody>tr>td{border:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-info>tbody>tr>td{vertical-align:top;padding:6px 9px;font-size:11px}
 .do-doc .do-info .do-to{width:58%}
 .do-doc .do-to-body{padding-left:18px}
 .do-doc .do-meta-k{width:78px;white-space:nowrap;border-right:none!important}
-.do-doc .do-meta-v{border-left:1px solid #000}
+.do-doc .do-meta-v{border-left:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-meta-k>div,.do-doc .do-meta-v>div{line-height:1.75;min-height:18px}
 .do-doc .do-addr{min-height:34px;font-size:11px;outline:none;line-height:1.6;white-space:pre-wrap}
 .do-doc .do-addr:empty:before{content:attr(data-ph);color:#bbb}
@@ -336,12 +340,12 @@ input[type=file]{display:none}
    - บน        = เส้นบนของ thead (พิมพ์ซ้ำทุกหน้า)
    - ล่าง      = เส้นบนของ tfoot (พิมพ์ซ้ำท้ายทุกหน้า)
    ถ้าใช้เส้นกรอบบน/ล่างของตาราง จะได้แค่หน้าแรกกับหน้าสุดท้ายเท่านั้น */
-.do-doc .do-items-tbl{margin-top:10px;border:1px solid #000;border-top:none;border-bottom:none;border-collapse:separate;border-spacing:0}
-.do-doc .do-items-tbl th{border-top:1px solid #000;border-right:1px solid #000;border-bottom:1px solid #000}
+.do-doc .do-items-tbl{margin-top:10px;border:var(--do-bw) solid var(--do-bc);border-top:none;border-bottom:none;border-collapse:separate;border-spacing:0}
+.do-doc .do-items-tbl th{border-top:var(--do-bw) solid var(--do-bc);border-right:var(--do-bw) solid var(--do-bc);border-bottom:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-items-tbl th:last-child{border-right:none}
-.do-doc .do-items-tbl td{border-right:1px solid #000;border-top:none;border-bottom:none;border-left:none}
+.do-doc .do-items-tbl td{border-right:var(--do-bw) solid var(--do-bc);border-top:none;border-bottom:none;border-left:none}
 .do-doc .do-items-tbl td:last-child{border-right:none}
-.do-doc .do-items-tbl tfoot td{border-top:1px solid #000;border-right:none;padding:0;height:0;line-height:0;font-size:0}
+.do-doc .do-items-tbl tfoot td{border-top:var(--do-bw) solid var(--do-bc);border-right:none;padding:0;height:0;line-height:0;font-size:0}
 .do-doc .do-items-tbl th{font-size:10.5px;padding:4px 4px;text-align:center;line-height:1.35;font-weight:700}
 .do-doc .do-items-tbl th .th-th,.do-doc .do-items-tbl th .th-en{display:block;white-space:nowrap}
 .do-doc .do-items-tbl td{padding:6px 7px;vertical-align:top;font-size:11px}
@@ -353,20 +357,20 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl .do-num{width:100%;box-sizing:border-box;border:none;border-bottom:1px dotted #c4c4c4;background:transparent!important;color:#111!important;
   text-align:right;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:1px 2px;outline:none}
 .do-doc .do-items-tbl .do-num:focus{background:#fffbe6!important;border-bottom-color:#f59e0b;box-shadow:none!important}
-.do-doc .do-note{border:1px solid #000;border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
+.do-doc .do-note{border:var(--do-bw) solid var(--do-bc);border-top:none;padding:6px 9px;font-size:11px;min-height:26px}
 .do-doc .do-note span{outline:none}
 /* สรุปยอดเงิน (Sub-Total / VAT / Total) — กล่องเล็กชิดขวาใต้ตาราง ตามใบจริง
    break-inside:avoid กันบล็อกยอดถูกตัดคาบเกี่ยว 2 หน้า */
 .do-doc .do-totals{border-collapse:collapse;break-inside:avoid;page-break-inside:avoid}
-.do-doc .do-totals td{border:1px solid #000;border-top:none;padding:3px 7px;font-size:11px}
-.do-doc .do-totals td.do-totals-pad{border-left:1px solid #000;border-right:1px solid #000;border-bottom:1px solid #000}
+.do-doc .do-totals td{border:var(--do-bw) solid var(--do-bc);border-top:none;padding:3px 7px;font-size:11px}
+.do-doc .do-totals td.do-totals-pad{border-left:var(--do-bw) solid var(--do-bc);border-right:var(--do-bw) solid var(--do-bc);border-bottom:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-totals td.k{font-weight:700;width:126px}
 .do-doc .do-totals td.v{text-align:right;font-weight:700;width:96px;white-space:nowrap}
 .do-doc .do-note{border:none;padding:8px 2px 0;font-size:11px;min-height:0}
 .do-doc .do-received{border:none;padding:16px 2px 0;font-size:11px}
 .do-doc .do-sign{margin-top:34px}
 .do-doc .do-sign td{width:50%;text-align:center;font-size:11px;padding:0 22px;vertical-align:top}
-.do-doc .do-sign .sig-line{border-top:1px solid #000;margin:30px 20px 5px}
+.do-doc .do-sign .sig-line{border-top:var(--do-bw) solid var(--do-bc);margin:30px 20px 5px}
 .do-doc .do-sign .d{font-size:11px}
 .do-doc .do-copy2{break-before:page;page-break-before:always}
 @media print{
