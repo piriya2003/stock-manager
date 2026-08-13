@@ -536,6 +536,7 @@
             <option value="ซ่อม">🔧 รับซ่อม</option>
             <option value="คืนสต็อก">♻️ คืนสต็อก</option>
           </select>
+          <button id="rp-more-btn" onclick="loadMoreTxns()" class="btn btn-ghost btn-sm">⬇ โหลดประวัติเก่าเพิ่ม</button>
           <button onclick="exportReportCSV()" class="btn btn-ghost btn-sm">⬇ CSV</button>
         </div>
       </div>
@@ -545,6 +546,7 @@
           <tbody id="report-tbody"></tbody>
         </table>
       </div>
+      <div id="rp-count" style="margin-top:8px;font-size:11px;color:var(--t3);text-align:right"></div>
     </div>
 
     <div id="tab-backup" class="tab-content">

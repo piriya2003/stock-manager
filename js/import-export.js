@@ -58,6 +58,10 @@ function renderReport() {
   const q  = document.getElementById('rp-q').value.toLowerCase();
   const ft = document.getElementById('rp-type').value;
   const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+  updateTxMoreBtn();
+  const cnt = document.getElementById('rp-count');
+  if (cnt) cnt.innerHTML = `แสดง <b style="color:var(--blue)">${data.length}</b> จากที่โหลดมา ${txns.length} รายการ`
+    + (txnsAllLoaded ? ' (ครบทั้งหมดแล้ว)' : ' — ยังมีของเก่ากว่านี้ กด "โหลดประวัติเก่าเพิ่ม"');
   document.getElementById('report-tbody').innerHTML = data.map(t => `
     <tr>
       <td class="mono">${t.date}${t.createdAt ? `<div style="font-size:10px;color:var(--t3)">${new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}</td><td>${typeBadge(t.type)}</td>

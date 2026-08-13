@@ -31,6 +31,8 @@ let doItems            = [];      // รายการสินค้าที�
 let doFromLiveSession  = true;    // true = มาจากเซสชั่นสแกนสด, false = มาจากประวัติที่ขายไปแล้ว
 let grnModalMode       = 'create';
 
+let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว
+
 let impRows = [];
 let stockSortCol = 'sn';
 let stockSortDir = 'desc';

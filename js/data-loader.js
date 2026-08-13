@@ -4,7 +4,7 @@
 async function loadAllData() {
   const [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes] = await Promise.all([
     supaClient.from('inventory').select('*').order('sn', { ascending: false }),
-    supaClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(500),
+    supaClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(TX_PAGE),
     supaClient.from('repair_jobs').select('*, customers(name)').order('created_at', { ascending: false }),
     supaClient.from('do_headers').select('*').order('created_at', { ascending: false }),
     supaClient.from('do_items').select('*'),
@@ -17,10 +17,9 @@ async function loadAllData() {
   [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes].forEach(r => { if (r.error) throw r.error; });
 
   stock = invRes.data;
-  txns  = txRes.data.map(t => ({
-    date: t.tx_date, type: t.type, name: t.item_name, code: t.item_code,
-    sn: t.sn, balance: t.balance, note: t.note, user: t.performed_by, createdAt: t.created_at,
-  }));
+  // ดึงประวัติชุดแรกพอให้เข้าระบบไว ที่เหลือกดโหลดเพิ่มได้จากหน้ารายงาน
+  txns = txRes.data.map(mapTxRow);
+  txnsAllLoaded = txRes.data.length < TX_PAGE;
 
   repairJobs = repRes.data.map(j => ({
     id: j.id, sn: j.sn, name: j.name, code: j.code, category: j.category,
