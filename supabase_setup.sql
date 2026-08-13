@@ -22,8 +22,11 @@ do $$ begin
   create type repair_status as enum ('รอซ่อม', 'กำลังซ่อม', 'ซ่อมเสร็จ', 'เคลมเครื่อง');
 exception when duplicate_object then null; end $$;
 do $$ begin
-  create type do_type as enum ('โอนสินค้า', 'ขายสินค้า');
+  create type do_type as enum ('โอนสินค้า', 'ขายสินค้า', 'เบิกสินค้า', 'สินค้าเคลม/ส่งซ่อม');
 exception when duplicate_object then null; end $$;
+-- enum ที่สร้างไว้ก่อนหน้ายังมีแค่ 2 ค่า — เติมค่าใหม่ให้ครบ
+alter type do_type add value if not exists 'เบิกสินค้า';
+alter type do_type add value if not exists 'สินค้าเคลม/ส่งซ่อม';
 do $$ begin
   create type user_role as enum ('admin', 'staff');
 exception when duplicate_object then null; end $$;

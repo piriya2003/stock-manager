@@ -115,6 +115,9 @@ function repairStatusBadge(s) {
 }
 function typeBadge(t) {
   if (t.includes('รับเข้า')) return '<span class="badge b-green">📥 รับเข้า</span>';
+  // 2 บรรทัดนี้เทียบแบบตรงตัว ไม่ใช่ includes — ไม่งั้นไปกินรายการ 'เคลม (SN เดิม)' / 'เคลมสลับ SN' ของงานเคลมด้วย
+  if (t === 'สินค้าเคลม/ส่งซ่อม') return '<span class="badge b-red">🔴 เคลม/ส่งซ่อม</span>';
+  if (t === 'เบิกสินค้า') return '<span class="badge b-cyan">📦 เบิก</span>';
   if (t.includes('ซ่อม')) return '<span class="badge b-orange">🔧 ซ่อม</span>';
   if (t.includes('ขาย')) return '<span class="badge b-blue">💰 ขาย</span>';
   if (t.includes('คืน')) return '<span class="badge b-purple">♻️ คืน</span>';
@@ -122,6 +125,8 @@ function typeBadge(t) {
 }
 function doTypeBadge(t) {
   if (t === 'ขายสินค้า') return '<span class="badge b-blue">💰 ขาย</span>';
+  if (t === 'เบิกสินค้า') return '<span class="badge b-cyan">📦 เบิก</span>';
+  if (t === 'สินค้าเคลม/ส่งซ่อม') return '<span class="badge b-red">🔴 เคลม/ส่งซ่อม</span>';
   return '<span class="badge b-gray">📤 โอน</span>';
 }
 

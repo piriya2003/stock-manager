@@ -318,7 +318,12 @@
             <div class="grid-2">
               <div class="form-row"><label class="field-label">วันที่</label><input type="date" id="o-date"></div>
               <div class="form-row"><label class="field-label">ประเภท</label>
-                <select id="o-type"><option value="โอนสินค้า">📤 โอนสินค้า (Transfer)</option><option value="ขายสินค้า">💰 ขายสินค้า (Sell)</option></select>
+                <select id="o-type">
+                  <option value="โอนสินค้า">📤 โอนสินค้า (Transfer)</option>
+                  <option value="ขายสินค้า">💰 ขายสินค้า (Sell)</option>
+                  <option value="เบิกสินค้า">📦 เบิกสินค้า (Withdraw)</option>
+                  <option value="สินค้าเคลม/ส่งซ่อม">🔴 สินค้าเคลม / ส่งซ่อม (Claim/Repair)</option>
+                </select>
               </div>
             </div>
             <div class="form-row"><label class="field-label" style="color:var(--orange)">ลูกค้า / สาขาปลายทาง *</label><select id="o-cust"></select></div>
@@ -471,6 +476,8 @@
             <option value="">— ทุกประเภท —</option>
             <option value="โอนสินค้า">📤 โอนสินค้า</option>
             <option value="ขายสินค้า">💰 ขายสินค้า</option>
+            <option value="เบิกสินค้า">📦 เบิกสินค้า</option>
+            <option value="สินค้าเคลม/ส่งซ่อม">🔴 สินค้าเคลม / ส่งซ่อม</option>
           </select>
           <button onclick="exportDOHistoryCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
@@ -521,6 +528,8 @@
             <option value="รับเข้า">📥 รับเข้า</option>
             <option value="โอนสินค้า">📤 โอน</option>
             <option value="ขายสินค้า">💰 ขาย</option>
+            <option value="เบิกสินค้า">📦 เบิก</option>
+            <option value="สินค้าเคลม/ส่งซ่อม">🔴 เคลม / ส่งซ่อม</option>
             <option value="ซ่อม">🔧 รับซ่อม</option>
             <option value="คืนสต็อก">♻️ คืนสต็อก</option>
           </select>
@@ -870,7 +879,7 @@
       <div class="detail-section" style="margin-bottom:0">
         <div class="detail-section-title">📋 ข้อมูลใบ DO (แก้ไขได้)</div>
         <div class="detail-row"><span class="lbl">เลขที่</span><input type="text" id="dov-no2" class="mono" style="max-width:60%;text-align:right;color:var(--blue);font-weight:700"></div>
-        <div class="detail-row"><span class="lbl">ประเภท</span><select id="dov-type" style="max-width:60%"><option value="โอนสินค้า">📤 โอนสินค้า</option><option value="ขายสินค้า">💰 ขายสินค้า</option></select></div>
+        <div class="detail-row"><span class="lbl">ประเภท</span><select id="dov-type" style="max-width:60%"><option value="โอนสินค้า">📤 โอนสินค้า</option><option value="ขายสินค้า">💰 ขายสินค้า</option><option value="เบิกสินค้า">📦 เบิกสินค้า</option><option value="สินค้าเคลม/ส่งซ่อม">🔴 สินค้าเคลม / ส่งซ่อม</option></select></div>
         <div class="detail-row"><span class="lbl">ลูกค้า</span><input type="text" id="dov-cust" style="max-width:60%;text-align:right"></div>
         <div style="margin:6px 0"><span class="lbl" style="display:block;margin-bottom:4px">ที่อยู่ / เลขผู้เสียภาษี</span><textarea id="dov-addr" rows="2" placeholder="ที่อยู่ลูกค้าที่พิมพ์บนใบ DO" style="resize:vertical;font-size:12px"></textarea></div>
         <div class="detail-row"><span class="lbl">พนักงานขาย</span><input type="text" id="dov-sales" style="max-width:60%;text-align:right"></div>
