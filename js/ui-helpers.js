@@ -78,6 +78,19 @@ function inlineMsg(id, msg, ok) {
   setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3500);
 }
 
+// เลขรันของเอกสาร (DO / GRN) = เลขสูงสุด "ของวันนั้น" + 1
+// เดิมนับจากจำนวนใบทั้งหมดที่มี ซึ่งพอลบใบเก่าทิ้ง เลขจะวนกลับมาชนใบที่ยังอยู่ (บันทึกไม่ผ่าน)
+// และเลขก็ไม่ได้เริ่มใหม่รายวันทั้งที่รูปแบบสื่อแบบนั้น
+function nextDocNo(prefix, existingNos) {
+  const maxSeq = (existingNos || []).reduce((max, no) => {
+    const s = String(no || '');
+    if (!s.startsWith(prefix)) return max;
+    const seq = parseInt(s.slice(prefix.length), 10);
+    return Number.isFinite(seq) && seq > max ? seq : max;
+  }, 0);
+  return prefix + String(maxSeq + 1).padStart(4, '0');
+}
+
 function today() { return new Date().toISOString().split('T')[0]; }
 function nowISO() { return new Date().toISOString(); }
 function nowStr() {

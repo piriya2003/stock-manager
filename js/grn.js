@@ -3,8 +3,7 @@
 // ══════════════════════════════════════════════════════════════
 function genGRNNo() {
   const n = new Date(), yy = String(n.getFullYear()).slice(-2), mm = String(n.getMonth()+1).padStart(2,'0'), dd = String(n.getDate()).padStart(2,'0');
-  const seq = String(grnHistory.length + 1).padStart(4, '0');
-  return `GRN-${yy}${mm}${dd}-${seq}`;
+  return nextDocNo(`GRN-${yy}${mm}${dd}-`, grnHistory.map(g => g.grnNo));
 }
 
 function openGRNModal() {

@@ -3,8 +3,7 @@
 // ══════════════════════════════════════════════════════════════
 function genDONo() {
   const n = new Date(), yy = String(n.getFullYear()).slice(-2), mm = String(n.getMonth()+1).padStart(2,'0'), dd = String(n.getDate()).padStart(2,'0');
-  const seq = String(doHistory.length + 1).padStart(4, '0');
-  return `DO-${yy}${mm}${dd}-${seq}`;
+  return nextDocNo(`DO-${yy}${mm}${dd}-`, doHistory.map(d => d.doNo));
 }
 
 function openDOModal() {
