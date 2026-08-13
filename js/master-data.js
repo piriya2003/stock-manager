@@ -1,6 +1,8 @@
 // ══════════════════════════════════════════════════════════════
 //  MASTER DATA
 // ══════════════════════════════════════════════════════════════
+let editingMasterId = null;   // ไม่ null = ฟอร์มต้นแบบสินค้ากำลังอยู่ในโหมดแก้ไข
+
 async function saveMasterProduct() {
   const cat    = document.getElementById('m-cat').value.trim();
   const subcat = document.getElementById('m-subcat').value.trim();
@@ -10,19 +12,55 @@ async function saveMasterProduct() {
   try {
     const row = { category: cat || 'ไม่ระบุ', name, code };
     if (subcat) row.subcategory = subcat;
-    let { data, error } = await supaClient.from('master_products').insert(row).select().single();
+    let data, error;
+    if (editingMasterId) {
+      ({ data, error } = await supaClient.from('master_products')
+        .update({ ...row, subcategory: subcat || null }).eq('id', editingMasterId).select());
+      // ยังไม่ได้รันสคริปต์เพิ่ม update policy — RLS จะคืน 200 พร้อม 0 แถวโดยไม่แจ้ง error
+      if (!error && (!data || !data.length)) throw new Error('ไม่มีสิทธิ์แก้ไขต้นแบบ — ยังไม่ได้รันสคริปต์ตั้ง update policy ให้ master_products');
+      if (!error) data = data[0];
+    } else {
+      ({ data, error } = await supaClient.from('master_products').insert(row).select().single());
+    }
     // ยังไม่ได้รันสคริปต์เพิ่มคอลัมน์ subcategory — บันทึกส่วนที่เหลือไปก่อน ไม่ให้ฟอร์มพังทั้งใบ
     if (error && subcat && /subcategory/i.test(error.message || '')) {
-      ({ data, error } = await supaClient.from('master_products')
-        .insert({ category: cat || 'ไม่ระบุ', name, code }).select().single());
+      const plain = { category: cat || 'ไม่ระบุ', name, code };
+      if (editingMasterId) {
+        ({ data, error } = await supaClient.from('master_products').update(plain).eq('id', editingMasterId).select());
+        if (!error) data = data[0];
+      } else {
+        ({ data, error } = await supaClient.from('master_products').insert(plain).select().single());
+      }
       if (!error) toast('บันทึกแล้ว แต่ยังเก็บหมวดหมู่ย่อยไม่ได้ — ต้องรันสคริปต์เพิ่มคอลัมน์ก่อน', 'warning');
     }
     if (error) throw error;
-    masterProds.push(data);
+
+    if (editingMasterId) Object.assign(masterProds.find(p => p.id === editingMasterId), data);
+    else masterProds.push(data);
+    const wasEditing = editingMasterId;
+    cancelEditMasterProduct();
     renderMasterProducts(); updateDataLists();
-    ['m-cat', 'm-subcat', 'm-name', 'm-code'].forEach(id => { document.getElementById(id).value = ''; });
-    toast('บันทึกต้นแบบสำเร็จ', 'success');
+    toast(wasEditing ? 'แก้ไขต้นแบบสำเร็จ' : 'บันทึกต้นแบบสำเร็จ', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
+}
+
+function editMasterProduct(id) {
+  const p = masterProds.find(x => x.id === id); if (!p) return;
+  editingMasterId = id;
+  document.getElementById('m-cat').value    = p.category === 'ไม่ระบุ' ? '' : (p.category || '');
+  document.getElementById('m-subcat').value = p.subcategory || '';
+  document.getElementById('m-name').value   = p.name || '';
+  document.getElementById('m-code').value   = p.code || '';
+  document.getElementById('mp-save-btn').textContent = '💾 บันทึกการแก้ไข';
+  document.getElementById('mp-cancel-btn').style.display = 'inline-flex';
+  document.getElementById('m-subcat').focus();
+}
+
+function cancelEditMasterProduct() {
+  editingMasterId = null;
+  ['m-cat', 'm-subcat', 'm-name', 'm-code'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('mp-save-btn').textContent = '+ บันทึกต้นแบบ';
+  document.getElementById('mp-cancel-btn').style.display = 'none';
 }
 
 function renderMasterProducts() {
@@ -30,7 +68,10 @@ function renderMasterProducts() {
   el.innerHTML = masterProds.length ? masterProds.map((p) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
       <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category || '—'}</span>${p.subcategory ? `<span class="cat-sub"><span class="cat-sub-arrow">↳</span><span class="badge b-purple" style="font-size:9px">${p.subcategory}</span></span>` : ''}<b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code||''}</span></span>
-      <button onclick="deleteMasterProduct('${p.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+      <span style="display:flex;gap:2px;flex-shrink:0">
+        <button onclick="editMasterProduct('${p.id}')" title="แก้ไขหมวดหมู่/ชื่อ/รหัส" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px">✏️</button>
+        <button onclick="deleteMasterProduct('${p.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+      </span>
     </div>`).join('') : '<div style="text-align:center;color:var(--t3);font-size:12px;padding:12px">ยังไม่มีต้นแบบ</div>';
 }
 
@@ -39,6 +80,7 @@ async function deleteMasterProduct(id) {
     const { error } = await supaClient.from('master_products').delete().eq('id', id);
     if (error) throw error;
     masterProds = masterProds.filter(p => p.id !== id);
+    if (editingMasterId === id) cancelEditMasterProduct();
     renderMasterProducts(); updateDataLists();
   } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
 }

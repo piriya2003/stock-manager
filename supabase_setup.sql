@@ -334,9 +334,11 @@ create policy "delete grn_items" on grn_items for delete to authenticated using 
 -- ── master_products / customers: authenticated จัดการได้เต็ม ──
 drop policy if exists "read master_products"   on master_products;
 drop policy if exists "insert master_products" on master_products;
+drop policy if exists "update master_products" on master_products;
 drop policy if exists "delete master_products" on master_products;
 create policy "read master_products"   on master_products for select to authenticated using (true);
 create policy "insert master_products" on master_products for insert to authenticated with check (true);
+create policy "update master_products" on master_products for update to authenticated using (true) with check (true);  -- แก้หมวดหมู่/ชื่อ/รหัสของต้นแบบเดิม
 create policy "delete master_products" on master_products for delete to authenticated using (true);
 
 drop policy if exists "read customers"   on customers;
