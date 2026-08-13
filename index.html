@@ -194,8 +194,12 @@
         <div class="card">
           <div class="card-header" style="border-color:rgba(45,212,160,.2)"><span class="card-title text-green">👥 ลูกค้า / สาขา</span></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
-            <div class="form-row"><label class="field-label">ชื่อลูกค้า / สาขา *</label><input type="text" id="m-cust" placeholder="เช่น TOPS สาขาชลบุรี" onkeypress="if(event.key==='Enter')saveCustomer()"></div>
-            <button onclick="saveCustomer()" class="btn btn-success btn-full">+ เพิ่มลูกค้า</button>
+            <div class="form-row"><label class="field-label">ชื่อลูกค้า / สาขา *</label><input type="text" id="m-cust" placeholder="เช่น TOPS สาขาชลบุรี"></div>
+            <div class="form-row"><label class="field-label">ที่อยู่ / เลขผู้เสียภาษี *</label><textarea id="m-cust-addr" rows="3" placeholder="ที่อยู่ที่จะพิมพ์บนใบ DO&#10;เช่น 52 ซ.ชลบุรี 42 อ.เมือง จ.ชลบุรี 11000&#10;เลขประจำตัวผู้เสียภาษี : 0105540047132" style="resize:vertical;font-size:12px"></textarea></div>
+            <div class="flex gap-2">
+              <button id="cust-save-btn" onclick="saveCustomer()" class="btn btn-success btn-full">+ เพิ่มลูกค้า</button>
+              <button id="cust-cancel-btn" onclick="cancelEditCustomer()" class="btn btn-ghost" style="display:none">ยกเลิก</button>
+            </div>
           </div>
           <hr class="divider" style="margin:0">
           <div class="card-body" style="max-height:280px;overflow-y:auto"><div id="customer-list" style="display:flex;flex-direction:column;gap:6px"></div></div>

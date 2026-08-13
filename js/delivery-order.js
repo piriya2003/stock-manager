@@ -50,7 +50,9 @@ function prepDOModal() {
   const custObj = customers.find(c => c.id === custSel.value);
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
 
-  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = ''; addr.contentEditable = 'true'; }
+  // ที่อยู่มาจากทะเบียนลูกค้า (หน้าข้อมูลหลัก) — ยังพิมพ์ทับได้ถ้าใบนี้ต้องส่งที่อื่น
+  const addr = document.getElementById('do-cust-addr');
+  if (addr) { addr.textContent = custObj?.address || ''; addr.contentEditable = 'true'; }
   const items = document.getElementById('do-items');
   if (!doItems.length) {
     items.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';

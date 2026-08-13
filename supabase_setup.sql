@@ -86,8 +86,10 @@ $$ language sql security definer;
 create table if not exists customers (
   id          uuid primary key default gen_random_uuid(),
   name        text not null unique,
+  address     text,                                   -- ที่อยู่ + เลขผู้เสียภาษี ที่พิมพ์บนใบ DO
   created_at  timestamptz not null default now()
 );
+alter table customers add column if not exists address text;   -- ตารางที่สร้างไว้ก่อนหน้า
 
 create table if not exists master_products (
   id          uuid primary key default gen_random_uuid(),
@@ -336,9 +338,11 @@ create policy "delete master_products" on master_products for delete to authenti
 
 drop policy if exists "read customers"   on customers;
 drop policy if exists "insert customers" on customers;
+drop policy if exists "update customers" on customers;
 drop policy if exists "delete customers" on customers;
 create policy "read customers"   on customers for select to authenticated using (true);
 create policy "insert customers" on customers for insert to authenticated with check (true);
+create policy "update customers" on customers for update to authenticated using (true) with check (true);  -- แก้ชื่อ/ที่อยู่ลูกค้าเดิม
 create policy "delete customers" on customers for delete to authenticated using (true);
 
 -- ══════════════════════════════════════════════════════════════════════════

@@ -43,26 +43,63 @@ async function deleteMasterProduct(id) {
   } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
 }
 
+let editingCustomerId = null;   // ไม่ null = ฟอร์มลูกค้ากำลังอยู่ในโหมดแก้ไข
+
 async function saveCustomer() {
   const name = document.getElementById('m-cust').value.trim();
+  const address = document.getElementById('m-cust-addr').value.trim();
   if (!name) return toast('กรุณาใส่ชื่อลูกค้า', 'error');
-  if (customers.some(c => c.name === name)) return toast('มีชื่อนี้แล้ว', 'error');
+  // ที่อยู่ต้องมี เพราะเป็นตัวที่พิมพ์ลงหัวใบ DO — ปล่อยว่างไว้แล้วต้องมานั่งพิมพ์ใหม่ทุกใบ
+  if (!address) return toast('กรุณาใส่ที่อยู่ลูกค้า (ใช้พิมพ์บนใบ DO)', 'error');
+  if (customers.some(c => c.name === name && c.id !== editingCustomerId)) return toast('มีชื่อนี้แล้ว', 'error');
   try {
-    const { data, error } = await supaClient.from('customers').insert({ name }).select().single();
-    if (error) throw error;
-    customers.push(data);
+    if (editingCustomerId) {
+      const { data, error } = await supaClient.from('customers')
+        .update({ name, address }).eq('id', editingCustomerId).select();
+      if (error) throw error;
+      if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไข — ยังไม่ได้รันสคริปต์ตั้ง update policy');
+      Object.assign(customers.find(c => c.id === editingCustomerId), data[0]);
+      toast('แก้ไขลูกค้าสำเร็จ', 'success');
+    } else {
+      const { data, error } = await supaClient.from('customers').insert({ name, address }).select().single();
+      if (error) throw error;
+      customers.push(data);
+      toast('เพิ่มลูกค้าสำเร็จ', 'success');
+    }
+    cancelEditCustomer();
     refreshCustomerSelects(); renderCustomerList();
-    document.getElementById('m-cust').value = '';
-    toast('เพิ่มลูกค้าสำเร็จ', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
+}
+
+function editCustomer(id) {
+  const c = customers.find(x => x.id === id); if (!c) return;
+  editingCustomerId = id;
+  document.getElementById('m-cust').value = c.name;
+  document.getElementById('m-cust-addr').value = c.address || '';
+  document.getElementById('cust-save-btn').textContent = '💾 บันทึกการแก้ไข';
+  document.getElementById('cust-cancel-btn').style.display = 'inline-flex';
+  document.getElementById('m-cust-addr').focus();
+}
+
+function cancelEditCustomer() {
+  editingCustomerId = null;
+  document.getElementById('m-cust').value = '';
+  document.getElementById('m-cust-addr').value = '';
+  document.getElementById('cust-save-btn').textContent = '+ เพิ่มลูกค้า';
+  document.getElementById('cust-cancel-btn').style.display = 'none';
 }
 
 function renderCustomerList() {
   const el = document.getElementById('customer-list');
   el.innerHTML = customers.map((c) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
-      <span style="color:var(--t1)">👤 ${c.name}</span>
-      <button onclick="deleteCustomer('${c.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
+      <span style="color:var(--t1);min-width:0">👤 ${c.name}
+        <div style="color:${c.address ? 'var(--t3)' : 'var(--orange)'};font-size:11px;line-height:1.5;margin-top:2px;white-space:pre-wrap">${c.address || '⚠️ ยังไม่มีที่อยู่ — กด ✏️ เพื่อเพิ่ม'}</div>
+      </span>
+      <span style="display:flex;gap:2px;flex-shrink:0">
+        <button onclick="editCustomer('${c.id}')" title="แก้ไขชื่อ/ที่อยู่" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px">✏️</button>
+        <button onclick="deleteCustomer('${c.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
+      </span>
     </div>`).join('');
 }
 
@@ -71,6 +108,7 @@ async function deleteCustomer(id) {
     const { error } = await supaClient.from('customers').delete().eq('id', id);
     if (error) throw error;
     customers = customers.filter(c => c.id !== id);
+    if (editingCustomerId === id) cancelEditCustomer();
     refreshCustomerSelects(); renderCustomerList();
   } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
 }
