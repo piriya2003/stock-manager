@@ -92,10 +92,12 @@ create table if not exists customers (
 create table if not exists master_products (
   id          uuid primary key default gen_random_uuid(),
   category    text not null default 'ไม่ระบุ',
+  subcategory text,                                   -- หมวดหมู่ย่อยใต้ category เช่น POS ↳ สลิม
   name        text not null,
   code        text,
   created_at  timestamptz not null default now()
 );
+alter table master_products add column if not exists subcategory text;   -- ตารางที่สร้างไว้ก่อนหน้า
 
 -- ══════════════════════════════════════════════════════════════════════════
 --  3. GRN — ใบรับเข้าสินค้า (สร้างก่อน inventory เพราะ inventory อ้างถึง)

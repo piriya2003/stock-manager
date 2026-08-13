@@ -182,7 +182,8 @@
         <div class="card">
           <div class="card-header" style="border-color:rgba(79,142,247,.2)"><span class="card-title text-blue">📦 เพิ่มต้นแบบสินค้า</span></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
-            <div class="form-row"><label class="field-label">หมวดหมู่</label><input type="text" id="m-cat" placeholder="เช่น POS, ปริ้นเตอร์"></div>
+            <div class="form-row"><label class="field-label">หมวดหมู่หลัก</label><input type="text" id="m-cat" list="cat-dl" placeholder="เช่น POS, ปริ้นเตอร์"></div>
+            <div class="form-row"><label class="field-label">หมวดหมู่ย่อย</label><input type="text" id="m-subcat" list="subcat-dl" placeholder="เช่น สลิม, ตั้งโต๊ะ (ไม่ใส่ก็ได้)"></div>
             <div class="form-row"><label class="field-label">ชื่อสินค้า *</label><input type="text" id="m-name" placeholder="ชื่อสินค้า"></div>
             <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="m-code" placeholder="เช่น POS-001"></div>
             <button onclick="saveMasterProduct()" class="btn btn-primary btn-full mt-1">+ บันทึกต้นแบบ</button>
@@ -298,6 +299,7 @@
         </div>
       </div>
       <datalist id="cat-dl"></datalist>
+      <datalist id="subcat-dl"></datalist>
       <datalist id="product-dl"></datalist>
       <datalist id="code-dl"></datalist>
       <datalist id="supplier-dl"></datalist>

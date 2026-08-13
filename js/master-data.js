@@ -2,17 +2,25 @@
 //  MASTER DATA
 // ══════════════════════════════════════════════════════════════
 async function saveMasterProduct() {
-  const cat  = document.getElementById('m-cat').value.trim();
-  const name = document.getElementById('m-name').value.trim();
-  const code = document.getElementById('m-code').value.trim();
+  const cat    = document.getElementById('m-cat').value.trim();
+  const subcat = document.getElementById('m-subcat').value.trim();
+  const name   = document.getElementById('m-name').value.trim();
+  const code   = document.getElementById('m-code').value.trim();
   if (!name) return toast('กรุณาใส่ชื่อสินค้า', 'error');
   try {
-    const { data, error } = await supaClient.from('master_products')
-      .insert({ category: cat || 'ไม่ระบุ', name, code }).select().single();
+    const row = { category: cat || 'ไม่ระบุ', name, code };
+    if (subcat) row.subcategory = subcat;
+    let { data, error } = await supaClient.from('master_products').insert(row).select().single();
+    // ยังไม่ได้รันสคริปต์เพิ่มคอลัมน์ subcategory — บันทึกส่วนที่เหลือไปก่อน ไม่ให้ฟอร์มพังทั้งใบ
+    if (error && subcat && /subcategory/i.test(error.message || '')) {
+      ({ data, error } = await supaClient.from('master_products')
+        .insert({ category: cat || 'ไม่ระบุ', name, code }).select().single());
+      if (!error) toast('บันทึกแล้ว แต่ยังเก็บหมวดหมู่ย่อยไม่ได้ — ต้องรันสคริปต์เพิ่มคอลัมน์ก่อน', 'warning');
+    }
     if (error) throw error;
     masterProds.push(data);
     renderMasterProducts(); updateDataLists();
-    document.getElementById('m-cat').value = ''; document.getElementById('m-name').value = ''; document.getElementById('m-code').value = '';
+    ['m-cat', 'm-subcat', 'm-name', 'm-code'].forEach(id => { document.getElementById(id).value = ''; });
     toast('บันทึกต้นแบบสำเร็จ', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
 }
@@ -21,7 +29,7 @@ function renderMasterProducts() {
   const el = document.getElementById('master-product-list');
   el.innerHTML = masterProds.length ? masterProds.map((p) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
-      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category || '—'}</span><b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code||''}</span></span>
+      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category || '—'}</span>${p.subcategory ? `<span class="cat-sub"><span class="cat-sub-arrow">↳</span><span class="badge b-purple" style="font-size:9px">${p.subcategory}</span></span>` : ''}<b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code||''}</span></span>
       <button onclick="deleteMasterProduct('${p.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
     </div>`).join('') : '<div style="text-align:center;color:var(--t3);font-size:12px;padding:12px">ยังไม่มีต้นแบบ</div>';
 }
@@ -88,6 +96,9 @@ function updateDataLists() {
   const names = [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])];
   const codes = [...new Set([...stock.map(i => i.code), ...masterProds.map(p => p.code)])].filter(c => c && c !== '-');
   const suppliers = [...new Set(stock.map(i => i.supplier).filter(Boolean))];
+  const subcats = [...new Set(masterProds.map(p => p.subcategory).filter(Boolean))];
+  const subDl = document.getElementById('subcat-dl');
+  if (subDl) subDl.innerHTML = subcats.map(s => `<option value="${s}">`).join('');
   const catDl  = document.getElementById('cat-dl');
   const prodDl = document.getElementById('product-dl');
   const codeDl = document.getElementById('code-dl');
