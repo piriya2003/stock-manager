@@ -440,6 +440,85 @@ async function saveDOViewPrices() {
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
 }
 
+// ── เพิ่มสินค้าเข้าใบ DO ที่ออกไปแล้ว (ตอนสร้างใบใส่ไม่ครบ) พร้อมตัดสต็อกให้ตรงนั้นเลย ──
+async function addItemsToDO() {
+  if (!currentViewDOId) return;
+  const d = doHistory.find(x => x.id === currentViewDOId); if (!d) return;
+
+  const raw = document.getElementById('dov-add-sn').value || '';
+  const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];
+  if (!list.length) return inlineMsg('dov-add-msg', '❌ กรุณายิงบาร์โค้ดหรือวางรายการ SN ก่อน', false);
+
+  const toAdd = [], notFound = [], notAvail = [];
+  list.forEach(sn => {
+    const item = stock.find(i => String(i.sn) === sn && i.status === 'Available');
+    if (item) toAdd.push(item);
+    else if (stock.find(i => String(i.sn) === sn)) notAvail.push(sn);
+    else notFound.push(sn);
+  });
+  if (!toAdd.length) return inlineMsg('dov-add-msg', `❌ ไม่มี SN ที่เพิ่มได้ (ไม่พบ ${notFound.length}, ตัดไปแล้ว/ไม่พร้อม ${notAvail.length})`, false);
+  if (!confirm(`เพิ่ม ${toAdd.length} รายการเข้าใบ ${d.doNo}\nและตัดสต็อกทันที?`)) return;
+
+  // ให้ของที่เพิ่มเข้าชุดจ่ายเดียวกับของเดิมในใบนี้ ประวัติการจ่ายออกจะได้ไม่แตกเป็นคนละชุด
+  const firstSn = (d.items || [])[0]?.sn;
+  const firstItem = firstSn ? stock.find(i => String(i.sn) === String(firstSn)) : null;
+  const batchAt = firstItem?.dispatched_at || d.createdAt || nowISO();
+  // ราคาต่อหน่วยของสินค้าชื่อเดียวกันที่มีอยู่แล้วในใบ — ของใหม่ใช้ราคาเดียวกัน
+  const priceByName = {};
+  (d.items || []).forEach(i => { if (i.unitPrice != null && priceByName[i.name] == null) priceByName[i.name] = Number(i.unitPrice); });
+
+  try {
+    const { error: uErr } = await supaClient.from('inventory')
+      .update({ status: 'Sold', dispatched_at: batchAt }).in('id', toAdd.map(i => i.id));
+    if (uErr) throw uErr;
+
+    const { data: inserted, error: iErr } = await supaClient.from('do_items').insert(
+      toAdd.map(i => ({
+        do_header_id: d.id, item_name: i.name, item_code: i.code, item_category: i.category,
+        sn: String(i.sn), unit_price: priceByName[i.name] ?? null, amount: null,
+      }))
+    ).select();
+    if (iErr) throw iErr;
+
+    toAdd.forEach(i => {
+      i.status = 'Sold'; i.dispatched_at = batchAt; i.dispatched_to = d.customer;
+    });
+    recordDispatchTo(toAdd.map(i => i.id), d.customer);
+    if (!d.items) d.items = [];
+    (inserted || []).forEach(r => d.items.push({
+      id: r.id, name: r.item_name, code: r.item_code, category: r.item_category,
+      sn: String(r.sn), unitPrice: r.unit_price, amount: r.amount,
+    }));
+
+    // จำนวนเงินเก็บเป็นยอดรวมของทั้งกลุ่ม — พอกลุ่มมีของเพิ่ม ต้องคิดใหม่ทั้งกลุ่ม
+    for (const name of [...new Set(toAdd.map(i => i.name))]) {
+      const price = priceByName[name];
+      if (price == null) continue;
+      const amount = Math.round(price * d.items.filter(i => i.name === name).length * 100) / 100;
+      const { error } = await supaClient.from('do_items')
+        .update({ amount }).eq('do_header_id', d.id).eq('item_name', name).select('id');
+      if (error) throw error;
+      d.items.forEach(i => { if (i.name === name) i.amount = amount; });
+    }
+
+    for (const i of toAdd) {
+      await logTransaction(today(), d.type || 'โอนสินค้า', i.name, i.code, i.sn, getBalance(i.code),
+                           `→ ${d.customer} (เพิ่มเข้าใบ ${d.doNo})`);
+    }
+
+    document.getElementById('dov-add-sn').value = '';
+    openDOView(currentViewDOId);   // โหลดใบใหม่ให้เห็นรายการ/ยอดที่เพิ่งเพิ่ม
+    renderDOHistory(); filterStock(); renderOutboundHistory(); checkAlerts();
+    let msg = `✅ เพิ่ม ${toAdd.length} รายการเข้าใบ ${d.doNo} และตัดสต็อกแล้ว`;
+    if (notFound.length || notAvail.length) msg += `  (ข้าม: ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`;
+    inlineMsg('dov-add-msg', msg, true);
+    toast(`เพิ่ม ${toAdd.length} รายการเข้าใบ ${d.doNo} สำเร็จ`, 'success');
+  } catch (err) {
+    inlineMsg('dov-add-msg', '❌ เพิ่มไม่สำเร็จ: ' + err.message, false);
+    toast('เพิ่มรายการล้มเหลว: ' + err.message, 'error');
+  }
+}
+
 function reopenDOForPrint(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
   closeModal('do-view-modal'); doModalMode = 'view';

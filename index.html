@@ -894,6 +894,14 @@
         <textarea id="dov-note" rows="3" placeholder="หมายเหตุที่จะแสดงบนใบ DO" style="resize:vertical;font-size:12px"></textarea>
       </div>
     </div>
+    <div class="detail-section" style="margin-bottom:12px;border-color:rgba(45,212,160,.25)">
+      <div class="detail-section-title" style="color:var(--green)">➕ เพิ่มสินค้าเข้าใบนี้ (ตัดสต็อกให้ทันทีตอนเพิ่ม)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+        <textarea id="dov-add-sn" rows="2" placeholder="ยิงบาร์โค้ดต่อกันได้เลย หรือวางหลาย SN คั่นด้วยเว้นวรรค / ขึ้นบรรทัดใหม่" style="flex:1;min-width:260px;resize:vertical;font-size:12px;font-family:var(--mono)"></textarea>
+        <button onclick="addItemsToDO()" class="btn btn-success">➕ เพิ่ม &amp; ตัดสต็อก</button>
+      </div>
+      <div id="dov-add-msg" style="font-size:11px;margin-top:6px;min-height:15px"></div>
+    </div>
     <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น) — แก้ไขแล้วกด "บันทึกการแก้ไข"</div>
     <div class="tbl-wrap" style="max-height:280px;overflow-y:auto;margin-bottom:12px">
       <table>
