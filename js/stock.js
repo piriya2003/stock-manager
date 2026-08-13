@@ -36,7 +36,7 @@ function getFilteredStock() {
   let data = stock.filter(i =>
     (!st || i.status === st) &&
     (!cat || i.category === cat) &&
-    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)))
+    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)) || (i.dispatched_to && i.dispatched_to.toLowerCase().includes(q)))
   );
   data.sort((a, b) => {
     let va = String(a[stockSortCol] || '').toLowerCase();
@@ -61,7 +61,7 @@ function filterStock() {
       <td class="code-cell">${item.code}</td>
       <td class="mono" style="font-size:11px;color:var(--t2)">${item.lot_no || '—'}</td>
       ${snCellHTML(item)}
-      <td>${statusBadge(item.status)}</td>
+      <td>${statusBadge(item.status)}${item.dispatched_to ? `<div style="font-size:10px;color:var(--t3);margin-top:3px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.dispatched_to}">👤 ${item.dispatched_to}</div>` : ''}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
           ${item.status === 'Sold' ? `<button onclick="returnToStock('${item.id}')" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>` : ''}

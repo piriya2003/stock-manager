@@ -122,11 +122,19 @@ function getFilteredSoldItems() {
   return soldItems;
 }
 
-// บันทึกลูกค้าปลายทางลงสินค้า (best-effort — ถ้ายังไม่มีคอลัมน์ dispatched_to ก็ข้ามไป ไม่ทำให้การตัดสต็อกพัง)
-function recordDispatchTo(ids, custName) {
+// บันทึกลูกค้าปลายทางลงสินค้า — ไม่ทำให้การตัดสต็อกพังถ้าล้มเหลว แต่ต้อง "ส่งเสียง" ด้วย
+// เดิมกลืน error ทิ้งเงียบๆ พอคอลัมน์ dispatched_to ไม่มีอยู่จริง ประวัติเลยไม่รู้ว่าจ่ายให้ใครมาตลอดโดยไม่มีใครรู้ตัว
+async function recordDispatchTo(ids, custName) {
   if (!ids.length) return;
-  supaClient.from('inventory').update({ dispatched_to: custName }).in('id', ids)
-    .then(() => {}, () => {});
+  try {
+    const { data, error } = await supaClient.from('inventory')
+      .update({ dispatched_to: custName }).in('id', ids).select('id');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('ไม่มีแถวถูกแก้');
+  } catch (err) {
+    console.warn('บันทึกลูกค้าปลายทางไม่สำเร็จ:', err.message);
+    toast('⚠️ ตัดสต็อกแล้ว แต่บันทึกลูกค้าปลายทางไม่สำเร็จ — ประวัติจะไม่รู้ว่าจ่ายให้ใคร', 'warning');
+  }
 }
 
 function renderOutboundHistory() {
