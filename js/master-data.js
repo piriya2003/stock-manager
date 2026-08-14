@@ -76,6 +76,8 @@ function renderMasterProducts() {
 }
 
 async function deleteMasterProduct(id) {
+  const p = masterProds.find(x => x.id === id); if (!p) return;
+  if (!confirm(`ลบต้นแบบสินค้า "${p.name}"?\n(ไม่กระทบสินค้าในคลัง — ลบแค่ตัวต้นแบบที่ใช้เติมชื่ออัตโนมัติ)`)) return;
   try {
     const { error } = await supaClient.from('master_products').delete().eq('id', id);
     if (error) throw error;
@@ -146,13 +148,28 @@ function renderCustomerList() {
 }
 
 async function deleteCustomer(id) {
+  const c = customers.find(x => x.id === id); if (!c) return;
+  // ฐานข้อมูลกันไม่ให้ลบลูกค้าที่ยังถูกอ้างถึง (งานซ่อม/ใบ DO) — บอกเหตุผลก่อน
+  // ดีกว่าปล่อยให้ยิงไปแล้วเด้ง error ดิบๆ ของ Postgres กลับมา
+  const jobs = repairJobs.filter(j => j.customerId === id).length;
+  const dos  = doHistory.filter(d => d.customer === c.name).length;
+  if (jobs || dos) {
+    const ref = [jobs ? `งานซ่อม ${jobs} รายการ` : '', dos ? `ใบ DO ${dos} ใบ` : ''].filter(Boolean).join(' และ ');
+    return toast(`ลบ "${c.name}" ไม่ได้ — ยังมี${ref}อ้างถึงอยู่ (ถ้าต้องการแก้ชื่อ/ที่อยู่ ให้กด ✏️ แทน)`, 'error');
+  }
+  if (!confirm(`ลบลูกค้า "${c.name}"?`)) return;
   try {
     const { error } = await supaClient.from('customers').delete().eq('id', id);
     if (error) throw error;
-    customers = customers.filter(c => c.id !== id);
+    customers = customers.filter(x => x.id !== id);
     if (editingCustomerId === id) cancelEditCustomer();
     refreshCustomerSelects(); renderCustomerList();
-  } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
+    toast(`ลบลูกค้า "${c.name}" แล้ว`, 'info');
+  } catch (err) {
+    // 23503 = foreign key violation — ยังมีตารางอื่นอ้างถึงอยู่ (เช่นงานซ่อมที่โหลดมาไม่ครบ)
+    if (err.code === '23503') toast(`ลบ "${c.name}" ไม่ได้ — ยังมีงานซ่อมหรือใบ DO อ้างถึงลูกค้ารายนี้อยู่`, 'error');
+    else toast('ลบล้มเหลว: ' + err.message, 'error');
+  }
 }
 
 function refreshCustomerSelects() {
