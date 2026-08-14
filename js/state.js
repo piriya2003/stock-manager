@@ -29,6 +29,7 @@ let swapMode           = 'new';  // 'new' = เปลี่ยน SN ใหม�
 let doModalMode        = 'create';
 let doItems            = [];      // รายการสินค้าที่กำลังจะออก DO (จากเซสชั่นสด หรือจากประวัติ)
 let doFromLiveSession  = true;    // true = มาจากเซสชั่นสแกนสด, false = มาจากประวัติที่ขายไปแล้ว
+let doCustId           = null;    // id ลูกค้าของใบ DO ที่กำลังกรอก (ชุดเก่าอาจไม่ใช่คนที่เลือกค้างไว้หน้าสแกน)
 let grnModalMode       = 'create';
 
 let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว

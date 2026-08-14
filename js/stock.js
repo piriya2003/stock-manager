@@ -78,9 +78,11 @@ async function returnToStock(id) {
   const item = stock.find(i => i.id === id); if (!item) return;
   const old = item.status;
   try {
-    const { error } = await supaClient.from('inventory').update({ status: 'Available', dispatched_at: null }).eq('id', id);
+    // ของกลับเข้าคลังแล้ว ต้องล้างปลายทางด้วย ไม่งั้นในตารางจะยังขึ้นชื่อลูกค้าทั้งที่ของอยู่กับเรา
+    const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
+    const { error } = await supaClient.from('inventory').update(back).eq('id', id);
     if (error) throw error;
-    item.status = 'Available'; item.dispatched_at = null;
+    Object.assign(item, back);
     await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `คืนจากสถานะ: ${old}`);
     filterStock(); checkAlerts();
     toast(`คืนสต็อก SN: ${item.sn} สำเร็จ`, 'success');

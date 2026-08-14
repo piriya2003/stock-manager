@@ -29,11 +29,13 @@ function openDOFromBatch(batchIndex) {
   if (!b || !b.items.length) return toast('ไม่พบรายการในชุดนี้', 'error');
   doFromLiveSession = false;
   doItems = b.items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
-  prepDOModal();
+  // ใบนี้เป็นของ "ลูกค้าเจ้าของชุด" ไม่ใช่ลูกค้าที่ค้างเลือกอยู่ในหน้าสแกน
+  // ถ้าไม่ส่งเข้าไป ที่อยู่บนหัวใบจะเป็นของลูกค้าคนละเจ้า
+  prepDOModal(b.cust ? customers.find(c => c.name === b.cust) : null);
   if (b.cust) document.getElementById('do-cust').value = b.cust;
 }
 
-function prepDOModal() {
+function prepDOModal(custOverride) {
   doModalMode = 'create';
   document.getElementById('do-modal-badge').style.display = 'none';
   document.getElementById('do-modal-hint').textContent = 'กรอกข้อมูลและกด "บันทึก DO" เพื่อบันทึกประวัติ';
@@ -46,7 +48,8 @@ function prepDOModal() {
   document.getElementById('do-no').value = genDONo();
   document.getElementById('do-date').textContent = fmtDODate(nowISO());
   const custSel = document.getElementById('o-cust');
-  const custObj = customers.find(c => c.id === custSel.value);
+  const custObj = custOverride || customers.find(c => c.id === custSel.value);
+  doCustId = custObj ? custObj.id : null;   // ใช้ตอนบันทึก แทนการอ่านค่าจาก dropdown หน้าสแกนซ้ำ
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
 
   // ที่อยู่มาจากทะเบียนลูกค้า (หน้าข้อมูลหลัก) — ยังพิมพ์ทับได้ถ้าใบนี้ต้องส่งที่อื่น
@@ -128,8 +131,7 @@ async function saveDO() {
   const machineVal = document.getElementById('do-machine').value.trim();
   const headerText = document.getElementById('do-header-text').innerText;
   const typ        = document.getElementById('o-type')?.value || 'โอนสินค้า';
-  const custSel    = document.getElementById('o-cust');
-  const custId     = customers.some(c => c.id === custSel.value) ? custSel.value : null;
+  const custId     = customers.some(c => c.id === doCustId) ? doCustId : null;
 
   if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
   if (!custVal) return toast('กรุณาระบุชื่อลูกค้า', 'error');

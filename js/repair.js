@@ -204,10 +204,11 @@ async function advanceRepairStatus(newStatus) {
     Object.assign(job, { notes, status: newStatus, startedAt: payload.started_at || job.startedAt, finishedAt: payload.finished_at || job.finishedAt });
 
     if (newStatus === 'ซ่อมเสร็จ') {
-      const { error: invErr } = await supaClient.from('inventory').update({ status: 'Available' }).eq('sn', job.sn);
+      const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
+      const { error: invErr } = await supaClient.from('inventory').update(back).eq('sn', job.sn);
       if (invErr) throw invErr;
       const item = stock.find(i => String(i.sn) === job.sn);
-      if (item) item.status = 'Available';
+      if (item) Object.assign(item, back);
       await logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), 'ซ่อมเสร็จเรียบร้อย');
     }
     closeModal('repair-detail-modal'); renderRepairList(); checkAlerts();
@@ -294,9 +295,15 @@ async function confirmSwapSN() {
       Object.assign(oldItem, { status: 'Claimed', claimed_at: nowISO(), claim_reason: reason, replaced_by_sn: newSN });
     }
 
-    const { error: newErr } = await supaClient.from('inventory').update({ status: 'Sold', prev_sn: oldSN }).eq('id', newItem.id);
+    // เครื่องใหม่ออกจากคลังไปหาลูกค้าเจ้าเดิม — ต้องบันทึกปลายทาง/เวลาให้ครบเหมือนการจ่ายออกปกติ
+    // ไม่งั้นเครื่องเคลมจะหายจากประวัติการจ่ายออก และไม่รู้ว่าไปอยู่กับใคร
+    const newDispatch = {
+      status: 'Sold', prev_sn: oldSN, dispatched_at: nowISO(),
+      dispatched_to: (oldItem && oldItem.dispatched_to) || job.customer || null,
+    };
+    const { error: newErr } = await supaClient.from('inventory').update(newDispatch).eq('id', newItem.id);
     if (newErr) throw newErr;
-    Object.assign(newItem, { status: 'Sold', prev_sn: oldSN });
+    Object.assign(newItem, newDispatch);
 
     const { error: jobErr } = await supaClient.from('repair_jobs').update({
       status: 'เคลมเครื่อง', finished_at: nowISO(), replaced_sn: newSN, claim_reason: reason,
