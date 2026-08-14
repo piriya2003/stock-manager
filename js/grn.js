@@ -186,10 +186,19 @@ async function deleteGRN(id) {
   const d = grnHistory.find(x => x.id === id); if (!d) return;
   if (!confirm(`ลบใบ GRN เลขที่: ${d.grnNo}?\n(สินค้าที่รับเข้าจะยังอยู่ในระบบ แค่ตัดการเชื่อมโยงเอกสาร)`)) return;
   try {
+    // ต้องตัดการเชื่อมโยงที่ตัวสินค้าก่อน ไม่งั้น foreign key จะกันไม่ให้ลบหัวใบเลย
+    // (สินค้ายังอยู่ครบตามที่บอกในข้อความยืนยัน — แค่ไม่ผูกกับใบนี้แล้ว)
+    const { error: unlinkErr } = await supaClient.from('inventory').update({ grn_header_id: null }).eq('grn_header_id', id);
+    if (unlinkErr) throw unlinkErr;
+    stock.forEach(i => { if (i.grn_header_id === id) i.grn_header_id = null; });
+
     const { error } = await supaClient.from('grn_headers').delete().eq('id', id); // grn_items ลบตามด้วย cascade
     if (error) throw error;
     grnHistory = grnHistory.filter(x => x.id !== id);
     renderGRNHistory(); updateGRNBadge();
-    toast('ลบใบ GRN สำเร็จ', 'info');
-  } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
+    toast('ลบใบ GRN สำเร็จ (สินค้ายังอยู่ในคลังครบ)', 'info');
+  } catch (err) {
+    if (err.code === '23503') toast('ลบใบ GRN ไม่ได้ — ยังมีข้อมูลอื่นอ้างถึงใบนี้อยู่', 'error');
+    else toast('ลบล้มเหลว: ' + err.message, 'error');
+  }
 }

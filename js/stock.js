@@ -221,6 +221,9 @@ async function renameMasterProduct(oldName, newName) {
 
 async function delItem(id) {
   const item = stock.find(x => x.id === id); if (!item) return;
+  // งานซ่อมผูกกับตัวสินค้าด้วย foreign key — บอกไปเลยว่าติดอะไร ดีกว่าปล่อยให้เด้ง error ดิบของฐานข้อมูล
+  const jobs = repairJobs.filter(j => String(j.sn) === String(item.sn)).length;
+  if (jobs) return toast(`ลบ SN: ${item.sn} ไม่ได้ — ยังมีประวัติงานซ่อม/เคลม ${jobs} รายการอ้างถึงอยู่`, 'error');
   if (!confirm(`ลบสินค้า SN: ${item.sn}?\n(ไม่สามารถกู้คืนได้)`)) return;
   try {
     const { error } = await supaClient.from('inventory').delete().eq('id', id);
@@ -228,5 +231,8 @@ async function delItem(id) {
     stock = stock.filter(x => x.id !== id);
     filterStock(); checkAlerts();
     toast(`ลบ SN: ${item.sn} สำเร็จ`, 'success');
-  } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
+  } catch (err) {
+    if (err.code === '23503') toast(`ลบ SN: ${item.sn} ไม่ได้ — ยังมีประวัติงานซ่อม/เคลมอ้างถึงอยู่`, 'error');
+    else toast('ลบล้มเหลว: ' + err.message, 'error');
+  }
 }
