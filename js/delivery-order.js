@@ -345,7 +345,7 @@ function openDOView(id) {
     const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${g.code}</div>` : '';
     return `<tr data-gi="${gi}">
       <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
-      <td style="color:var(--t1)"><b>${g.name}</b>${modelLine}<div style="font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--mono)">${g.sns.join(', ')}</div></td>
+      <td style="color:var(--t1)"><b>${g.name}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${sn}${currentRole === 'admin' ? `<button onclick="removeItemFromDO('${sn}')" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
       <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.sns.length}</td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>
@@ -439,6 +439,52 @@ async function saveDOViewPrices() {
     renderDOHistory();
     toast('บันทึกการแก้ไขสำเร็จ', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
+}
+
+// ── ถอดสินค้าออกจากใบ DO (ใส่ผิดชิ้น) พร้อมคืนของเข้าคลังให้ ──
+async function removeItemFromDO(sn) {
+  if (!currentViewDOId) return;
+  const d = doHistory.find(x => x.id === currentViewDOId); if (!d) return;
+  const row = (d.items || []).find(i => String(i.sn) === String(sn));
+  if (!row) return toast('ไม่พบ SN นี้ในใบ', 'error');
+  const item = stock.find(i => String(i.sn) === String(sn));
+  const willReturn = item && item.status === 'Sold';
+
+  if (!confirm(`ถอด SN: ${sn} ออกจากใบ ${d.doNo}?` +
+    (willReturn ? `\n\nสินค้าชิ้นนี้จะถูกคืนเข้าคลังเป็น "พร้อมใช้"` : ''))) return;
+
+  try {
+    // ลบแถวในใบ — do_items ให้ลบได้เฉพาะแอดมิน ถ้าไม่มีสิทธิ์ RLS จะคืน 0 แถวโดยไม่แจ้ง error
+    const del = supaClient.from('do_items').delete();
+    const { data, error } = row.id != null
+      ? await del.eq('id', row.id).select('id')
+      : await del.eq('do_header_id', d.id).eq('sn', String(sn)).select('id');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ถอดรายการออกจากใบ (เฉพาะแอดมิน)');
+
+    if (willReturn) {
+      const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
+      const { error: iErr } = await supaClient.from('inventory').update(back).eq('id', item.id);
+      if (iErr) throw iErr;
+      Object.assign(item, back);
+      await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, sn, getBalance(item.code), `ถอดออกจากใบ ${d.doNo}`);
+    }
+
+    d.items = d.items.filter(i => String(i.sn) !== String(sn));
+    // จำนวนเงินเก็บเป็นยอดรวมของทั้งกลุ่ม — กลุ่มมีของน้อยลง ต้องคิดใหม่
+    const left = d.items.filter(i => i.name === row.name);
+    if (row.unitPrice != null && left.length) {
+      const amount = Math.round(Number(row.unitPrice) * left.length * 100) / 100;
+      const { error: aErr } = await supaClient.from('do_items')
+        .update({ amount }).eq('do_header_id', d.id).eq('item_name', row.name);
+      if (aErr) throw aErr;
+      left.forEach(i => { i.amount = amount; });
+    }
+
+    openDOView(currentViewDOId);
+    renderDOHistory(); filterStock(); renderOutboundHistory(); checkAlerts();
+    toast(willReturn ? `ถอด SN: ${sn} ออกจากใบ และคืนเข้าคลังแล้ว` : `ถอด SN: ${sn} ออกจากใบแล้ว`, 'success');
+  } catch (err) { toast('ถอดรายการล้มเหลว: ' + err.message, 'error'); }
 }
 
 // ── เพิ่มสินค้าเข้าใบ DO ที่ออกไปแล้ว (ตอนสร้างใบใส่ไม่ครบ) พร้อมตัดสต็อกให้ตรงนั้นเลย ──
@@ -548,11 +594,36 @@ function reopenDOForPrint(id) {
 async function deleteDO(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
   if (!confirm(`ลบใบ DO เลขที่: ${d.doNo}?`)) return;
+
+  // ของในใบยังถูกตัดสต็อกอยู่ — ต้องให้คนตัดสินใจเอง ว่าออกใบผิด (คืนของ) หรือส่งไปแล้วจริง (ไม่คืน)
+  // ตัดสินใจแทนไม่ได้ทั้งสองทาง เพราะเดาผิดแล้วสต็อกเพี้ยนทันที
+  const sns = (d.items || []).map(i => String(i.sn));
+  const stillOut = stock.filter(i => sns.includes(String(i.sn)) && i.status === 'Sold');
+  let restore = false;
+  if (stillOut.length) {
+    restore = confirm(
+      `ใบนี้มีสินค้าที่ยังตัดสต็อกอยู่ ${stillOut.length} ชิ้น\n\n` +
+      `[ตกลง] = คืนกลับเข้าคลังเป็น "พร้อมใช้" — ใช้เมื่อออกใบผิด ของยังไม่ได้ส่ง\n` +
+      `[ยกเลิก] = ลบแค่ใบ ของยังเป็น "โอน/ขาย" ตามเดิม — ใช้เมื่อของส่งไปแล้วจริง`
+    );
+  }
+
   try {
     const { error } = await supaClient.from('do_headers').delete().eq('id', id); // do_items ลบตามด้วย cascade
     if (error) throw error;
+
+    if (restore && stillOut.length) {
+      const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
+      const { error: rErr } = await supaClient.from('inventory').update(back).in('id', stillOut.map(i => i.id));
+      if (rErr) throw rErr;
+      for (const item of stillOut) {
+        Object.assign(item, back);
+        await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `ลบใบ ${d.doNo} แล้วคืนของเข้าคลัง`);
+      }
+    }
+
     doHistory = doHistory.filter(x => x.id !== id);
-    renderDOHistory(); updateDOBadge();
-    toast('ลบใบ DO สำเร็จ', 'info');
+    renderDOHistory(); updateDOBadge(); filterStock(); renderOutboundHistory(); checkAlerts();
+    toast(restore ? `ลบใบ DO และคืนของ ${stillOut.length} ชิ้นเข้าคลังแล้ว` : 'ลบใบ DO สำเร็จ', 'info');
   } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
 }

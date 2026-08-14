@@ -415,6 +415,11 @@ input[type=file]{display:none}
   /* ช่องราคา/จำนวนเงิน: พิมพ์เป็นตัวเลขเปล่า ไม่มีเส้นประ ชิดขวาให้ตรงคอลัมน์ */
   #printArea .do-num{font-size:11px!important;text-align:right!important;border:none!important}
 }
+/* SN ในหน้ารายละเอียดใบ DO — แต่ละตัวถอดออกจากใบได้ทีละชิ้น */
+.dov-sn-wrap{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.dov-sn{display:inline-flex;align-items:center;gap:3px;background:var(--s3);border:1px solid var(--b1);border-radius:5px;padding:1px 4px 1px 6px;font-family:var(--mono);font-size:10px;color:var(--t2)}
+.dov-sn button{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;line-height:1;padding:1px 2px;border-radius:3px}
+.dov-sn button:hover{background:var(--red-dim);color:var(--red)}
 .kbd{display:inline-flex;align-items:center;justify-content:center;background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:1px 5px;font-size:10px;font-family:var(--mono);color:var(--t3);min-width:20px}
 hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
