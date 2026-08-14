@@ -176,8 +176,45 @@ function openRepairDetail(id) {
              <button onclick="saveRepairNotes()" class="btn btn-primary">💾 บันทึกหมายเหตุ</button>
              <span class="badge b-green" style="padding:8px 14px; font-size:12px">✅ เสร็จสิ้น</span>`;
   }
+  // ลบงานซ่อม — เฉพาะแอดมิน (ตรงกับสิทธิ์ฝั่งฐานข้อมูล) วางชิดซ้ายให้ห่างจากปุ่มที่ใช้บ่อย
+  if (currentRole === 'admin') {
+    btns = `<button onclick="deleteRepairJob('${job.id}')" class="btn btn-red btn-sm" title="ลบงานซ่อมใบนี้">🗑 ลบงานซ่อม</button>`
+         + `<span style="flex:1"></span>` + btns;
+  }
   acts.innerHTML = btns;
   document.getElementById('repair-detail-modal').classList.add('open');
+}
+
+// ลบงานซ่อม/เคลมทิ้ง — ใช้ตอนบันทึกผิดใบ หรือต้องเคลียร์ก่อนลบลูกค้า (ลูกค้าที่มีงานซ่อมผูกอยู่จะลบไม่ได้)
+async function deleteRepairJob(id) {
+  if (currentRole !== 'admin') return toast('เฉพาะแอดมินเท่านั้นที่ลบงานซ่อมได้', 'error');
+  const job = repairJobs.find(j => j.id === id); if (!job) return;
+
+  // เครื่องยังค้างสถานะ "รับซ่อม" เพราะใบนี้ใบเดียว → ลบแล้วต้องปลดกลับเป็นพร้อมใช้ ไม่งั้นค้างอยู่อย่างนั้นตลอด
+  const item = stock.find(i => String(i.sn) === String(job.sn));
+  const otherActive = repairJobs.some(j => j.id !== id && String(j.sn) === String(job.sn)
+                        && j.status !== 'ซ่อมเสร็จ' && j.status !== 'เคลมเครื่อง');
+  const willFree = !!item && item.status === 'Repair' && !otherActive;
+
+  if (!confirm(`ลบงานซ่อม SN: ${job.sn}?\n(ประวัติใบนี้จะหายถาวร กู้คืนไม่ได้)`
+      + (willFree ? '\n\nสินค้าจะกลับเป็น "พร้อมใช้"' : '')
+      + (job.status === 'เคลมเครื่อง' ? '\n\n⚠️ ใบนี้เป็นรายการเคลม ประวัติการสลับเครื่องจะหายไปด้วย\n(สถานะของเครื่องเก่า/เครื่องใหม่ไม่เปลี่ยน)' : ''))) return;
+
+  try {
+    const { data, error } = await supaClient.from('repair_jobs').delete().eq('id', id).select('id');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ลบงานซ่อม (เฉพาะแอดมิน)');
+
+    if (willFree) {
+      const { error: iErr } = await supaClient.from('inventory').update({ status: 'Available' }).eq('id', item.id);
+      if (iErr) throw iErr;
+      item.status = 'Available';
+    }
+    repairJobs = repairJobs.filter(j => j.id !== id);
+    closeModal('repair-detail-modal');
+    renderRepairList(); renderClaimList(); updateRepairBadges(); updateClaimBadge(); checkAlerts(); filterStock();
+    toast(willFree ? `ลบงานซ่อมแล้ว — SN: ${job.sn} กลับเป็นพร้อมใช้` : 'ลบงานซ่อมแล้ว', 'info');
+  } catch (err) { toast('ลบงานซ่อมล้มเหลว: ' + err.message, 'error'); }
 }
 
 async function saveRepairNotes() {
