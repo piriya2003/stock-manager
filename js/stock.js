@@ -1,10 +1,49 @@
 // ══════════════════════════════════════════════════════════════
 //  STOCK
 // ══════════════════════════════════════════════════════════════
+// ตัวคั่นค่าใน dropdown หมวดหมู่: "POS" = ทั้งหมวด, "POS⟩สลิม" = เจาะหมวดย่อย
+const CAT_SEP = '⟩';
+
+// หมวดหมู่ย่อยเก็บอยู่ที่ "ต้นแบบสินค้า" ไม่ได้อยู่บนสินค้าแต่ละชิ้น
+// เลยต้องโยงกลับด้วยชื่อสินค้า (หรือรหัส ถ้ามี) — ทำเป็น Map ครั้งเดียวแล้วใช้ซ้ำ ไม่ไล่หาทีละชิ้น
+function subcatMap() {
+  const m = new Map();
+  masterProds.forEach(p => {
+    if (!p.subcategory) return;
+    m.set('n:' + p.name, p.subcategory);
+    if (p.code && p.code !== '-') m.set('c:' + p.code, p.subcategory);
+  });
+  return m;
+}
+function subcatOf(item, m) {
+  return m.get('n:' + item.name) || (item.code ? m.get('c:' + item.code) : '') || '';
+}
+
 function populateCatFilter() {
   const sel = document.getElementById('s-cat');
-  const cats = [...new Set(stock.map(i => i.category))].sort();
-  sel.innerHTML = '<option value="">— ทุกหมวดหมู่ —</option>' + cats.map(c => `<option>${c}</option>`).join('');
+  const prev = sel.value;                    // สลับแท็บไปมาแล้วตัวกรองเดิมต้องไม่หลุด
+  const m = subcatMap();
+  const esc = v => String(v).replace(/"/g, '&quot;');
+
+  // หมวดหลัก → หมวดย่อยที่ "มีของอยู่จริงในคลัง" เท่านั้น (เลือกแล้วต้องไม่เจอตารางว่าง)
+  const tree = new Map();
+  stock.forEach(i => {
+    if (!tree.has(i.category)) tree.set(i.category, new Set());
+    const sub = subcatOf(i, m);
+    if (sub) tree.get(i.category).add(sub);
+  });
+
+  let html = '<option value="">— ทุกหมวดหมู่ —</option>';
+  [...tree.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(cat => {
+    const subs = [...tree.get(cat)].sort((a, b) => a.localeCompare(b, 'th'));
+    if (!subs.length) { html += `<option value="${esc(cat)}">${cat}</option>`; return; }
+    html += `<optgroup label="${esc(cat)}">`
+          + `<option value="${esc(cat)}">${cat} — ทั้งหมด</option>`
+          + subs.map(s => `<option value="${esc(cat + CAT_SEP + s)}">&nbsp;&nbsp;&nbsp;↳ ${s}</option>`).join('')
+          + `</optgroup>`;
+  });
+  sel.innerHTML = html;
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
 
 function sortStock(col) {
@@ -32,11 +71,14 @@ function snCellHTML(item) {
 function getFilteredStock() {
   const q   = (document.getElementById('s-q').value || '').toLowerCase();
   const st = document.getElementById('s-status').value;
-  const cat = document.getElementById('s-cat').value;
+  const catVal = document.getElementById('s-cat').value;
+  const [cat, subCat] = catVal.includes(CAT_SEP) ? catVal.split(CAT_SEP) : [catVal, ''];
+  const sm = subcatMap();
   let data = stock.filter(i =>
     (!st || i.status === st) &&
     (!cat || i.category === cat) &&
-    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)) || (i.dispatched_to && i.dispatched_to.toLowerCase().includes(q)))
+    (!subCat || subcatOf(i, sm) === subCat) &&
+    (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)) || (i.dispatched_to && i.dispatched_to.toLowerCase().includes(q)) || subcatOf(i, sm).toLowerCase().includes(q))
   );
   data.sort((a, b) => {
     let va = String(a[stockSortCol] || '').toLowerCase();
@@ -52,11 +94,12 @@ function getFilteredStock() {
 
 function filterStock() {
   const data = getFilteredStock();
+  const sm = subcatMap();
   const tbody = document.getElementById('stock-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map((item, idx) => `<tr>
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
-      <td style="color:var(--blue);font-weight:500">${item.category}</td>
+      <td style="color:var(--blue);font-weight:500">${item.category}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">↳ ${subcatOf(item, sm)}</div>` : ''}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
       <td class="mono" style="font-size:11px;color:var(--t2)">${item.lot_no || '—'}</td>
