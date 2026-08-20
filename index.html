@@ -146,7 +146,13 @@
         <div class="page-title">📋 สินค้าคงคลัง</div>
         <div class="flex gap-2 flex-wrap">
           <input type="text" id="s-q" oninput="filterStock()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
-          <select id="s-cat" onchange="filterStock()" style="width:180px"><option value="">— ทุกหมวดหมู่ —</option></select>
+          <div class="cat-dd" id="s-cat-dd">
+            <input type="hidden" id="s-cat" value="">
+            <button type="button" class="cat-dd-btn" onclick="toggleCatMenu(event)">
+              <span id="s-cat-label">— ทุกหมวดหมู่ —</span><span class="cat-dd-caret">▾</span>
+            </button>
+            <div class="cat-dd-menu" id="s-cat-menu"></div>
+          </div>
           <select id="s-status" onchange="filterStock()" style="width:150px">
             <option value="">— ทุกสถานะ —</option>
             <option value="Available">พร้อมใช้งาน</option>

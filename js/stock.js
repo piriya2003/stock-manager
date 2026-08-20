@@ -19,11 +19,12 @@ function subcatOf(item, m) {
   return m.get('n:' + item.name) || (item.code ? m.get('c:' + item.code) : '') || '';
 }
 
+const escHtml = v => String(v).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+
 function populateCatFilter() {
-  const sel = document.getElementById('s-cat');
-  const prev = sel.value;                    // สลับแท็บไปมาแล้วตัวกรองเดิมต้องไม่หลุด
+  const menu = document.getElementById('s-cat-menu'); if (!menu) return;
+  const cur = document.getElementById('s-cat').value;   // สลับแท็บไปมาแล้วตัวกรองเดิมต้องไม่หลุด
   const m = subcatMap();
-  const esc = v => String(v).replace(/"/g, '&quot;');
 
   // หมวดหลัก → หมวดย่อยที่ "มีของอยู่จริงในคลัง" เท่านั้น (เลือกแล้วต้องไม่เจอตารางว่าง)
   const tree = new Map();
@@ -33,17 +34,54 @@ function populateCatFilter() {
     if (sub) tree.get(i.category).add(sub);
   });
 
-  let html = '<option value="">— ทุกหมวดหมู่ —</option>';
+  const row = (val, label, cls = '') =>
+    `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escHtml(val)}')">${escHtml(label)}</div>`;
+
+  let html = row('', '— ทุกหมวดหมู่ —');
   [...tree.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(cat => {
     const subs = [...tree.get(cat)].sort((a, b) => a.localeCompare(b, 'th'));
-    if (!subs.length) { html += `<option value="${esc(cat)}">${cat}</option>`; return; }
-    html += `<optgroup label="${esc(cat)}">`
-          + `<option value="${esc(cat)}">${cat} — ทั้งหมด</option>`
-          + subs.map(s => `<option value="${esc(cat + CAT_SEP + s)}">&nbsp;&nbsp;&nbsp;↳ ${s}</option>`).join('')
-          + `</optgroup>`;
+    if (!subs.length) { html += row(cat, cat); return; }
+    // มีหมวดย่อย → กดที่ชื่อ = ทั้งหมวด, ชี้/กดลูกศร = บานเมนูย่อยออกทางขวา
+    html += `<div class="cat-dd-item${cur === cat ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escHtml(cat)}')">
+        <span>${escHtml(cat)}</span>
+        <span class="cat-dd-arrow" onclick="event.stopPropagation();this.parentNode.classList.toggle('show-sub')">›</span>
+        <div class="cat-dd-sub">
+          ${row(cat, cat + ' — ทั้งหมด', ' all')}
+          ${subs.map(s => row(cat + CAT_SEP + s, '↳ ' + s)).join('')}
+        </div>
+      </div>`;
   });
-  sel.innerHTML = html;
-  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  menu.innerHTML = html;
+  updateCatLabel();
+}
+
+function updateCatLabel() {
+  const el = document.getElementById('s-cat-label'); if (!el) return;
+  const v = document.getElementById('s-cat').value;
+  const [c, s] = v.includes(CAT_SEP) ? v.split(CAT_SEP) : [v, ''];
+  el.textContent = !c ? '— ทุกหมวดหมู่ —' : (s ? `${c} ↳ ${s}` : c);
+}
+
+function toggleCatMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('s-cat-dd');
+  const willOpen = !dd.classList.contains('open');
+  closeCatMenu();
+  if (willOpen) dd.classList.add('open');
+}
+
+function closeCatMenu() {
+  const dd = document.getElementById('s-cat-dd'); if (!dd) return;
+  dd.classList.remove('open');
+  dd.querySelectorAll('.show-sub').forEach(el => el.classList.remove('show-sub'));
+}
+document.addEventListener('click', closeCatMenu);   // คลิกที่อื่นแล้วเมนูปิดเอง
+
+function pickCat(v) {
+  document.getElementById('s-cat').value = v;
+  closeCatMenu();
+  populateCatFilter();   // อัปเดตแถบไฮไลต์ + ป้ายบนปุ่ม
+  filterStock();
 }
 
 function sortStock(col) {
