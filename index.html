@@ -270,8 +270,9 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
             <div class="grid-2">
               <div class="form-row"><label class="field-label">วันที่รับ</label><input type="date" id="i-date"></div>
-              <div class="form-row"><label class="field-label">หมวดหมู่</label><input type="text" id="i-cat" placeholder="เช่น POS, ปริ้นเตอร์" list="cat-dl"></div>
+              <div class="form-row"><label class="field-label">หมวดหมู่หลัก</label><input type="text" id="i-cat" placeholder="เช่น POS, ปริ้นเตอร์" list="cat-dl"></div>
             </div>
+            <div class="form-row"><label class="field-label">หมวดหมู่ย่อย</label><input type="text" id="i-subcat" placeholder="เช่น สลิม, ตั้งโต๊ะ (ไม่ใส่ก็ได้)" list="subcat-dl"></div>
             <div class="form-row col-span-2"><label class="field-label" style="color:var(--blue)">ชื่อสินค้า *</label><input type="text" id="i-name" placeholder="ชื่อสินค้า" list="product-dl"></div>
             <div class="grid-2">
               <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="i-code" oninput="updateBalance()" placeholder="รหัส (ถ้ามี)" list="code-dl"></div>

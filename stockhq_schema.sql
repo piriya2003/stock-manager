@@ -169,6 +169,7 @@ create table if not exists public.grn_items (
 create table if not exists public.inventory (
   id              uuid primary key default gen_random_uuid(),
   category        text not null default 'ไม่ระบุ',
+  subcategory     text,                                -- หมวดหมู่ย่อย เช่น category = POS, subcategory = สลิม
   name            text not null,
   code            text not null default '-',
   sn              text not null unique,               -- 🔒 กัน SN ซ้ำที่ระดับฐานข้อมูล
@@ -190,6 +191,7 @@ create table if not exists public.inventory (
 );
 
 -- คอลัมน์ที่เพิ่มมาทีหลัง (ตารางที่สร้างไว้ก่อนหน้าจะได้ครบเหมือนกัน)
+alter table public.inventory add column if not exists subcategory   text;
 alter table public.inventory add column if not exists received_at   timestamptz not null default now();
 alter table public.inventory add column if not exists dispatched_at timestamptz;
 alter table public.inventory add column if not exists dispatched_to text;
@@ -283,6 +285,7 @@ create index if not exists idx_inventory_status   on public.inventory(status);
 create index if not exists idx_inventory_category on public.inventory(category);
 create index if not exists idx_inventory_code     on public.inventory(code);
 create index if not exists idx_inventory_lot_no   on public.inventory(lot_no);
+create index if not exists idx_inventory_subcat   on public.inventory(subcategory);
 create index if not exists idx_transactions_sn    on public.transactions(sn);
 create index if not exists idx_transactions_date  on public.transactions(tx_date desc);
 create index if not exists idx_repair_status      on public.repair_jobs(status);

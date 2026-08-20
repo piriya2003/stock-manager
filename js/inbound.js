@@ -9,25 +9,41 @@ function updateBalance() {
   if (mp) {
     if (!document.getElementById('i-name').value) document.getElementById('i-name').value = mp.name;
     if (!document.getElementById('i-cat').value)  document.getElementById('i-cat').value  = mp.category;
+    if (!document.getElementById('i-subcat').value && mp.subcategory) document.getElementById('i-subcat').value = mp.subcategory;
   }
 }
 
+// ค่าที่กรอกไว้ในฟอร์มรับเข้า ใช้ร่วมกันทั้งแบบสแกนทีละชิ้นและแบบวางทีเดียวหลายตัว
+function inboundFields() {
+  const g = id => document.getElementById(id).value.trim();
+  return {
+    dt: document.getElementById('i-date').value || today(),
+    cat: g('i-cat') || 'ไม่ระบุ', subcat: g('i-subcat'),
+    nm: g('i-name'), cd: g('i-code') || '-',
+    lot: g('i-lot') || null, sup: g('i-supplier') || null, po: g('i-po') || null,
+  };
+}
+
+// ยังไม่ได้รันสคริปต์เพิ่มคอลัมน์ subcategory — ลองใหม่โดยตัดออก ไม่ให้การรับเข้าพังทั้งใบ
+function isMissingSubcat(error, subcat) {
+  return !!(error && subcat && /subcategory/i.test(error.message || ''));
+}
+
 async function doInbound() {
-  const dt  = document.getElementById('i-date').value || today();
-  const cat = document.getElementById('i-cat').value.trim() || 'ไม่ระบุ';
-  const nm  = document.getElementById('i-name').value.trim();
-  const cd  = document.getElementById('i-code').value.trim() || '-';
-  const lot = document.getElementById('i-lot').value.trim() || null;
-  const sup = document.getElementById('i-supplier').value.trim() || null;
-  const po  = document.getElementById('i-po').value.trim() || null;
+  const { dt, cat, subcat, nm, cd, lot, sup, po } = inboundFields();
   const sn  = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
   if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
   if (!nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
 
   try {
-    const { data, error } = await supaClient.from('inventory')
-      .insert({ category: cat, name: nm, code: cd, sn, status: 'Available', created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po })
-      .select().single();
+    const row = { category: cat, name: nm, code: cd, sn, status: 'Available', created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po };
+    if (subcat) row.subcategory = subcat;
+    let { data, error } = await supaClient.from('inventory').insert(row).select().single();
+    if (isMissingSubcat(error, subcat)) {
+      delete row.subcategory;
+      ({ data, error } = await supaClient.from('inventory').insert(row).select().single());
+      if (!error) toast('รับเข้าแล้ว แต่ยังเก็บหมวดหมู่ย่อยไม่ได้ — ต้องรันสคริปต์เพิ่มคอลัมน์ก่อน', 'warning');
+    }
     if (error) {
       if (error.code === '23505') { inlineMsg('i-msg', `❌ SN: ${sn} มีในระบบแล้ว!`, false); document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
       throw error;
@@ -43,13 +59,7 @@ async function doInbound() {
 
 // รับเข้าหลายรายการทีเดียว จากรายการ SN (ไม่ต้องสแกน)
 async function doInboundBulk() {
-  const dt  = document.getElementById('i-date').value || today();
-  const cat = document.getElementById('i-cat').value.trim() || 'ไม่ระบุ';
-  const nm  = document.getElementById('i-name').value.trim();
-  const cd  = document.getElementById('i-code').value.trim() || '-';
-  const lot = document.getElementById('i-lot').value.trim() || null;
-  const sup = document.getElementById('i-supplier').value.trim() || null;
-  const po  = document.getElementById('i-po').value.trim() || null;
+  const { dt, cat, subcat, nm, cd, lot, sup, po } = inboundFields();
   if (!nm) return inlineMsg('i-bulk-msg', '❌ กรุณาระบุชื่อสินค้าในช่องด้านบนก่อน', false);
 
   const raw = document.getElementById('i-bulk').value || '';
@@ -62,11 +72,17 @@ async function doInboundBulk() {
   if (!toAdd.length) return inlineMsg('i-bulk-msg', `❌ ทุก SN มีในระบบแล้ว (${dup.length} รายการ)`, false);
 
   try {
-    const rows = toAdd.map(sn => ({
-      category: cat, name: nm, code: cd, sn, status: 'Available',
-      created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po,
-    }));
-    const { data, error } = await supaClient.from('inventory').insert(rows).select();
+    const mkRows = withSub => toAdd.map(sn => {
+      const r = { category: cat, name: nm, code: cd, sn, status: 'Available',
+                  created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po };
+      if (withSub && subcat) r.subcategory = subcat;
+      return r;
+    });
+    let { data, error } = await supaClient.from('inventory').insert(mkRows(true)).select();
+    if (isMissingSubcat(error, subcat)) {
+      ({ data, error } = await supaClient.from('inventory').insert(mkRows(false)).select());
+      if (!error) toast('รับเข้าแล้ว แต่ยังเก็บหมวดหมู่ย่อยไม่ได้ — ต้องรันสคริปต์เพิ่มคอลัมน์ก่อน', 'warning');
+    }
     if (error) {
       if (error.code === '23505') return inlineMsg('i-bulk-msg', '❌ มี SN ซ้ำในระบบ — ตรวจรายการแล้วลองใหม่', false);
       throw error;

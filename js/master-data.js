@@ -193,7 +193,7 @@ function updateDataLists() {
   const names = [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])];
   const codes = [...new Set([...stock.map(i => i.code), ...masterProds.map(p => p.code)])].filter(c => c && c !== '-');
   const suppliers = [...new Set(stock.map(i => i.supplier).filter(Boolean))];
-  const subcats = [...new Set(masterProds.map(p => p.subcategory).filter(Boolean))];
+  const subcats = [...new Set([...masterProds.map(p => p.subcategory), ...stock.map(i => i.subcategory)].filter(Boolean))];
   const subDl = document.getElementById('subcat-dl');
   if (subDl) subDl.innerHTML = subcats.map(s => `<option value="${s}">`).join('');
   const catDl  = document.getElementById('cat-dl');
