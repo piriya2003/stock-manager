@@ -47,7 +47,7 @@ function populateCatFilter() {
         <span class="cat-dd-arrow" onclick="event.stopPropagation();this.parentNode.classList.toggle('show-sub')">›</span>
         <div class="cat-dd-sub">
           ${row(cat, cat + ' — ทั้งหมด', ' all')}
-          ${subs.map(s => row(cat + CAT_SEP + s, '↳ ' + s)).join('')}
+          ${subs.map(s => row(cat + CAT_SEP + s, s)).join('')}
         </div>
       </div>`;
   });
