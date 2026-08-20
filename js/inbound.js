@@ -90,7 +90,16 @@ async function doInboundBulk() {
 
 function renderInSession() {
   document.getElementById('i-session-count').textContent = inSession.length;
-  document.getElementById('i-session').innerHTML = inSession.slice().reverse().map(i =>
-    `<div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span>${i.lot_no ? `<span class="badge b-purple" style="font-size:9px">🏷 ${i.lot_no}</span>` : ''}<span class="badge b-green" style="font-size:9px">📥 IN</span></div>`
-  ).join('');
+  const el = document.getElementById('i-session');
+  if (!inSession.length) {
+    el.innerHTML = '<div class="scan-empty">ยังไม่มีรายการ<br>ยิงบาร์โค้ดเพื่อเริ่มได้เลย</div>';
+    return;
+  }
+  // เลขลำดับนับตามที่สแกนจริง แต่เรียงตัวล่าสุดไว้บนสุด — เลขบนสุดจึงเท่ากับจำนวนที่รับเข้าแล้ว
+  el.innerHTML = inSession.map((i, idx) => `
+    <div class="scan-row">
+      <span class="scan-no">${idx + 1}</span>
+      <span class="scan-sn">${i.sn}</span>
+      <span class="scan-side">${i.name}${i.lot_no ? `<br>🏷 ${i.lot_no}` : ''}</span>
+    </div>`).reverse().join('');
 }

@@ -263,7 +263,8 @@
 
     <div id="tab-inbound" class="tab-content">
       <div class="page-title mb-4">📥 รับเข้าสินค้า</div>
-      <div style="max-width:640px">
+      <div class="inbound-layout">
+        <div style="max-width:640px;min-width:0">
         <div class="scan-hint mb-4">💡 ตั้งค่าชื่อสินค้าไว้ครั้งเดียว แล้วสแกน SN ต่อเนื่องได้เลย ระบบบันทึกอัตโนมัติเมื่อกด Enter</div>
         <div class="card">
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
@@ -303,12 +304,15 @@
             <div class="inline-msg" id="i-bulk-msg"></div>
           </div>
         </div>
-        <div class="mt-4">
-          <div class="flex items-center justify-between" style="margin-bottom:8px">
-            <div style="font-size:12px;font-weight:600;color:var(--t2)">รายการที่รับเข้าในเซสชั่นนี้ (<span id="i-session-count">0</span> รายการ)</div>
-            <button onclick="openGRNModal()" class="btn btn-primary btn-sm">📄 บันทึกใบรับเข้า (GRN)</button>
+        </div>
+        <div class="card scan-panel">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div style="font-size:12px;font-weight:700;color:var(--t2)">📋 รับเข้าเซสชั่นนี้ <span id="i-session-count" style="color:var(--green);font-size:15px">0</span> รายการ</div>
+              <button onclick="openGRNModal()" class="btn btn-primary btn-sm">📄 บันทึก GRN</button>
+            </div>
+            <div id="i-session" class="scan-list"></div>
           </div>
-          <div id="i-session" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
         </div>
       </div>
       <datalist id="cat-dl"></datalist>

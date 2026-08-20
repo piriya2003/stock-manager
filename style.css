@@ -415,6 +415,23 @@ input[type=file]{display:none}
   /* ช่องราคา/จำนวนเงิน: พิมพ์เป็นตัวเลขเปล่า ไม่มีเส้นประ ชิดขวาให้ตรงคอลัมน์ */
   #printArea .do-num{font-size:11px!important;text-align:right!important;border:none!important}
 }
+/* ── หน้ารับเข้า: ฟอร์มซ้าย + รายการ SN ที่สแกนแล้วอยู่ขวา ──────────
+   SN ตัวใหญ่พออ่านจากระยะแขน เพราะคนยิงบาร์โค้ดมักไม่ได้จ้องจอ */
+.inbound-layout{display:grid;grid-template-columns:minmax(0,640px) minmax(300px,1fr);gap:16px;align-items:start}
+.scan-panel{position:sticky;top:8px;margin-bottom:0}
+.scan-list{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 230px);overflow-y:auto}
+.scan-row{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:7px 10px}
+.scan-row:first-child{border-color:rgba(45,212,160,.35);background:var(--green-dim)}
+.scan-no{min-width:26px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--t3);flex-shrink:0}
+.scan-sn{flex:1;min-width:0;font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:.03em;color:var(--green);word-break:break-all;line-height:1.25}
+.scan-side{font-size:10px;color:var(--t3);text-align:right;line-height:1.45;flex-shrink:0;max-width:38%}
+.scan-empty{text-align:center;color:var(--t3);font-size:12px;padding:26px 10px;border:1px dashed var(--b2);border-radius:8px}
+@media screen and (max-width:1100px){
+  .inbound-layout{grid-template-columns:1fr}
+  .scan-panel{position:static}
+  .scan-list{max-height:280px}
+}
+
 /* ── ตัวกรองหมวดหมู่แบบมีเมนูย่อยบานออกข้าง ──────────────
    <select> ปกติทำเมนูซ้อนไม่ได้ เลยทำเป็นปุ่ม + เมนูเองให้หน้าตาเหมือน select เดิม */
 .cat-dd{position:relative;width:180px;flex-shrink:0}
