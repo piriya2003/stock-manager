@@ -315,7 +315,10 @@ input[type=file]{display:none}
 /* ตารางครอบทั้งใบ — thead = หัวกระดาษ (เบราว์เซอร์พิมพ์ซ้ำทุกหน้าให้อัตโนมัติ) */
 .do-doc .do-page{width:100%;border-collapse:collapse}
 .do-doc .do-page>thead{display:table-header-group}
-.do-doc .do-page>thead>tr>td{padding:0 0 4px;border:none}
+/* กรอบข้อมูลลูกค้า (TO / No. / Staff / PO / Date) อยู่ในหัวกระดาษ จะได้พิมพ์ซ้ำทุกหน้าเหมือนหัวจดหมาย
+   ระยะห่างก่อนตารางสินค้าจึงต้องมาจาก padding ของหัวกระดาษ ไม่ใช่ margin ของตาราง
+   (margin ของตารางมีผลเฉพาะหน้าแรก หน้าถัดไปจะชิดกันจนดูแน่น) */
+.do-doc .do-page>thead>tr>td{padding:0 0 10px;border:none}
 .do-doc .do-page>tbody>tr>td{padding:0;border:none}
 .do-doc .do-lh{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .do-doc .do-lh-logo{font-size:30px;font-weight:800;letter-spacing:.05em}
@@ -325,12 +328,20 @@ input[type=file]{display:none}
 .do-doc .do-doc-title{text-align:center;margin:10px 0 8px;font-weight:700}
 .do-doc .do-doc-title>div{font-size:12.5px;line-height:1.7}
 .do-doc table{width:100%;border-collapse:collapse}
-.do-doc .do-info,.do-doc .do-info>tbody>tr>td{border:var(--do-bw) solid var(--do-bc)}
-.do-doc .do-info>tbody>tr>td{vertical-align:top;padding:6px 9px;font-size:11px}
-.do-doc .do-info .do-to{width:58%}
+/* กล่องข้อมูลลูกค้าต้องโผล่ทุกหน้าเหมือนหัวจดหมาย แต่เอาไปต่อท้าย thead ของ .do-page ไม่ได้
+   เพราะ Chrome เลิกพิมพ์หัวซ้ำทันทีถ้าหัวสูงเกินโควตา (วัดแล้วเหลือที่ให้เพิ่มได้ไม่ถึง 60px)
+   เลยห่อด้วยตารางอีกชั้นที่มี thead เป็นของตัวเอง — แต่ละตารางมีโควตาความสูงของใครของมัน
+   และห้ามเอากล่องนี้กลับไปเป็น <table> เพราะตารางซ้อนใน thead ก็ทำให้หัวไม่ซ้ำเหมือนกัน */
+.do-doc .do-page-info{width:100%;border-collapse:collapse}
+.do-doc .do-page-info>thead{display:table-header-group}
+.do-doc .do-page-info>thead>tr>td{padding:0 0 10px;border:none}
+.do-doc .do-page-info>tbody>tr>td{padding:0;border:none}
+.do-doc .do-info{display:flex;align-items:stretch;border:var(--do-bw) solid var(--do-bc);font-size:11px}
+.do-doc .do-info .do-to{width:58%;padding:6px 9px}
 .do-doc .do-to-body{padding-left:18px}
-.do-doc .do-meta-k{width:78px;white-space:nowrap;border-right:none!important}
-.do-doc .do-meta-v{border-left:var(--do-bw) solid var(--do-bc)}
+.do-doc .do-info .do-meta{display:flex;flex:1;border-left:var(--do-bw) solid var(--do-bc)}
+.do-doc .do-meta-k{width:96px;flex-shrink:0;white-space:nowrap;padding:6px 9px}
+.do-doc .do-meta-v{flex:1;border-left:var(--do-bw) solid var(--do-bc);padding:6px 9px}
 .do-doc .do-meta-k>div,.do-doc .do-meta-v>div{line-height:1.75;min-height:18px}
 .do-doc .do-addr{min-height:34px;font-size:11px;outline:none;line-height:1.6;white-space:pre-wrap}
 .do-doc .do-addr:empty:before{content:attr(data-ph);color:#bbb}
@@ -343,7 +354,7 @@ input[type=file]{display:none}
    - บน        = เส้นบนของ thead (พิมพ์ซ้ำทุกหน้า)
    - ล่าง      = เส้นบนของ tfoot (พิมพ์ซ้ำท้ายทุกหน้า)
    ถ้าใช้เส้นกรอบบน/ล่างของตาราง จะได้แค่หน้าแรกกับหน้าสุดท้ายเท่านั้น */
-.do-doc .do-items-tbl{margin-top:10px;border:var(--do-bw) solid var(--do-bc);border-top:none;border-bottom:none;border-collapse:separate;border-spacing:0}
+.do-doc .do-items-tbl{margin-top:0;border:var(--do-bw) solid var(--do-bc);border-top:none;border-bottom:none;border-collapse:separate;border-spacing:0}
 .do-doc .do-items-tbl th{border-top:var(--do-bw) solid var(--do-bc);border-right:var(--do-bw) solid var(--do-bc);border-bottom:var(--do-bw) solid var(--do-bc)}
 .do-doc .do-items-tbl th:last-child{border-right:none}
 .do-doc .do-items-tbl td{border-right:var(--do-bw) solid var(--do-bc);border-top:none;border-bottom:none;border-left:none}

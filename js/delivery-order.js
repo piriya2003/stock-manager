@@ -222,14 +222,18 @@ function doDocHTML(label, d) {
       <div class="do-taxid">หมายเลขประจำตัวผู้เสียภาษีอากร &nbsp;&nbsp; TAX ID 0205561043127</div>
       <div class="do-doc-title"><div>${label}</div><div>ใบส่งสินค้า</div></div>
     </td></tr></thead><tbody><tr><td>
-      <table class="do-info"><tbody><tr>
-        <td class="do-to">
+      <table class="do-page-info"><thead><tr><td>
+      <div class="do-info">
+        <div class="do-to">
           <div style="font-weight:600">TO :</div>
           <div class="do-to-body"><div>${d.cust}</div><div class="do-addr">${d.addr}</div></div>
-        </td>
-        <td class="do-meta-k"><div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div></td>
-        <td class="do-meta-v"><div>${d.no}</div><div>${d.staff}</div><div>${d.po}</div><div>${d.date}</div></td>
-      </tr></tbody></table>
+        </div>
+        <div class="do-meta">
+          <div class="do-meta-k"><div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div></div>
+          <div class="do-meta-v"><div>${d.no}</div><div>${d.staff}</div><div>${d.po}</div><div>${d.date}</div></div>
+        </div>
+      </div>
+      </td></tr></thead><tbody><tr><td>
       <table class="do-items-tbl">
         <thead><tr>
           <th style="width:58px"><span class="th-th">รหัสสินค้า</span><span class="th-en">Product No.</span></th>
@@ -252,6 +256,7 @@ function doDocHTML(label, d) {
         <td><div class="sig-line"></div>ผู้อนุมัติ / Approver<br><span class="d">วันที่</span></td>
         <td><div class="sig-line"></div>ผู้รับสินค้า / Receiver<br><span class="d">วันที่</span></td>
       </tr></tbody></table>
+      </td></tr></tbody></table>
     </td></tr></tbody>
     <tfoot><tr><td class="do-page-foot"></td></tr></tfoot>
     </table>`;
