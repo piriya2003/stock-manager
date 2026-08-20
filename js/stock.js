@@ -59,7 +59,7 @@ function updateCatLabel() {
   const el = document.getElementById('s-cat-label'); if (!el) return;
   const v = document.getElementById('s-cat').value;
   const [c, s] = v.includes(CAT_SEP) ? v.split(CAT_SEP) : [v, ''];
-  el.textContent = !c ? '— ทุกหมวดหมู่ —' : (s ? `${c} ↳ ${s}` : c);
+  el.textContent = !c ? '— ทุกหมวดหมู่ —' : (s ? `${c} → ${s}` : c);
 }
 
 function toggleCatMenu(e) {
@@ -137,7 +137,7 @@ function filterStock() {
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map((item, idx) => `<tr>
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
-      <td style="color:var(--blue);font-weight:500">${item.category}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">↳ ${subcatOf(item, sm)}</div>` : ''}</td>
+      <td style="color:var(--blue);font-weight:500">${item.category}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">→ ${subcatOf(item, sm)}</div>` : ''}</td>
       <td style="color:var(--t1)">${item.name}</td>
       <td class="code-cell">${item.code}</td>
       <td class="mono" style="font-size:11px;color:var(--t2)">${item.lot_no || '—'}</td>
