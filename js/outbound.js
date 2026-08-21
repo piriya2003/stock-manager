@@ -132,6 +132,12 @@ function fallbackCopy(text, done) {
   ta.remove();
 }
 
+// ชื่อลูกค้าที่ติดอยู่กับตัวสินค้ากับชื่อในทะเบียน มักต่างกันเรื่องช่องว่าง (เว้นวรรคเกิน/ท้ายชื่อ)
+// เทียบแบบตรงตัวเป๊ะเลยหาไม่เจอทั้งที่เป็นเจ้าเดียวกัน — ตัดช่องว่างส่วนเกินออกก่อนเทียบเสมอ
+function normCustName(s) {
+  return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
 // ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
 function getFilteredSoldItems() {
   const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
@@ -139,7 +145,7 @@ function getFilteredSoldItems() {
   const cust = document.getElementById('o-hist-cust')?.value || '';
   let soldItems = stock.filter(i => i.status === 'Sold');
   if (d) soldItems = soldItems.filter(i => i.dispatched_at && new Date(i.dispatched_at).toLocaleDateString('en-CA') === d);
-  if (cust) soldItems = soldItems.filter(i => i.dispatched_to === cust);
+  if (cust) { const c = normCustName(cust); soldItems = soldItems.filter(i => normCustName(i.dispatched_to) === c); }
   if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
   return soldItems;
 }

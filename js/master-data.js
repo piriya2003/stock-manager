@@ -183,7 +183,13 @@ function refreshCustomerSelects() {
   const hist = document.getElementById('o-hist-cust');
   if (hist) {
     const prev = hist.value;
-    hist.innerHTML = '<option value="">— ทุกลูกค้า —</option>' + customers.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    // รวมชื่อที่ติดอยู่กับตัวสินค้าเข้ามาด้วย — ของที่จ่ายให้ลูกค้าที่ถูกลบ/เปลี่ยนชื่อไปแล้ว
+    // จะได้ยังเลือกกรองได้ ไม่ใช่หายไปจากตัวเลือกทั้งที่ของยังอยู่ในประวัติ
+    const seen = new Map();
+    customers.forEach(c => seen.set(normCustName(c.name), c.name));
+    stock.forEach(i => { const k = normCustName(i.dispatched_to); if (k && !seen.has(k)) seen.set(k, i.dispatched_to); });
+    hist.innerHTML = '<option value="">— ทุกลูกค้า —</option>'
+      + [...seen.values()].sort((a, b) => a.localeCompare(b, 'th')).map(n => `<option value="${n}">${n}</option>`).join('');
     hist.value = prev;
   }
 }
