@@ -1,60 +1,6 @@
 // ══════════════════════════════════════════════════════════════
-//  DASHBOARD — เปิดมาแล้วต้องตอบ 3 อย่าง: มีอะไรต้องทำ / ของไหลเข้าออกแค่ไหน / อะไรใกล้หมด
+//  DASHBOARD — ยอดคงคลัง / ของไหลเข้าออก / ความเคลื่อนไหวและใบ DO ล่าสุด
 // ══════════════════════════════════════════════════════════════
-
-// สินค้าที่ยัง "ใช้ได้จริง" คือของที่พร้อมใช้งาน — ใช้ตัวนี้ตัดสินว่ารุ่นไหนเหลือน้อย
-function availByProduct() {
-  const m = new Map();
-  stock.forEach(i => {
-    const k = i.name;
-    if (!m.has(k)) m.set(k, { name: i.name, code: i.code, avail: 0, total: 0 });
-    const r = m.get(k);
-    r.total++;
-    if (i.status === 'Available') r.avail++;
-  });
-  return [...m.values()];
-}
-
-// ── กล่อง "ต้องจัดการ" ── รวมงานค้างจากทุกมุมของระบบมาไว้ที่เดียว
-function dashTodos() {
-  const out = [];
-
-  const waiting = repairJobs.filter(j => j.status === 'รอซ่อม').length;
-  const fixing  = repairJobs.filter(j => j.status === 'กำลังซ่อม').length;
-  if (waiting + fixing) out.push({
-    tone: 'orange', n: waiting + fixing, text: 'งานซ่อมที่ยังไม่ปิด',
-    hint: `รอซ่อม ${waiting} · กำลังซ่อม ${fixing}`, go: () => tab('maintenance'),
-  });
-
-  // ของที่ตัดสต็อกไปแล้วแต่ไม่เคยอยู่ในใบ DO ใบไหนเลย = ส่งของแล้วแต่ยังไม่มีเอกสาร
-  const onDO = new Set();
-  doHistory.forEach(d => (d.items || []).forEach(i => onDO.add(String(i.sn))));
-  const noDoc = stock.filter(i => i.status === 'Sold' && !onDO.has(String(i.sn))).length;
-  if (noDoc) out.push({
-    tone: 'blue', n: noDoc, text: 'ชิ้นที่จ่ายออกแล้วยังไม่มีใบ DO',
-    hint: 'ออกใบย้อนหลังได้จากหน้าโอน/ขาย', go: () => tab('outbound'),
-  });
-
-  const noCust = stock.filter(i => i.status === 'Sold' && !i.dispatched_to).length;
-  if (noCust) out.push({
-    tone: 'gray', n: noCust, text: 'ชิ้นที่ไม่รู้ว่าจ่ายให้ใคร',
-    hint: 'ของเก่าก่อนระบบเก็บชื่อลูกค้า', go: () => { tab('stock'); },
-  });
-
-  const noAddr = customers.filter(c => !c.address).length;
-  if (noAddr) out.push({
-    tone: 'gray', n: noAddr, text: 'ลูกค้าที่ยังไม่มีที่อยู่',
-    hint: 'ที่อยู่ใช้พิมพ์บนหัวใบ DO', go: () => tab('master'),
-  });
-
-  const claimed = stock.filter(i => i.status === 'Claimed').length;
-  if (claimed) out.push({
-    tone: 'red', n: claimed, text: 'ชิ้นที่เคลม/ชำรุดค้างอยู่',
-    hint: 'ดูรายละเอียดที่หน้าเคลม', go: () => tab('claim'),
-  });
-
-  return out;
-}
 
 // ── กราฟของเข้า–ออก 7 วันล่าสุด ── นับจากประวัติการเคลื่อนไหว
 function dashFlow() {
@@ -89,19 +35,6 @@ function renderDashboard() {
   set('d-repair-pct', pct(repair)); set('d-claimed-pct', pct(claimed));
   set('d-asof', 'ข้อมูล ณ ' + nowStr());
 
-  // ── ต้องจัดการ ──
-  const todos = dashTodos();
-  set('d-todo-count', todos.length ? todos.length + ' เรื่อง' : 'ไม่มี');
-  const todoEl = document.getElementById('d-todo');
-  window.__dashTodos = todos;   // เก็บไว้ให้ปุ่มในรายการเรียกใช้ตอนคลิก
-  todoEl.innerHTML = todos.length ? todos.map((t, i) => `
-    <button class="todo-row" onclick="__dashTodos[${i}].go()">
-      <span class="todo-n t-${t.tone}">${t.n}</span>
-      <span class="todo-text"><b>${t.text}</b><span>${t.hint}</span></span>
-      <span class="todo-go">→</span>
-    </button>`).join('')
-    : '<div class="dash-empty">ไม่มีงานค้าง — เคลียร์หมดแล้ว</div>';
-
   // ── ของเข้า–ออก 7 วัน ──
   const flow = dashFlow();
   const peak = Math.max(1, ...flow.map(f => Math.max(f.inN, f.outN)));
@@ -113,16 +46,6 @@ function renderDashboard() {
       </div>
       <div class="flow-day">${f.d.getDate()}/${f.d.getMonth() + 1}</div>
     </div>`).join('');
-
-  // ── รุ่นที่เหลือน้อย ──
-  const low = availByProduct().sort((a, b) => a.avail - b.avail || b.total - a.total).slice(0, 6);
-  const lowPeak = Math.max(1, ...low.map(p => p.avail));
-  document.getElementById('d-low').innerHTML = low.length ? low.map(p => `
-    <div class="low-row">
-      <div class="low-name" title="${p.name}">${p.name}</div>
-      <div class="low-bar"><span style="width:${Math.round(p.avail / lowPeak * 100)}%;background:${p.avail === 0 ? 'var(--red)' : p.avail <= 2 ? 'var(--orange)' : 'var(--green)'}"></span></div>
-      <div class="low-n ${p.avail === 0 ? 'text-red' : p.avail <= 2 ? 'text-orange' : ''}">${p.avail}</div>
-    </div>`).join('') : '<div class="dash-empty">ยังไม่มีสินค้าในคลัง</div>';
 
   // ── ตามหมวดหมู่ ──
   const catMap = {};
