@@ -17,7 +17,7 @@ function dlCSV(csv, fname) {
 function exportStockCSV() {
   const data = typeof getFilteredStock === 'function' ? getFilteredStock() : stock;
   if (!data.length) return toast('ไม่มีรายการให้ export (ตามที่กรองอยู่)', 'info');
-  dlCSV(toCSV(data, ['category','name','code','sn','lot_no','supplier','status','received_at','dispatched_at','dispatched_to']), 'stock_export.csv');
+  dlCSV(toCSV(data, ['category','subcategory','name','code','sn','lot_no','supplier','status','received_at','dispatched_at','dispatched_to']), 'stock_export.csv');
   toast(`Export ${data.length} รายการ (ตามที่กรองอยู่)`, 'success');
 }
 function exportReportCSV() { dlCSV(toCSV(txns, ['date','type','name','code','sn','balance','note','user']), 'report_export.csv'); }

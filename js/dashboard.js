@@ -4,20 +4,25 @@
 function renderDashboard() {
   const total = stock.length, avail = stock.filter(i => i.status === 'Available').length;
   const sold = stock.filter(i => i.status === 'Sold').length, repair = stock.filter(i => i.status === 'Repair').length;
+  // ของที่เคลม/ชำรุดก็นับอยู่ใน "สินค้าทั้งหมด" ด้วย ถ้าไม่แสดงแยกไว้ ยอด 3 การ์ดจะรวมกันไม่ครบ
+  const claimed = stock.filter(i => i.status === 'Claimed').length;
   const pct = n => total ? Math.round(n / total * 100) + '%' : '0%';
   document.getElementById('d-total').textContent = total;
   document.getElementById('d-avail').textContent = avail;
   document.getElementById('d-sold').textContent  = sold;
   document.getElementById('d-repair').textContent = repair;
+  document.getElementById('d-claimed').textContent = claimed;
   document.getElementById('d-avail-pct').textContent = pct(avail) + ' ของทั้งหมด';
   document.getElementById('d-sold-pct').textContent  = pct(sold) + ' ของทั้งหมด';
   document.getElementById('d-repair-pct').textContent = pct(repair) + ' ของทั้งหมด';
+  document.getElementById('d-claimed-pct').textContent = pct(claimed) + ' ของทั้งหมด';
 
   const w = document.getElementById('status-chart-wrap');
   const rows = [
     { label: 'พร้อมใช้งาน', count: avail, cls: 'b-green', color: 'var(--green)' },
     { label: 'โอน/ขายแล้ว', count: sold,  cls: 'b-gray',  color: 'var(--t3)' },
     { label: 'รับซ่อม',     count: repair, cls: 'b-orange', color: 'var(--orange)' },
+    { label: 'เคลม/ชำรุด',  count: claimed, cls: 'b-red',  color: 'var(--red)' },
   ];
   w.innerHTML = rows.map(r => `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">

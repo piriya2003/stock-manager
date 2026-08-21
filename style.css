@@ -111,7 +111,7 @@ body{
 .sub-tab.active{background:var(--s1);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,.25), inset 0 0 0 1px var(--b1)}
 
 /* ── Stat cards ────────────────────────────────────────── */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
 .stat-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s;box-shadow:var(--shadow-card)}
 .stat-card:hover{border-color:var(--b2);transform:translateY(-3px)}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
@@ -122,6 +122,8 @@ body{
 .stat-card.gray::before{background:linear-gradient(90deg,var(--t3),var(--b3))}
 .stat-card.orange::before{background:linear-gradient(90deg,var(--orange),#fbbf24)}
 .stat-card.orange:hover{box-shadow:0 12px 32px rgba(245,166,35,.13)}
+.stat-card.red::before{background:linear-gradient(90deg,var(--red),#fb7185)}
+.stat-card.red:hover{box-shadow:0 12px 32px rgba(240,109,109,.13)}
 .stat-card.red::before{background:linear-gradient(90deg,var(--red),#fb7185)}
 .stat-card.cyan::before{background:linear-gradient(90deg,var(--cyan),#67e8f9)}
 .stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:8px}
