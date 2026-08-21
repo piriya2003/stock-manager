@@ -58,7 +58,7 @@ function renderDashboard() {
   const recent5 = doHistory.slice(0, 5);
   doList.innerHTML = !recent5.length ? '<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px">ยังไม่มีใบ DO</div>' :
     recent5.map(d => `
-      <div class="do-card" onclick="openDOView('${d.id}')">
+      <div class="do-card" onclick="reopenDOForPrint('${d.id}')">
         <div><div class="do-card-num">${d.doNo}</div><div class="do-card-meta">${fmtDate(doDateOf(d))}</div></div>
         <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div><div style="font-size:11px;color:var(--t3)">${d.type||'โอนสินค้า'}</div></div>
         <div class="do-summary-chip">${(d.items||[]).length} ชิ้น</div>

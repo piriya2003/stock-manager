@@ -49,6 +49,7 @@ function prepDOModal(custOverride) {
   // ใบใหม่ใช้ปุ่ม "บันทึก DO" ไม่ใช่ปุ่มแก้ไขของใบเก่า
   document.getElementById('do-edit-btn').style.display = 'none';
   document.getElementById('do-update-btn').style.display = 'none';
+  document.getElementById('do-manage-btn').style.display = 'none';
   document.getElementById('do-no').value = genDONo();
   document.getElementById('do-date').value = fmtDODate(nowISO());
   const custSel = document.getElementById('o-cust');
@@ -320,7 +321,7 @@ function renderDOHistory() {
   const tbody = document.getElementById('do-history-tbody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>'; return; }
   tbody.innerHTML = data.map(d => `
-    <tr class="do-row" onclick="openDOView('${d.id}')">
+    <tr class="do-row" onclick="reopenDOForPrint('${d.id}')">
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
@@ -329,7 +330,7 @@ function renderDOHistory() {
       <td style="font-size:11px;color:var(--t3)">${d.createdBy||'—'}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
-          <button onclick="event.stopPropagation();openDOView('${d.id}')" class="btn btn-ghost btn-sm">👁</button>
+          <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-ghost btn-sm" title="เปิดใบ (แก้ไข/พิมพ์)">👁</button>
           <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-primary btn-sm">🖨️</button>
           ${currentRole === 'admin' ? `<button onclick="event.stopPropagation();deleteDO('${d.id}')" class="btn btn-red btn-sm">🗑</button>` : ''}
         </div>
@@ -337,9 +338,12 @@ function renderDOHistory() {
     </tr>`).join('');
 }
 
+// หน้าสรุป — เหลือไว้สำหรับ 2 อย่างที่ไม่ได้พิมพ์บนใบ: ประเภทใบ และ เพิ่ม/ถอดรายการสินค้า
+// (ข้อมูลบนหัวใบกับราคา แก้บนหน้ากระดาษได้ตรงๆ แล้ว)
 function openDOView(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
   currentViewDOId = id;
+  closeModal('do-modal');
   document.getElementById('dov-no').textContent = 'เลขที่: ' + d.doNo;
   document.getElementById('dov-no2').value = d.doNo;
   document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
@@ -610,6 +614,8 @@ function setDODocEditable(on) {
   document.querySelectorAll('#printArea .do-num').forEach(el => { el.readOnly = !on; });
   document.getElementById('do-edit-btn').style.display = on ? 'none' : 'inline-flex';
   document.getElementById('do-update-btn').style.display = on ? 'inline-flex' : 'none';
+  // ประเภทใบ กับ เพิ่ม/ถอดรายการ ไม่มีที่บนกระดาษ เลยยังต้องเข้าไปทำในหน้าสรุป
+  document.getElementById('do-manage-btn').style.display = on ? 'none' : 'inline-flex';
   document.getElementById('do-modal-hint').textContent = on
     ? 'แก้ได้ทุกช่องบนใบ แล้วกด "บันทึกการแก้ไข"'
     : 'กด "แก้ไขใบนี้" เพื่อพิมพ์ทับข้อมูลบนใบ';
