@@ -146,10 +146,10 @@ function filterStock() {
       <td>${statusBadge(item.status)}${item.dispatched_to ? `<div style="font-size:10px;color:var(--t3);margin-top:3px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.dispatched_to}">👤 ${item.dispatched_to}</div>` : ''}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
-          ${item.status === 'Sold' ? `<button onclick="returnToStock('${item.id}')" class="btn btn-ghost btn-sm" title="คืนเป็น Available">♻️</button>` : ''}
-          ${item.status === 'Repair' ? `<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-sm" title="ดูรายการซ่อม">🔧</button>` : ''}
-          <button onclick="openEdit('${item.id}')" class="btn btn-ghost btn-sm">✏️</button>
-          ${currentRole === 'admin' ? `<button onclick="delItem('${item.id}')" class="btn btn-red btn-sm">🗑</button>` : ''}
+          ${item.status === 'Sold' ? `<button onclick="returnToStock('${item.id}')" class="btn btn-ghost btn-icon btn-sm" title="คืนเป็นพร้อมใช้">${icon('undo')}</button>` : ''}
+          ${item.status === 'Repair' ? `<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-icon btn-sm" title="ดูรายการซ่อม">${icon('wrench')}</button>` : ''}
+          <button onclick="openEdit('${item.id}')" class="btn btn-ghost btn-icon btn-sm" title="แก้ไข">${icon('edit')}</button>
+          ${currentRole === 'admin' ? `<button onclick="delItem('${item.id}')" class="btn btn-red btn-icon btn-sm" title="ลบ">${icon('trash')}</button>` : ''}
         </div>
       </td>
     </tr>`).join('');

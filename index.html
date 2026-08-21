@@ -43,33 +43,33 @@
   </div>
   <nav style="flex:1;overflow-y:auto;padding:6px 0">
     <div class="nav-group-label">ภาพรวม</div>
-    <button class="nav-item active" id="nav-overview" onclick="tab('overview')"><span class="ni-icon">📈</span>แดชบอร์ด</button>
+    <button class="nav-item active" id="nav-overview" onclick="tab('overview')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>แดชบอร์ด</button>
     <div class="nav-group-label">ข้อมูลหลัก</div>
-    <button class="nav-item" id="nav-master" onclick="tab('master')"><span class="ni-icon">⚙️</span>สินค้า & ลูกค้า</button>
-    <button class="nav-item" id="nav-import" onclick="tab('import')"><span class="ni-icon">📂</span>Import Excel/CSV</button>
+    <button class="nav-item" id="nav-master" onclick="tab('master')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>สินค้า & ลูกค้า</button>
+    <button class="nav-item" id="nav-import" onclick="tab('import')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.9 3.9A2 2 0 0 0 8.2 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Import Excel/CSV</button>
     <div class="nav-group-label">จัดการสต็อก</div>
-    <button class="nav-item" id="nav-stock" onclick="tab('stock')"><span class="ni-icon">📋</span>สินค้าคงคลัง</button>
-    <button class="nav-item" id="nav-inbound" onclick="tab('inbound')"><span class="ni-icon">📥</span>รับเข้าสินค้า</button>
-    <button class="nav-item" id="nav-outbound" onclick="tab('outbound')"><span class="ni-icon">📤</span>โอน / ขาย</button>
+    <button class="nav-item" id="nav-stock" onclick="tab('stock')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>สินค้าคงคลัง</button>
+    <button class="nav-item" id="nav-inbound" onclick="tab('inbound')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>รับเข้าสินค้า</button>
+    <button class="nav-item" id="nav-outbound" onclick="tab('outbound')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>โอน / ขาย</button>
     <button class="nav-item" id="nav-maintenance" onclick="tab('maintenance')">
-      <span class="ni-icon">🔧</span>ซ่อม
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3Z"/></svg>ซ่อม
       <span class="nav-badge orange" id="badge-repair" style="display:none">0</span>
     </button>
     <button class="nav-item" id="nav-claim" onclick="tab('claim')">
-      <span class="ni-icon">🔴</span>เคลม
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>เคลม
       <span class="nav-badge orange" id="badge-claim" style="display:none">0</span>
     </button>
     <div class="nav-group-label">รายงาน & ระบบ</div>
     <button class="nav-item" id="nav-do-history" onclick="tab('do-history')">
-      <span class="ni-icon">📄</span>ประวัติใบ DO
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>ประวัติใบ DO
       <span class="nav-badge blue" id="badge-do" style="display:none">0</span>
     </button>
     <button class="nav-item" id="nav-grn-history" onclick="tab('grn-history')">
-      <span class="ni-icon">📦</span>ประวัติใบรับเข้า (GRN)
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>ประวัติใบรับเข้า (GRN)
       <span class="nav-badge orange" id="badge-grn" style="display:none">0</span>
     </button>
-    <button class="nav-item" id="nav-report" onclick="tab('report')"><span class="ni-icon">📊</span>ประวัติการเคลื่อนไหว</button>
-    <button class="nav-item" id="nav-backup" onclick="tab('backup')"><span class="ni-icon">💾</span>Backup / Restore</button>
+    <button class="nav-item" id="nav-report" onclick="tab('report')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7" rx="1"/><rect x="13" y="6" width="3" height="11" rx="1"/></svg>ประวัติการเคลื่อนไหว</button>
+    <button class="nav-item" id="nav-backup" onclick="tab('backup')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Backup / Restore</button>
   </nav>
   <div class="sidebar-footer">
     <div class="user-row">
@@ -101,7 +101,7 @@
 
     <div id="tab-overview" class="tab-content active">
       <div class="page-header">
-        <div class="page-title">📈 แดชบอร์ด</div>
+        <div class="page-title">แดชบอร์ด</div>
         <button onclick="renderDashboard()" class="btn btn-ghost btn-sm">🔄 รีเฟรช</button>
       </div>
       <div class="stats-row">
@@ -144,7 +144,7 @@
 
     <div id="tab-stock" class="tab-content">
       <div class="page-header">
-        <div class="page-title">📋 สินค้าคงคลัง</div>
+        <div class="page-title">สินค้าคงคลัง</div>
         <div class="flex gap-2 flex-wrap">
           <input type="text" id="s-q" oninput="filterStock()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
           <div class="cat-dd" id="s-cat-dd">
@@ -184,7 +184,7 @@
     </div>
 
     <div id="tab-master" class="tab-content">
-      <div class="page-title mb-4">⚙️ ข้อมูลหลัก</div>
+      <div class="page-title mb-4">ข้อมูลหลัก</div>
       <div class="grid-2" style="align-items:start">
         <div class="card">
           <div class="card-header" style="border-color:rgba(79,142,247,.2)"><span class="card-title text-blue">📦 เพิ่มต้นแบบสินค้า</span></div>
@@ -218,7 +218,7 @@
     </div>
 
     <div id="tab-import" class="tab-content">
-      <div class="page-title mb-4">📂 Import ข้อมูล Excel / CSV</div>
+      <div class="page-title mb-4">Import ข้อมูล Excel / CSV</div>
       <div class="card">
         <div class="card-body">
           <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
@@ -263,7 +263,7 @@
     </div>
 
     <div id="tab-inbound" class="tab-content">
-      <div class="page-title mb-4">📥 รับเข้าสินค้า</div>
+      <div class="page-title mb-4">รับเข้าสินค้า</div>
       <div class="inbound-layout">
         <div style="max-width:640px;min-width:0">
         <div class="scan-hint mb-4">💡 ตั้งค่าชื่อสินค้าไว้ครั้งเดียว แล้วสแกน SN ต่อเนื่องได้เลย ระบบบันทึกอัตโนมัติเมื่อกด Enter</div>
@@ -325,7 +325,7 @@
     </div>
 
     <div id="tab-outbound" class="tab-content">
-      <div class="page-title mb-4">📤 โอน / ขายสินค้า</div>
+      <div class="page-title mb-4">โอน / ขายสินค้า</div>
       <div style="max-width:640px">
         <div class="scan-hint mb-4" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)">💡 เลือกลูกค้าปลายทางแล้วสแกน SN ต่อเนื่องเพื่อตัดสต็อกอย่างรวดเร็ว</div>
         <div class="card">
@@ -374,7 +374,7 @@
       </div>
       <hr class="divider" style="margin:24px 0">
       <div class="page-header mb-3">
-        <div class="page-title" style="font-size:15px">📦 รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
+        <div class="page-title" style="font-size:15px">รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
         <div class="flex gap-2 flex-wrap items-center">
           <label class="field-label" style="margin:0">วันที่จ่ายออก</label>
           <input type="date" id="o-hist-date" onchange="renderOutboundHistory()" style="width:150px">
@@ -399,7 +399,7 @@
 
     <div id="tab-maintenance" class="tab-content">
       <div class="page-header">
-        <div class="page-title">🔧 ซ่อม</div>
+        <div class="page-title">ซ่อม</div>
         <div class="flex gap-2 items-center">
           <span class="badge b-orange" id="badge-wait">0 รอ</span>
           <span class="badge b-cyan" id="badge-wip">0 กำลังซ่อม</span>
@@ -460,7 +460,7 @@
 
     <div id="tab-claim" class="tab-content">
       <div class="page-header">
-        <div class="page-title">🔴 รายการเคลม</div>
+        <div class="page-title">รายการเคลม</div>
         <div class="flex gap-2 flex-wrap items-center">
           <input type="text" id="claim-q" oninput="renderClaimList()" placeholder="🔍 ค้นหา SN เดิม / SN ทดแทน / สินค้า / ลูกค้า..." style="width:280px">
           <span class="badge b-red" id="claim-count">0 รายการ</span>
@@ -485,7 +485,7 @@
 
     <div id="tab-do-history" class="tab-content">
       <div class="page-header">
-        <div class="page-title">📄 ประวัติใบ DO</div>
+        <div class="page-title">ประวัติใบ DO</div>
         <div class="flex gap-2 flex-wrap items-center">
           <input type="text" id="doh-q" oninput="renderDOHistory()" placeholder="🔍 ค้นหา เลขที่ / ลูกค้า / สินค้า..." style="width:240px">
           <button id="doh-merge-btn" onclick="mergeSelectedDOs()" class="btn btn-success btn-sm" style="display:none" title="รวมใบที่ติ๊กเลือกไว้เป็นใบเดียว">🔗 รวมใบที่เลือก</button>
@@ -515,7 +515,7 @@
 
     <div id="tab-grn-history" class="tab-content">
       <div class="page-header">
-        <div class="page-title">📦 ประวัติใบรับเข้า (GRN)</div>
+        <div class="page-title">ประวัติใบรับเข้า (GRN)</div>
         <div class="flex gap-2 flex-wrap items-center">
           <input type="text" id="grnh-q" oninput="renderGRNHistory()" placeholder="🔍 ค้นหา เลขที่ / ผู้จำหน่าย / ล็อต / สินค้า..." style="width:260px">
           <button onclick="exportGRNHistoryCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
@@ -537,7 +537,7 @@
 
     <div id="tab-report" class="tab-content">
       <div class="page-header">
-        <div class="page-title">📊 ประวัติการเคลื่อนไหว</div>
+        <div class="page-title">ประวัติการเคลื่อนไหว</div>
         <div class="flex gap-2 flex-wrap">
           <input type="text" id="rp-q" oninput="renderReport()" placeholder="🔍 ค้นหา..." style="width:220px">
           <select id="rp-type" onchange="renderReport()" style="width:170px">
@@ -564,7 +564,7 @@
     </div>
 
     <div id="tab-backup" class="tab-content">
-      <div class="page-title mb-4">💾 Backup & Restore</div>
+      <div class="page-title mb-4">Backup & Restore</div>
       <div class="grid-2" style="align-items:start;max-width:800px">
         <div class="card">
           <div class="card-header" style="border-color:rgba(79,142,247,.2)"><span class="card-title text-blue">📤 Export Backup</span></div>

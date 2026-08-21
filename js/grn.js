@@ -116,9 +116,9 @@ function renderGRNHistory() {
       <td style="font-size:11px;color:var(--t3)">${d.createdBy||'—'}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
-          <button onclick="event.stopPropagation();openGRNView('${d.id}')" class="btn btn-ghost btn-sm">👁</button>
-          <button onclick="event.stopPropagation();reopenGRNForPrint('${d.id}')" class="btn btn-primary btn-sm">🖨️</button>
-          ${currentRole === 'admin' ? `<button onclick="event.stopPropagation();deleteGRN('${d.id}')" class="btn btn-red btn-sm">🗑</button>` : ''}
+          <button onclick="event.stopPropagation();openGRNView('${d.id}')" class="btn btn-ghost btn-icon btn-sm">${icon('eye')}</button>
+          <button onclick="event.stopPropagation();reopenGRNForPrint('${d.id}')" class="btn btn-primary btn-icon btn-sm">${icon('print')}</button>
+          ${currentRole === 'admin' ? `<button onclick="event.stopPropagation();deleteGRN('${d.id}')" class="btn btn-red btn-icon btn-sm">${icon('trash')}</button>` : ''}
         </div>
       </td>
     </tr>`).join('');

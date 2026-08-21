@@ -68,6 +68,20 @@ function repairSubTab(name) {
   if (name === 'intake') setTimeout(() => document.getElementById('r-sn').focus(), 80);
 }
 
+// ── ไอคอนเส้นสำหรับปุ่มในตาราง — วาดเป็น SVG ในโค้ดเลย ไม่ต้องโหลดจากที่อื่น ──
+// อิโมจิหน้าตาต่างกันไปตามเครื่อง/ระบบปฏิบัติการ และดูไม่เป็นชุดเดียวกัน
+const ICONS = {
+  edit:   '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  trash:  '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+  undo:   '<path d="M3 7v6h6"/><path d="M3.5 13a9 9 0 1 0 2.1-6.4L3 9"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3Z"/>',
+  eye:    '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  print:  '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6Z"/>',
+};
+function icon(name, size = 14) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICONS[name] || ''}</svg>`;
+}
+
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function inlineMsg(id, msg, ok) {
