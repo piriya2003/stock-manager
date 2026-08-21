@@ -103,11 +103,33 @@ function clearOutSession() {
   outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession();
 }
 
-// เลขชุดจ่ายจากเวลา: HHMM DD MM YYYY เช่น 16:30 04/09/2026 → 163004092026
-function genBatchNo(iso) {
-  if (!iso) return '';
-  const n = new Date(iso), p = x => String(x).padStart(2, '0');
-  return p(n.getHours()) + p(n.getMinutes()) + p(n.getDate()) + p(n.getMonth() + 1) + n.getFullYear();
+// เลขชุดจ่ายจากวัน: DD MM YYYY เช่น 19/08/2026 → 19082026
+// (เดิมใส่ชั่วโมง:นาทีนำหน้าด้วย ทำให้ของที่จ่ายให้ลูกค้าเจ้าเดียวกันวันเดียวกันแต่คนละรอบ แตกเป็นหลายชุด)
+function genBatchNo(day) {
+  if (!day) return '';
+  const [y, m, d] = String(day).slice(0, 10).split('-');
+  return d + m + y;
+}
+
+// วันที่จ่ายออกแบบ YYYY-MM-DD ตามเวลาเครื่อง — ใช้เป็นตัวจับกลุ่มและตัวกรองวันที่ให้ตรงกัน
+function dispatchDay(iso) {
+  return iso ? new Date(iso).toLocaleDateString('en-CA') : '';
+}
+
+// คัดลอกรายการ SN ออกไปวางที่อื่น — บรรทัดละตัวตามด้วยจุลภาค
+function copySNList(btn, snText) {
+  const text = snText.split('|').map(s => s + ',').join('\n');
+  const done = () => { const old = btn.textContent; btn.textContent = '✅ คัดลอกแล้ว'; setTimeout(() => { btn.textContent = old; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { toast('คัดลอกไม่สำเร็จ', 'error'); }
+  ta.remove();
 }
 
 // ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
@@ -141,14 +163,16 @@ function renderOutboundHistory() {
   const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
-  // จัดกลุ่มเป็น "ชุดการจ่าย" ตามเลขชุด (นาทีที่จ่าย) + ลูกค้า
-  // ใช้ความละเอียดระดับนาทีให้ตรงกับเลขชุดที่แสดง — ของเก่าที่สแกนทีละชิ้น (วินาทีต่างกัน) จะได้รวมเป็นชุดเดียว
+  // จัดกลุ่มเป็น "ชุดการจ่าย" ตาม วันที่จ่าย + ลูกค้า
+  // จ่ายให้เจ้าเดียวกันวันเดียวกันถือเป็นชุดเดียว ต่อให้สแกนหลายรอบคนละเวลา
   const batches = {};
   soldItems.forEach(item => {
-    const no  = item.dispatched_at ? genBatchNo(item.dispatched_at) : '';
-    const key = no ? no + '|' + (item.dispatched_to || '') : 'no-batch';
-    if (!batches[key]) batches[key] = { no, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
+    const day = dispatchDay(item.dispatched_at);
+    const key = day ? day + '|' + (item.dispatched_to || '') : 'no-batch';
+    if (!batches[key]) batches[key] = { no: genBatchNo(day), day, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
     batches[key].items.push(item);
+    // เก็บเวลาล่าสุดของชุดไว้เรียงลำดับ
+    if (item.dispatched_at && String(item.dispatched_at) > String(batches[key].at)) batches[key].at = item.dispatched_at;
   });
   outboundBatches = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const batchList = outboundBatches;
@@ -159,10 +183,9 @@ function renderOutboundHistory() {
 
   let html = '';
   batchList.forEach((b, bi) => {
-    const time = b.at ? (fmtDate(b.at) + ' ' + new Date(b.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) : '';
-    const head = b.at
-      ? `🧾 ชุด #${b.no} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
-      : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
+    const head = b.day
+      ? `🧾 ${fmtDate(b.day)} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
+      : `🧾 ของเก่า (ไม่มีวันที่จ่าย) · ${b.items.length} ชิ้น`;
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <span style="font-size:12px;font-weight:700;color:var(--t1)">${head}</span>
@@ -182,7 +205,8 @@ function renderOutboundHistory() {
         <td><div class="code-cell">${g.code}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${g.category}${g.lots.size ? ' · ล็อต: ' + [...g.lots].join(', ') : ''}</div></td>
         <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700;font-size:14px">${g.sns.length}</td>
         <td style="font-size:11px;color:var(--t2);font-family:var(--mono);max-width:300px;line-height:1.6;white-space:normal">
-          ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('')}
+          <button onclick="copySNList(this,'${g.sns.join('|')}')" class="btn btn-ghost btn-sm" style="float:right;margin-left:6px;font-size:10px" title="คัดลอก SN ทั้งหมด บรรทัดละตัว">📋 คัดลอก</button>
+          ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('\n')}
         </td></tr>`;
     });
   });
