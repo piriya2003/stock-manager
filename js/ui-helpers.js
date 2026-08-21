@@ -78,9 +78,9 @@ function inlineMsg(id, msg, ok) {
   setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3500);
 }
 
-// เลขรันของเอกสาร (DO / GRN) = เลขสูงสุด "ของวันนั้น" + 1
+// เลขรันของเอกสาร (DO / GRN) = เลขสูงสุดที่ขึ้นต้นด้วย prefix เดียวกัน + 1
+// prefix เป็นตัวกำหนดเองว่าจะให้เริ่มนับใหม่เมื่อไหร่ (DO ใช้รายเดือน, GRN ใช้รายวัน)
 // เดิมนับจากจำนวนใบทั้งหมดที่มี ซึ่งพอลบใบเก่าทิ้ง เลขจะวนกลับมาชนใบที่ยังอยู่ (บันทึกไม่ผ่าน)
-// และเลขก็ไม่ได้เริ่มใหม่รายวันทั้งที่รูปแบบสื่อแบบนั้น
 function nextDocNo(prefix, existingNos) {
   const maxSeq = (existingNos || []).reduce((max, no) => {
     const s = String(no || '');

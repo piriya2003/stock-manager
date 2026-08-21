@@ -1,9 +1,11 @@
 // ══════════════════════════════════════════════════════════════
 //  DO — CREATE / SAVE / PRINT
 // ══════════════════════════════════════════════════════════════
+// เลขที่ใบ DO: DO-ปีเดือน-ลำดับ เช่น DO-2608-0001 — ขึ้นเดือนใหม่เริ่มนับ 0001 ใหม่
+// (เลขเก่ารูปแบบ DO-260821-xxxx ที่มีวันอยู่ด้วย จะไม่ถูกนับรวม เพราะคนละ prefix กัน)
 function genDONo() {
-  const n = new Date(), yy = String(n.getFullYear()).slice(-2), mm = String(n.getMonth()+1).padStart(2,'0'), dd = String(n.getDate()).padStart(2,'0');
-  return nextDocNo(`DO-${yy}${mm}${dd}-`, doHistory.map(d => d.doNo));
+  const n = new Date(), yy = String(n.getFullYear()).slice(-2), mm = String(n.getMonth()+1).padStart(2,'0');
+  return nextDocNo(`DO-${yy}${mm}-`, doHistory.map(d => d.doNo));
 }
 
 function openDOModal() {
