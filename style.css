@@ -122,6 +122,61 @@ body{
 /* ไอคอนลายน้ำมุมการ์ด — ซ่อนไว้ ตัวเลขกับป้ายกำกับสื่อความหมายครบอยู่แล้ว */
 .stat-icon{display:none}
 
+/* ── แดชบอร์ด ──────────────────────────────────────────── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);margin-bottom:16px;overflow:hidden}
+.kpi{padding:14px 18px;border-left:1px solid var(--b1)}
+.kpi:first-child{border-left:none}
+.kpi-label{font-size:11px;color:var(--t3);margin-bottom:6px}
+.kpi-value{font-size:26px;font-weight:600;font-family:var(--mono);line-height:1;letter-spacing:-1px;color:var(--t1)}
+.kpi-sub{font-size:10px;color:var(--t3);margin-top:4px}
+
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.dash-todo,.dash-tx{grid-column:span 1}
+.dash-empty{padding:28px 16px;text-align:center;color:var(--t3);font-size:12px}
+
+/* ต้องจัดการ */
+.dash-todo-list{display:flex;flex-direction:column}
+.todo-row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 18px;background:none;border:none;border-top:1px solid var(--b1);cursor:pointer;text-align:left;font-family:var(--sans);transition:background .15s}
+.dash-todo-list .todo-row:first-child{border-top:none}
+.todo-row:hover{background:var(--s2)}
+.todo-n{min-width:34px;height:26px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0}
+.todo-n.t-orange{background:var(--orange-dim);color:var(--orange)}
+.todo-n.t-blue{background:var(--blue-dim);color:var(--blue)}
+.todo-n.t-red{background:var(--red-dim);color:var(--red)}
+.todo-n.t-gray{background:var(--s3);color:var(--t2)}
+.todo-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.todo-text b{font-size:12.5px;font-weight:500;color:var(--t1)}
+.todo-text span{font-size:10.5px;color:var(--t3)}
+.todo-go{color:var(--t3);font-size:14px;flex-shrink:0}
+.todo-row:hover .todo-go{color:var(--blue)}
+
+/* ของเข้า–ออก 7 วัน */
+.flow-chart{display:flex;align-items:flex-end;gap:10px;height:132px}
+.flow-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+.flow-bars{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px}
+.flow-bar{width:9px;min-height:2px;border-radius:2px 2px 0 0;transition:height .3s}
+.flow-bar.in{background:var(--green)}
+.flow-bar.out{background:var(--blue)}
+.flow-day{font-size:10px;color:var(--t3);font-family:var(--mono)}
+
+/* รุ่นที่เหลือน้อย */
+.dash-low-list,.dash-cat-list{display:flex;flex-direction:column;padding:6px 0}
+.low-row,.cat-row{display:flex;align-items:center;gap:12px;padding:7px 18px}
+.low-name{flex:1;min-width:0;font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.low-bar,.cat-bar{width:88px;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;flex-shrink:0}
+.low-bar span,.cat-bar span{display:block;height:100%;border-radius:3px}
+.cat-bar span{background:var(--blue)}
+.low-n{width:26px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t1);flex-shrink:0}
+
+/* ตามหมวดหมู่ */
+.cat-name{flex:1;min-width:0;font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-n{width:56px;text-align:right;flex-shrink:0}
+.cat-n b{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t1);display:block}
+.cat-n span{font-size:10px;color:var(--t3)}
+
+.dash-do-list{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:236px;overflow-y:auto}
+@media screen and (max-width:1100px){ .dash-grid{grid-template-columns:1fr} }
+
 /* ── Cards & tables ────────────────────────────────────── */
 .card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);transition:background-color .3s, border-color .3s}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}

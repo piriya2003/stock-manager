@@ -101,43 +101,59 @@
 
     <div id="tab-overview" class="tab-content active">
       <div class="page-header">
-        <div class="page-title">แดชบอร์ด</div>
-        <button onclick="renderDashboard()" class="btn btn-ghost btn-sm">🔄 รีเฟรช</button>
-      </div>
-      <div class="stats-row">
-        <div class="stat-card blue"><div class="stat-label">สินค้าทั้งหมด</div><div class="stat-value text-blue" id="d-total">0</div><div class="stat-sub" id="d-total-sub">ในระบบ</div><div class="stat-icon">📦</div></div>
-        <div class="stat-card green"><div class="stat-label">พร้อมใช้งาน</div><div class="stat-value text-green" id="d-avail">0</div><div class="stat-sub" id="d-avail-pct">0%</div><div class="stat-icon">✅</div></div>
-        <div class="stat-card gray"><div class="stat-label">โอน / ขายออก</div><div class="stat-value" style="color:var(--t3)" id="d-sold">0</div><div class="stat-sub" id="d-sold-pct">0%</div><div class="stat-icon">📤</div></div>
-        <div class="stat-card orange"><div class="stat-label">รับซ่อม</div><div class="stat-value text-orange" id="d-repair">0</div><div class="stat-sub" id="d-repair-pct">0%</div><div class="stat-icon">🔧</div></div>
-        <div class="stat-card red"><div class="stat-label">เคลม / ชำรุด</div><div class="stat-value text-red" id="d-claimed">0</div><div class="stat-sub" id="d-claimed-pct">0%</div><div class="stat-icon">🔴</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div class="card">
-          <div class="card-header"><span class="card-title">สัดส่วนสถานะ</span></div>
-          <div class="card-body" id="status-chart-wrap"></div>
+        <div>
+          <div class="page-title">ภาพรวมคลัง</div>
+          <div id="d-asof" style="font-size:11px;color:var(--t3);margin-top:2px"></div>
         </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">สินค้าตามหมวดหมู่</span><span id="cat-count-badge" class="badge b-blue" style="font-size:10px"></span></div>
-          <div style="max-height:220px;overflow-y:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-              <thead><tr>
-                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">หมวดหมู่</th>
-                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">จำนวน</th>
-                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);background:var(--s2)">พร้อม</th>
-              </tr></thead>
-              <tbody id="cat-tbody"></tbody>
-            </table>
+        <button onclick="renderDashboard()" class="btn btn-ghost btn-sm">รีเฟรช</button>
+      </div>
+
+      <!-- แถบตัวเลขรวม — บรรทัดเดียวจบ ไม่กินพื้นที่เท่าการ์ดใหญ่ 5 ใบ -->
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">สินค้าทั้งหมด</div><div class="kpi-value" id="d-total">0</div></div>
+        <div class="kpi"><div class="kpi-label">พร้อมใช้งาน</div><div class="kpi-value text-green" id="d-avail">0</div><div class="kpi-sub" id="d-avail-pct"></div></div>
+        <div class="kpi"><div class="kpi-label">โอน / ขายออก</div><div class="kpi-value" id="d-sold">0</div><div class="kpi-sub" id="d-sold-pct"></div></div>
+        <div class="kpi"><div class="kpi-label">รับซ่อม</div><div class="kpi-value text-orange" id="d-repair">0</div><div class="kpi-sub" id="d-repair-pct"></div></div>
+        <div class="kpi"><div class="kpi-label">เคลม / ชำรุด</div><div class="kpi-value text-red" id="d-claimed">0</div><div class="kpi-sub" id="d-claimed-pct"></div></div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- สิ่งที่ต้องจัดการ — เปิดเว็บมาแล้วรู้ทันทีว่าต้องทำอะไร -->
+        <div class="card dash-todo">
+          <div class="card-header"><span class="card-title">ต้องจัดการ</span><span class="badge b-gray" id="d-todo-count">0</span></div>
+          <div id="d-todo" class="dash-todo-list"></div>
+        </div>
+
+        <!-- ของเข้า-ออก 7 วันล่าสุด -->
+        <div class="card dash-flow">
+          <div class="card-header"><span class="card-title">ของเข้า–ออก 7 วันล่าสุด</span>
+            <span style="font-size:10px;color:var(--t3)"><span style="color:var(--green)">■</span> เข้า &nbsp; <span style="color:var(--blue)">■</span> ออก</span>
           </div>
+          <div class="card-body"><div id="d-flow" class="flow-chart"></div></div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div class="card">
+
+        <!-- รุ่นที่เหลือน้อย — ไว้ดูว่าควรสั่งของอะไรเพิ่ม -->
+        <div class="card dash-low">
+          <div class="card-header"><span class="card-title">รุ่นที่เหลือน้อย</span><button onclick="tab('stock')" class="btn btn-ghost btn-sm">ดูคลัง →</button></div>
+          <div id="d-low" class="dash-low-list"></div>
+        </div>
+
+        <!-- สินค้าตามหมวดหมู่ -->
+        <div class="card dash-cat">
+          <div class="card-header"><span class="card-title">สินค้าตามหมวดหมู่</span><span id="cat-count-badge" class="badge b-gray"></span></div>
+          <div id="cat-list" class="dash-cat-list"></div>
+        </div>
+
+        <!-- เคลื่อนไหวล่าสุด -->
+        <div class="card dash-tx">
           <div class="card-header"><span class="card-title">รายการเคลื่อนไหวล่าสุด</span><button onclick="tab('report')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button></div>
-          <div class="tbl-wrap" style="border:none;border-radius:0"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>สินค้า</th><th>SN</th><th>หมายเหตุ</th></tr></thead><tbody id="recent-tx"></tbody></table></div>
+          <div class="tbl-wrap" style="border:none;border-radius:0"><table><thead><tr><th>เวลา</th><th>ประเภท</th><th>สินค้า</th><th>SN</th><th>หมายเหตุ</th></tr></thead><tbody id="recent-tx"></tbody></table></div>
         </div>
-        <div class="card">
+
+        <!-- ใบ DO ล่าสุด -->
+        <div class="card dash-do">
           <div class="card-header"><span class="card-title">ใบ DO ล่าสุด</span><button onclick="tab('do-history')" class="btn btn-ghost btn-sm">ดูทั้งหมด →</button></div>
-          <div id="dashboard-do-list" style="padding:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto"></div>
+          <div id="dashboard-do-list" class="dash-do-list"></div>
         </div>
       </div>
     </div>
