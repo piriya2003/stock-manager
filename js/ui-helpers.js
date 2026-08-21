@@ -82,6 +82,13 @@ function icon(name, size = 14) {
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICONS[name] || ''}</svg>`;
 }
 
+// เอกสาร/ประวัติเก็บแค่ id ของผู้ใช้ — แปลงกลับเป็นชื่อตอนแสดงผล
+// พนักงานทั่วไปอ่านแถวของคนอื่นไม่ได้ (RLS) เลยแสดง id สั้นๆ แทน ยังพอแยกออกว่าคนละคน
+function userName(id) {
+  if (!id) return '—';
+  return userNames[id] || (String(id).slice(0, 8) + '…');
+}
+
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function inlineMsg(id, msg, ok) {

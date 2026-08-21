@@ -9,6 +9,8 @@ let repairJobs  = [];
 let doHistory   = [];
 let grnHistory  = [];
 
+let userNames      = {};    // id ของผู้ใช้ → ชื่อผู้ใช้ (เอกสารเก็บแต่ id ต้องแปลงกลับตอนแสดง)
+
 let currentUser    = null;  // username (แสดงผล)
 let currentRole    = null;  // 'admin' | 'staff'
 let currentPosition = null; // ตำแหน่งงาน (เช่น HR, Executive) — แสดงแทน role label ถ้ามี

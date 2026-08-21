@@ -335,7 +335,7 @@ function renderDOHistory() {
       <td>${doTypeBadge(d.type)}</td>
       <td style="color:var(--t1);font-weight:500">${d.customer}</td>
       <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
-      <td style="font-size:11px;color:var(--t3)">${d.createdBy||'—'}</td>
+      <td style="font-size:11px;color:var(--t3)">${userName(d.createdBy)}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-ghost btn-icon btn-sm" title="เปิดใบ (แก้ไข/พิมพ์)">${icon('eye')}</button>
@@ -432,7 +432,7 @@ function openDOView(id) {
   document.getElementById('dov-type').value = d.type || 'โอนสินค้า';
   document.getElementById('dov-cust').value = d.customer || '';
   document.getElementById('dov-addr').value = d.customerAddress || '';
-  document.getElementById('dov-user').textContent = d.createdBy || '—';
+  document.getElementById('dov-user').textContent = userName(d.createdBy);
   document.getElementById('dov-sales').value = d.salesperson || '';
   document.getElementById('dov-po').value = d.machine || '';
   document.getElementById('dov-note').value = d.headerText || '';

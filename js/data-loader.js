@@ -16,6 +16,12 @@ async function loadAllData() {
 
   [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes].forEach(r => { if (r.error) throw r.error; });
 
+  // รายชื่อผู้ใช้ไว้แปลง id เป็นชื่อบนเอกสาร/ประวัติ
+  // แอดมินอ่านได้ทุกแถว พนักงานทั่วไป RLS จะคืนมาแค่แถวตัวเอง — ไม่ใช่ error ปล่อยผ่านได้
+  userNames = {};
+  const usrRes = await supaClient.from('users').select('id, username');
+  if (!usrRes.error) (usrRes.data || []).forEach(u => { userNames[u.id] = u.username; });
+
   stock = invRes.data;
   // ดึงประวัติชุดแรกพอให้เข้าระบบไว ที่เหลือกดโหลดเพิ่มได้จากหน้ารายงาน
   txns = txRes.data.map(mapTxRow);

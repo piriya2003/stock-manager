@@ -113,7 +113,7 @@ function renderGRNHistory() {
       <td style="color:var(--t1);font-weight:500">${d.supplier || '—'}</td>
       <td class="mono" style="font-size:11px">${d.lotNo || '—'}</td>
       <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
-      <td style="font-size:11px;color:var(--t3)">${d.createdBy||'—'}</td>
+      <td style="font-size:11px;color:var(--t3)">${userName(d.createdBy)}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();openGRNView('${d.id}')" class="btn btn-ghost btn-icon btn-sm">${icon('eye')}</button>
@@ -133,7 +133,7 @@ function openGRNView(id) {
   document.getElementById('grnv-supplier').textContent = d.supplier || '—';
   document.getElementById('grnv-po').textContent = d.poNo || '—';
   document.getElementById('grnv-lot').textContent = d.lotNo || '—';
-  document.getElementById('grnv-user').textContent = d.createdBy || '—';
+  document.getElementById('grnv-user').textContent = userName(d.createdBy);
 
   const grp = {};
   (d.items||[]).forEach(i => { grp[i.name] = (grp[i.name] || 0) + 1; });

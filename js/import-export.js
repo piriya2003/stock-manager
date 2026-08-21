@@ -29,7 +29,7 @@ function exportDOHistoryCSV() {
   const rows = [];
   doHistory.forEach(d => {
     (d.items||[]).forEach(item => {
-      rows.push({ doNo: d.doNo, date: fmtDate(doDateOf(d)), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: d.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+      rows.push({ doNo: d.doNo, date: fmtDate(doDateOf(d)), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: userName(d.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
     });
   });
   dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']), 'do_history_export.csv');
@@ -38,7 +38,7 @@ function exportGRNHistoryCSV() {
   const rows = [];
   grnHistory.forEach(g => {
     (g.items||[]).forEach(item => {
-      rows.push({ grnNo: g.grnNo, date: fmtDate(g.createdAt), supplier: g.supplier||'', poNo: g.poNo||'', lotNo: g.lotNo||'', createdBy: g.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+      rows.push({ grnNo: g.grnNo, date: fmtDate(g.createdAt), supplier: g.supplier||'', poNo: g.poNo||'', lotNo: g.lotNo||'', createdBy: userName(g.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
     });
   });
   dlCSV(toCSV(rows, ['grnNo','date','supplier','poNo','lotNo','createdBy','itemName','itemCode','itemCategory','itemSN']), 'grn_history_export.csv');
@@ -67,7 +67,7 @@ function renderReport() {
       <td class="mono">${t.date}${t.createdAt ? `<div style="font-size:10px;color:var(--t3)">${new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}</td><td>${typeBadge(t.type)}</td>
       <td>${t.name}</td><td class="code-cell">${t.code}</td>
       <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td>
-      <td>${t.note||''}</td><td style="font-size:11px;color:var(--t3)">${t.user||'—'}</td>
+      <td>${t.note||''}</td><td style="font-size:11px;color:var(--t3)">${userName(t.user)}</td>
     </tr>`).join('');
 }
 
