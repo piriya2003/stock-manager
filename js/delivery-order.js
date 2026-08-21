@@ -71,6 +71,13 @@ function prepDOModal(custOverride) {
 }
 
 // วันที่บนใบ DO รูปแบบ 24-Jul-2026 (ตามใบจริง)
+// วันที่ "บนใบ" (do_date) แก้ย้อนหลังได้ — ต่างจาก created_at ที่เป็นเวลาที่กดบันทึกจริง แก้ไม่ได้
+// ใบเก่าที่ยังไม่มี do_date ให้ถอยไปใช้วันที่สร้างแทน (ค่าเดิมของมันคือวันเดียวกันอยู่แล้ว)
+function doDateOf(d) {
+  if (d.date) return String(d.date).slice(0, 10);
+  return d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : today();
+}
+
 function fmtDODate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -298,7 +305,7 @@ function renderDOHistory() {
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="openDOView('${d.id}')">
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
-      <td class="mono" style="font-size:11px">${fmtDate(d.createdAt)}</td>
+      <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
       <td style="color:var(--t1);font-weight:500">${d.customer}</td>
       <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
@@ -319,6 +326,7 @@ function openDOView(id) {
   document.getElementById('dov-no').textContent = 'เลขที่: ' + d.doNo;
   document.getElementById('dov-no2').value = d.doNo;
   document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('dov-date-edit').value = doDateOf(d);
   document.getElementById('dov-type').value = d.type || 'โอนสินค้า';
   document.getElementById('dov-cust').value = d.customer || '';
   document.getElementById('dov-addr').value = d.customerAddress || '';
@@ -394,6 +402,7 @@ async function saveDOViewPrices() {
   if (!cust) return toast('กรุณาระบุชื่อลูกค้า', 'error');
   const headerPayload = {
     do_no: doNo,
+    do_date: document.getElementById('dov-date-edit').value || doDateOf(doHistory.find(x => x.id === currentViewDOId) || {}),
     type: document.getElementById('dov-type').value,
     customer_name: cust,
     customer_address: document.getElementById('dov-addr').value.trim(),
@@ -432,7 +441,7 @@ async function saveDOViewPrices() {
     // อัปเดตแคชในเครื่องให้ตรงกับที่บันทึกไป
     const d = doHistory.find(x => x.id === currentViewDOId);
     if (d) {
-      d.doNo = doNo; d.type = headerPayload.type; d.customer = cust;
+      d.doNo = doNo; d.type = headerPayload.type; d.customer = cust; d.date = headerPayload.do_date;
       d.customerAddress = headerPayload.customer_address;
       d.salesperson = headerPayload.salesperson; d.machine = headerPayload.machine;
       d.headerText = headerPayload.header_text;
@@ -583,7 +592,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
-  document.getElementById('do-date').textContent = fmtDODate(d.createdAt);
+  document.getElementById('do-date').textContent = fmtDODate(doDateOf(d));
   const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = d.customerAddress || ''; addr.contentEditable = 'false'; }
 
   const grp = {};

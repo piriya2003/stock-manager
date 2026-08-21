@@ -29,7 +29,7 @@ function exportDOHistoryCSV() {
   const rows = [];
   doHistory.forEach(d => {
     (d.items||[]).forEach(item => {
-      rows.push({ doNo: d.doNo, date: fmtDate(d.createdAt), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: d.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+      rows.push({ doNo: d.doNo, date: fmtDate(doDateOf(d)), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: d.createdBy||'', itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
     });
   });
   dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']), 'do_history_export.csv');
