@@ -103,12 +103,12 @@ function clearOutSession() {
   outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession();
 }
 
-// เลขชุดจ่ายจากวัน: DD MM YYYY เช่น 19/08/2026 → 19082026
-// (เดิมใส่ชั่วโมง:นาทีนำหน้าด้วย ทำให้ของที่จ่ายให้ลูกค้าเจ้าเดียวกันวันเดียวกันแต่คนละรอบ แตกเป็นหลายชุด)
-function genBatchNo(day) {
-  if (!day) return '';
-  const [y, m, d] = String(day).slice(0, 10).split('-');
-  return d + m + y;
+// เลขชุดจ่ายจากเวลา: HHMM DD MM YYYY เช่น 16:30 04/09/2026 → 163004092026
+// แต่ละรอบที่สแกนคือคนละชุด — ถ้าอยากได้เป็นใบเดียวค่อยกดรวมเอง
+function genBatchNo(iso) {
+  if (!iso) return '';
+  const n = new Date(iso), p = x => String(x).padStart(2, '0');
+  return p(n.getHours()) + p(n.getMinutes()) + p(n.getDate()) + p(n.getMonth() + 1) + n.getFullYear();
 }
 
 // วันที่จ่ายออกแบบ YYYY-MM-DD ตามเวลาเครื่อง — ใช้เป็นตัวจับกลุ่มและตัวกรองวันที่ให้ตรงกัน
@@ -144,9 +144,15 @@ function getFilteredSoldItems() {
   const d = document.getElementById('o-hist-date')?.value || '';
   const cust = document.getElementById('o-hist-cust')?.value || '';
   let soldItems = stock.filter(i => i.status === 'Sold');
-  if (d) soldItems = soldItems.filter(i => i.dispatched_at && new Date(i.dispatched_at).toLocaleDateString('en-CA') === d);
+  if (d) soldItems = soldItems.filter(i => dispatchDay(i.dispatched_at) === d);
   if (cust) { const c = normCustName(cust); soldItems = soldItems.filter(i => normCustName(i.dispatched_to) === c); }
-  if (q) soldItems = soldItems.filter(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q));
+  if (q) {
+    const sm = subcatMap();   // ค้นด้วยหมวดหมู่หลัก/ย่อยได้ด้วย ไม่ใช่แค่ชื่อ/SN/รหัส
+    soldItems = soldItems.filter(i =>
+      i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || i.code.toLowerCase().includes(q) ||
+      (i.category || '').toLowerCase().includes(q) || subcatOf(i, sm).toLowerCase().includes(q) ||
+      (i.lot_no || '').toLowerCase().includes(q));
+  }
   return soldItems;
 }
 
@@ -169,16 +175,14 @@ function renderOutboundHistory() {
   const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
 
-  // จัดกลุ่มเป็น "ชุดการจ่าย" ตาม วันที่จ่าย + ลูกค้า
-  // จ่ายให้เจ้าเดียวกันวันเดียวกันถือเป็นชุดเดียว ต่อให้สแกนหลายรอบคนละเวลา
+  // จัดกลุ่มเป็น "ชุดการจ่าย" ตามเลขชุด (นาทีที่จ่าย) + ลูกค้า
+  // ใช้ความละเอียดระดับนาทีให้ตรงกับเลขชุดที่แสดง — ของเก่าที่สแกนทีละชิ้น (วินาทีต่างกัน) จะได้รวมเป็นชุดเดียว
   const batches = {};
   soldItems.forEach(item => {
-    const day = dispatchDay(item.dispatched_at);
-    const key = day ? day + '|' + (item.dispatched_to || '') : 'no-batch';
-    if (!batches[key]) batches[key] = { no: genBatchNo(day), day, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
+    const no  = item.dispatched_at ? genBatchNo(item.dispatched_at) : '';
+    const key = no ? no + '|' + (item.dispatched_to || '') : 'no-batch';
+    if (!batches[key]) batches[key] = { no, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
     batches[key].items.push(item);
-    // เก็บเวลาล่าสุดของชุดไว้เรียงลำดับ
-    if (item.dispatched_at && String(item.dispatched_at) > String(batches[key].at)) batches[key].at = item.dispatched_at;
   });
   outboundBatches = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const batchList = outboundBatches;
@@ -189,9 +193,10 @@ function renderOutboundHistory() {
 
   let html = '';
   batchList.forEach((b, bi) => {
-    const head = b.day
-      ? `🧾 ${fmtDate(b.day)} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
-      : `🧾 ของเก่า (ไม่มีวันที่จ่าย) · ${b.items.length} ชิ้น`;
+    const time = b.at ? (fmtDate(b.at) + ' ' + new Date(b.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) : '';
+    const head = b.at
+      ? `🧾 ชุด #${b.no} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
+      : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <span style="font-size:12px;font-weight:700;color:var(--t1)">${head}</span>

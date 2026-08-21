@@ -379,7 +379,7 @@
           <input type="date" id="o-hist-date" onchange="renderOutboundHistory()" style="width:150px">
           <select id="o-hist-cust" onchange="renderOutboundHistory()" style="width:180px"><option value="">— ทุกลูกค้า —</option></select>
           <button onclick="document.getElementById('o-hist-date').value='';document.getElementById('o-hist-cust').value='';renderOutboundHistory()" class="btn btn-ghost btn-sm" title="ล้างตัวกรอง">ล้างตัวกรอง</button>
-          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:180px">
+          <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส / หมวดหมู่ / ล็อต..." style="width:230px">
           <button onclick="openDOFromHistory()" class="btn btn-primary btn-sm" title="สร้างใบ DO เฉพาะรายการที่กรองอยู่ (วันที่/ค้นหา)">📄 สร้าง DO จากรายการนี้</button>
         </div>
       </div>
