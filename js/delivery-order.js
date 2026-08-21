@@ -46,6 +46,9 @@ function prepDOModal(custOverride) {
   document.getElementById('do-salesperson').readOnly = false;
   document.getElementById('do-machine').readOnly = false;
   document.getElementById('do-date').readOnly = false;
+  // ใบใหม่ใช้ปุ่ม "บันทึก DO" ไม่ใช่ปุ่มแก้ไขของใบเก่า
+  document.getElementById('do-edit-btn').style.display = 'none';
+  document.getElementById('do-update-btn').style.display = 'none';
   document.getElementById('do-no').value = genDONo();
   document.getElementById('do-date').value = fmtDODate(nowISO());
   const custSel = document.getElementById('o-cust');
@@ -594,20 +597,37 @@ async function addItemsToDO() {
   }
 }
 
+// ── เปิดใบเก่ามาดู/พิมพ์ — แก้ได้ทั้งใบตรงหน้ากระดาษเลย ไม่ต้องกลับไปแก้ในฟอร์มแยก ──
+// เปิดมาล็อกไว้ก่อนกันพิมพ์ทับใบที่ส่งไปแล้วโดยไม่ตั้งใจ ต้องกด "แก้ไขใบนี้" ก่อนถึงพิมพ์ทับได้
+const DO_DOC_FIELDS = ['do-no', 'do-cust', 'do-salesperson', 'do-machine', 'do-date'];
+
+function setDODocEditable(on) {
+  DO_DOC_FIELDS.forEach(id => { document.getElementById(id).readOnly = !on; });
+  document.getElementById('do-header-text').contentEditable = on ? 'true' : 'false';
+  const addr = document.getElementById('do-cust-addr');
+  if (addr) addr.contentEditable = on ? 'true' : 'false';
+  // ช่องราคา/จำนวนเงินก็ล็อกด้วย เดิมพิมพ์ได้ทั้งที่ไม่มีปุ่มบันทึก พิมพ์ไปก็หาย
+  document.querySelectorAll('#printArea .do-num').forEach(el => { el.readOnly = !on; });
+  document.getElementById('do-edit-btn').style.display = on ? 'none' : 'inline-flex';
+  document.getElementById('do-update-btn').style.display = on ? 'inline-flex' : 'none';
+  document.getElementById('do-modal-hint').textContent = on
+    ? 'แก้ได้ทุกช่องบนใบ แล้วกด "บันทึกการแก้ไข"'
+    : 'กด "แก้ไขใบนี้" เพื่อพิมพ์ทับข้อมูลบนใบ';
+}
+
 function reopenDOForPrint(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
+  currentViewDOId = id;
   closeModal('do-view-modal'); doModalMode = 'view';
   document.getElementById('do-modal-badge').style.display = 'inline';
   document.getElementById('do-save-btn').style.display = 'none';
   document.getElementById('do-header-text').innerText = d.headerText || '';
-  document.getElementById('do-header-text').contentEditable = 'false';
-  ['do-no','do-cust','do-salesperson','do-machine','do-date'].forEach(id => { document.getElementById(id).readOnly = true; });
   document.getElementById('do-no').value = d.doNo;
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
   document.getElementById('do-date').value = fmtDODate(doDateOf(d));
-  const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = d.customerAddress || ''; addr.contentEditable = 'false'; }
+  const addr = document.getElementById('do-cust-addr'); if (addr) addr.textContent = d.customerAddress || '';
 
   const grp = {};
   (d.items||[]).forEach(i => {
@@ -616,7 +636,65 @@ function reopenDOForPrint(id) {
   });
   document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   recalcDOTotals();
+  setDODocEditable(false);
   document.getElementById('do-modal').classList.add('open');
+}
+
+// บันทึกสิ่งที่พิมพ์ทับบนหน้ากระดาษกลับเข้าฐานข้อมูล (หัวใบ + ราคาแต่ละรายการ)
+async function saveDODocEdits() {
+  if (!currentViewDOId) return;
+  const d = doHistory.find(x => x.id === currentViewDOId);
+  if (!d) return toast('ไม่พบใบนี้ในประวัติ', 'error');
+  const doNo = document.getElementById('do-no').value.trim();
+  const cust = document.getElementById('do-cust').value.trim();
+  if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
+  if (!cust) return toast('กรุณาระบุชื่อลูกค้า', 'error');
+
+  const headerPayload = {
+    do_no: doNo,
+    do_date: parseDODate(document.getElementById('do-date').value),
+    customer_name: cust,
+    customer_address: document.getElementById('do-cust-addr')?.innerText.trim() || '',
+    salesperson: document.getElementById('do-salesperson').value.trim(),
+    machine: document.getElementById('do-machine').value.trim(),
+    header_text: document.getElementById('do-header-text').innerText,
+  };
+
+  const btn = document.getElementById('do-update-btn');
+  btn.disabled = true;
+  try {
+    const { data: hData, error: hErr } = await supaClient.from('do_headers')
+      .update(headerPayload).eq('id', currentViewDOId).select('id');
+    if (hErr) {
+      if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
+      throw hErr;
+    }
+    if (!hData || !hData.length) throw new Error('ไม่มีสิทธิ์แก้ไขหัวใบ DO (ยังไม่ได้ตั้ง update policy ให้ do_headers)');
+
+    // ราคาต่อหน่วย/จำนวนเงิน — เก็บเป็นยอดของทั้งกลุ่มสินค้า เหมือนตอนสร้างใบ
+    for (const tr of document.querySelectorAll('#do-items tr[data-name]')) {
+      const name = tr.dataset.name;
+      const num = sel => { const el = tr.querySelector(`input[data-role="${sel}"]`);
+        const v = el && el.value !== '' ? parseFloat(String(el.value).replace(/,/g, '')) : null;
+        return isFinite(v) ? v : null; };
+      const unit_price = num('price'), amount = num('amount');
+      const { error } = await supaClient.from('do_items')
+        .update({ unit_price, amount }).eq('do_header_id', currentViewDOId).eq('item_name', name).select('id');
+      if (error) throw error;
+      (d.items || []).forEach(i => { if (i.name === name) { i.unitPrice = unit_price; i.amount = amount; } });
+    }
+
+    d.doNo = doNo; d.date = headerPayload.do_date; d.customer = cust;
+    d.customerAddress = headerPayload.customer_address;
+    d.salesperson = headerPayload.salesperson; d.machine = headerPayload.machine;
+    d.headerText = headerPayload.header_text;
+
+    setDODocEditable(false);
+    renderDOHistory();
+    toast('บันทึกการแก้ไขใบ DO สำเร็จ', 'success');
+  } catch (err) {
+    toast('บันทึกล้มเหลว: ' + err.message, 'error');
+  } finally { btn.disabled = false; }
 }
 
 async function deleteDO(id) {

@@ -690,6 +690,8 @@
       <div style="display:flex;gap:8px">
         <button onclick="closeDOModal()" style="background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)">ปิด</button>
         <button id="do-save-btn" onclick="saveDO()" style="background:#22d3ee;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">💾 บันทึก DO</button>
+        <button id="do-edit-btn" onclick="setDODocEditable(true)" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">✏️ แก้ไขใบนี้</button>
+        <button id="do-update-btn" onclick="saveDODocEdits()" style="display:none;background:#16a34a;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">💾 บันทึกการแก้ไข</button>
         <button onclick="printDO()" style="background:#4f8ef7;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">🖨️ พิมพ์</button>
       </div>
     </div>
