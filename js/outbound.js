@@ -171,6 +171,39 @@ async function recordDispatchTo(ids, custName) {
   }
 }
 
+// ── รวมหลายชุดการจ่ายให้ออกเป็นใบ DO ใบเดียว (ติ๊กเลือกเอง ไม่รวมให้อัตโนมัติ) ──
+function toggleBatchSelect(key, el) {
+  if (el.checked) selectedBatchKeys.add(key); else selectedBatchKeys.delete(key);
+  updateBatchMergeBtn();
+}
+
+function updateBatchMergeBtn() {
+  const btn = document.getElementById('o-merge-btn'); if (!btn) return;
+  const picked = outboundBatches.filter(b => selectedBatchKeys.has(b.key));
+  const pcs = picked.reduce((s, b) => s + b.items.length, 0);
+  btn.style.display = picked.length ? 'inline-flex' : 'none';
+  btn.textContent = `📄 สร้าง DO จาก ${picked.length} ชุดที่เลือก (${pcs} ชิ้น)`;
+}
+
+function openDOFromSelectedBatches() {
+  const picked = outboundBatches.filter(b => selectedBatchKeys.has(b.key));
+  if (!picked.length) return toast('ยังไม่ได้ติ๊กเลือกชุด', 'error');
+
+  // ชุดของลูกค้าคนละเจ้ารวมกันได้ แต่ต้องรู้ตัวก่อน เพราะใบ DO ใบเดียวมีลูกค้าได้คนเดียว
+  const custs = [...new Set(picked.map(b => normCustName(b.cust)).filter(Boolean))];
+  if (custs.length > 1) {
+    const names = [...new Set(picked.map(b => b.cust).filter(Boolean))].join('\n• ');
+    if (!confirm(`ชุดที่เลือกเป็นของลูกค้าคนละเจ้า:\n• ${names}\n\nใบ DO ใบเดียวระบุลูกค้าได้คนเดียว จะรวมต่อไหม?`)) return;
+  }
+
+  doFromLiveSession = false;
+  doItems = picked.flatMap(b => b.items).map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  const custName = picked[0].cust;
+  prepDOModal(custName ? customers.find(c => normCustName(c.name) === normCustName(custName)) : null);
+  if (custName) document.getElementById('do-cust').value = custName;
+  toast(`รวม ${picked.length} ชุด (${doItems.length} ชิ้น) เป็นใบเดียว`, 'info');
+}
+
 function renderOutboundHistory() {
   const soldItems = getFilteredSoldItems();
   document.getElementById('o-hist-total').textContent = soldItems.length;
@@ -181,11 +214,15 @@ function renderOutboundHistory() {
   soldItems.forEach(item => {
     const no  = item.dispatched_at ? genBatchNo(item.dispatched_at) : '';
     const key = no ? no + '|' + (item.dispatched_to || '') : 'no-batch';
-    if (!batches[key]) batches[key] = { no, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
+    if (!batches[key]) batches[key] = { key, no, at: item.dispatched_at || '', cust: item.dispatched_to || '', items: [] };
     batches[key].items.push(item);
   });
   outboundBatches = Object.values(batches).sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const batchList = outboundBatches;
+  // ชุดที่ติ๊กไว้แล้วหายไปจากตัวกรอง ให้ถือว่าไม่ได้เลือกแล้ว ไม่งั้นจะรวมของที่มองไม่เห็นติดไปด้วย
+  const alive = new Set(batchList.map(b => b.key));
+  [...selectedBatchKeys].forEach(k => { if (!alive.has(k)) selectedBatchKeys.delete(k); });
+  updateBatchMergeBtn();
 
   const tbody = document.getElementById('o-hist-tbody');
   if (!tbody) return;
@@ -199,7 +236,10 @@ function renderOutboundHistory() {
       : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <span style="font-size:12px;font-weight:700;color:var(--t1)">${head}</span>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--t1)">
+          <input type="checkbox" onchange="toggleBatchSelect('${b.key}',this)" ${selectedBatchKeys.has(b.key) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับชุดอื่น">
+          ${head}
+        </label>
         <button onclick="openDOFromBatch(${bi})" class="btn btn-primary btn-sm">📄 สร้าง DO ชุดนี้</button>
       </div></td></tr>`;
 

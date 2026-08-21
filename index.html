@@ -381,6 +381,7 @@
           <button onclick="document.getElementById('o-hist-date').value='';document.getElementById('o-hist-cust').value='';renderOutboundHistory()" class="btn btn-ghost btn-sm" title="ล้างตัวกรอง">ล้างตัวกรอง</button>
           <input type="text" id="o-hist-q" oninput="renderOutboundHistory()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส / หมวดหมู่ / ล็อต..." style="width:230px">
           <button onclick="openDOFromHistory()" class="btn btn-primary btn-sm" title="สร้างใบ DO เฉพาะรายการที่กรองอยู่ (วันที่/ค้นหา)">📄 สร้าง DO จากรายการนี้</button>
+          <button id="o-merge-btn" onclick="openDOFromSelectedBatches()" class="btn btn-success btn-sm" style="display:none" title="รวมชุดที่ติ๊กเลือกไว้เป็นใบ DO ใบเดียว">📄 สร้าง DO จากชุดที่เลือก</button>
         </div>
       </div>
       <div style="font-size:11px;color:var(--t3);margin:-8px 0 12px">💡 เลือก "วันที่จ่ายออก" + "ลูกค้า" เพื่อแยกใบ DO ให้ตรง — วันเดียวมีหลายใบ (หลายลูกค้า) ก็แยกได้</div>
@@ -486,6 +487,7 @@
         <div class="page-title">📄 ประวัติใบ DO</div>
         <div class="flex gap-2 flex-wrap items-center">
           <input type="text" id="doh-q" oninput="renderDOHistory()" placeholder="🔍 ค้นหา เลขที่ / ลูกค้า / สินค้า..." style="width:240px">
+          <button id="doh-merge-btn" onclick="mergeSelectedDOs()" class="btn btn-success btn-sm" style="display:none" title="รวมใบที่ติ๊กเลือกไว้เป็นใบเดียว">🔗 รวมใบที่เลือก</button>
           <select id="doh-type" onchange="renderDOHistory()" style="width:160px">
             <option value="">— ทุกประเภท —</option>
             <option value="โอนสินค้า">📤 โอนสินค้า</option>
@@ -503,7 +505,7 @@
       </div>
       <div class="tbl-wrap" style="max-height:calc(100vh - 300px);overflow-y:auto">
         <table>
-          <thead><tr><th>เลขที่ DO</th><th>วันที่ออก</th><th>ประเภท</th><th>ลูกค้า / สาขา</th><th style="text-align:center">รายการ</th><th>ผู้สร้าง</th><th style="text-align:center">จัดการ</th></tr></thead>
+          <thead><tr><th style="width:34px"></th><th>เลขที่ DO</th><th>วันที่ออก</th><th>ประเภท</th><th>ลูกค้า / สาขา</th><th style="text-align:center">รายการ</th><th>ผู้สร้าง</th><th style="text-align:center">จัดการ</th></tr></thead>
           <tbody id="do-history-tbody"></tbody>
         </table>
       </div>

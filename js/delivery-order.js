@@ -318,10 +318,16 @@ function renderDOHistory() {
   document.getElementById('doh-custs').textContent = uniqueCusts;
   document.getElementById('doh-count').textContent = data.length;
 
+  // ใบที่ติ๊กไว้แล้วหายไปจากตัวกรอง ให้ถือว่าไม่ได้เลือก จะได้ไม่รวมใบที่มองไม่เห็นติดไปด้วย
+  const shown = new Set(data.map(d => d.id));
+  [...selectedDOIds].forEach(id => { if (!shown.has(id)) selectedDOIds.delete(id); });
+  updateDOMergeBtn();
+
   const tbody = document.getElementById('do-history-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>'; return; }
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="reopenDOForPrint('${d.id}')">
+      <td style="text-align:center">${currentRole === 'admin' ? `<input type="checkbox" onclick="event.stopPropagation()" onchange="toggleDOSelect('${d.id}',this)" ${selectedDOIds.has(d.id) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับใบอื่น">` : ''}</td>
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
@@ -336,6 +342,79 @@ function renderDOHistory() {
         </div>
       </td>
     </tr>`).join('');
+}
+
+// ── รวมใบ DO หลายใบเข้าเป็นใบเดียว (ติ๊กเลือกเอง) ──
+function toggleDOSelect(id, el) {
+  if (el.checked) selectedDOIds.add(id); else selectedDOIds.delete(id);
+  updateDOMergeBtn();
+}
+
+function updateDOMergeBtn() {
+  const btn = document.getElementById('doh-merge-btn'); if (!btn) return;
+  const n = selectedDOIds.size;
+  btn.style.display = n >= 2 ? 'inline-flex' : 'none';
+  btn.textContent = `🔗 รวม ${n} ใบเป็นใบเดียว`;
+}
+
+async function mergeSelectedDOs() {
+  if (currentRole !== 'admin') return toast('เฉพาะแอดมินเท่านั้นที่รวมใบ DO ได้', 'error');
+  const picked = doHistory.filter(d => selectedDOIds.has(d.id));
+  if (picked.length < 2) return toast('ติ๊กเลือกอย่างน้อย 2 ใบ', 'error');
+
+  // ใบที่ออกก่อนสุดคือใบที่เก็บไว้ — เลือกแบบนี้เพื่อให้ผลลัพธ์เดาได้ ไม่ขึ้นกับลำดับที่ติ๊ก
+  picked.sort((a, b) => (doDateOf(a) + a.doNo).localeCompare(doDateOf(b) + b.doNo));
+  const keep = picked[0], drop = picked.slice(1);
+  const custs = [...new Set(picked.map(d => normCustName(d.customer)))];
+
+  let msg = `รวม ${picked.length} ใบเข้าเป็นใบ ${keep.doNo}\n\n`
+          + picked.map(d => `${d.id === keep.id ? '📌 เก็บไว้' : '🗑 ลบ'}  ${d.doNo} (${(d.items || []).length} ชิ้น)`).join('\n')
+          + `\n\nรายการสินค้าทั้งหมดจะย้ายมาอยู่ในใบ ${keep.doNo}`;
+  if (custs.length > 1) msg += `\n\n⚠️ ใบที่เลือกเป็นของลูกค้าคนละเจ้า — ใบที่รวมแล้วจะใช้ชื่อ "${keep.customer}"`;
+  if (!confirm(msg + '\n\nยืนยัน? (กู้คืนไม่ได้)')) return;
+
+  const btn = document.getElementById('doh-merge-btn');
+  btn.disabled = true;
+  try {
+    for (const d of drop) {
+      const had = (d.items || []).length;
+      const { data, error } = await supaClient.from('do_items')
+        .update({ do_header_id: keep.id }).eq('do_header_id', d.id).select('id');
+      if (error) throw error;
+      if (had && (!data || !data.length)) throw new Error('ไม่มีสิทธิ์ย้ายรายการสินค้า (ยังไม่ได้ตั้ง update policy ให้ do_items)');
+
+      const { error: dErr } = await supaClient.from('do_headers').delete().eq('id', d.id);
+      if (dErr) throw dErr;
+
+      if (!keep.items) keep.items = [];
+      keep.items.push(...(d.items || []));
+      doHistory = doHistory.filter(x => x.id !== d.id);
+    }
+
+    // จำนวนเงินเก็บเป็นยอดรวมของทั้งกลุ่มสินค้า — กลุ่มมีของมากขึ้นต้องคิดใหม่
+    for (const name of [...new Set(keep.items.map(i => i.name))]) {
+      const rows = keep.items.filter(i => i.name === name);
+      const price = rows.find(i => i.unitPrice != null)?.unitPrice;
+      if (price == null) continue;
+      const amount = Math.round(Number(price) * rows.length * 100) / 100;
+      const { error } = await supaClient.from('do_items')
+        .update({ unit_price: price, amount }).eq('do_header_id', keep.id).eq('item_name', name).select('id');
+      if (error) throw error;
+      rows.forEach(i => { i.unitPrice = price; i.amount = amount; });
+    }
+
+    // จดไว้บนใบว่ารวมมาจากใบไหนบ้าง กันงงตอนย้อนดูทีหลัง
+    const note = `(รวมจากใบ ${drop.map(d => d.doNo).join(', ')})`;
+    keep.headerText = keep.headerText ? `${keep.headerText} ${note}` : note;
+    await supaClient.from('do_headers').update({ header_text: keep.headerText }).eq('id', keep.id).select('id');
+
+    selectedDOIds.clear();
+    renderDOHistory(); updateDOBadge();
+    toast(`รวม ${picked.length} ใบเข้าเป็นใบ ${keep.doNo} แล้ว (${keep.items.length} ชิ้น)`, 'success');
+  } catch (err) {
+    toast('รวมใบล้มเหลว: ' + err.message, 'error');
+    renderDOHistory();
+  } finally { btn.disabled = false; }
 }
 
 // หน้าสรุป — เหลือไว้สำหรับ 2 อย่างที่ไม่ได้พิมพ์บนใบ: ประเภทใบ และ เพิ่ม/ถอดรายการสินค้า
