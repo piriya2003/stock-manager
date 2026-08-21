@@ -45,8 +45,9 @@ function prepDOModal(custOverride) {
   document.getElementById('do-cust').readOnly = false;
   document.getElementById('do-salesperson').readOnly = false;
   document.getElementById('do-machine').readOnly = false;
+  document.getElementById('do-date').readOnly = false;
   document.getElementById('do-no').value = genDONo();
-  document.getElementById('do-date').textContent = fmtDODate(nowISO());
+  document.getElementById('do-date').value = fmtDODate(nowISO());
   const custSel = document.getElementById('o-cust');
   const custObj = custOverride || customers.find(c => c.id === custSel.value);
   doCustId = custObj ? custObj.id : null;   // ใช้ตอนบันทึก แทนการอ่านค่าจาก dropdown หน้าสแกนซ้ำ
@@ -76,6 +77,19 @@ function prepDOModal(custOverride) {
 function doDateOf(d) {
   if (d.date) return String(d.date).slice(0, 10);
   return d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-CA') : today();
+}
+
+// อ่านวันที่ที่พิมพ์บนหัวใบ (รูปแบบ 21-Aug-2026) กลับเป็น YYYY-MM-DD สำหรับเก็บลงฐานข้อมูล
+// พิมพ์มั่วหรือเว้นว่าง → ใช้วันนี้แทน ดีกว่าบันทึกค่าที่อ่านไม่ออกลงไป
+function parseDODate(text) {
+  const s = String(text || '').trim();
+  const m = s.match(/^(\d{1,2})[-/\s]([A-Za-z]{3,})[-/\s](\d{4})$/);
+  if (m) {
+    const i = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0, 3).toLowerCase());
+    if (i >= 0) return `${m[3]}-${String(i + 1).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? today() : d.toLocaleDateString('en-CA');
 }
 
 function fmtDODate(iso) {
@@ -158,7 +172,7 @@ async function saveDO() {
 
   try {
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
-      do_no: doNo, do_date: today(), type: typ, customer_id: custId, customer_name: custVal,
+      do_no: doNo, do_date: parseDODate(document.getElementById('do-date').value), type: typ, customer_id: custId, customer_name: custVal,
       customer_address: custAddr, salesperson: salesVal, machine: machineVal,
       header_text: headerText, created_by: currentUserId,
     }).select().single();
@@ -175,7 +189,7 @@ async function saveDO() {
     if (iErr) throw iErr;
 
     doHistory.unshift({
-      id: header.id, doNo, date: today(), type: typ, customer: custVal, customerAddress: custAddr,
+      id: header.id, doNo, date: header.do_date, type: typ, customer: custVal, customerAddress: custAddr,
       salesperson: salesVal, machine: machineVal, headerText,
       items: (insertedItems || doItems).map(i => ({
         id: i.id, name: i.item_name ?? i.name, code: i.item_code ?? i.code, category: i.item_category ?? i.category,
@@ -204,7 +218,7 @@ function gatherDOData() {
     no:    g('do-no').value || '',
     staff: g('do-salesperson').value || '',
     po:    g('do-machine').value || '',
-    date:  g('do-date').textContent || '',
+    date:  g('do-date').value || '',
     note:  g('do-header-text').innerHTML || '',
     items: g('do-items').innerHTML || '',
     total: g('do-total') ? g('do-total').textContent : fmtMoney(0),
@@ -587,12 +601,12 @@ function reopenDOForPrint(id) {
   document.getElementById('do-save-btn').style.display = 'none';
   document.getElementById('do-header-text').innerText = d.headerText || '';
   document.getElementById('do-header-text').contentEditable = 'false';
-  ['do-no','do-cust','do-salesperson','do-machine'].forEach(id => { document.getElementById(id).readOnly = true; });
+  ['do-no','do-cust','do-salesperson','do-machine','do-date'].forEach(id => { document.getElementById(id).readOnly = true; });
   document.getElementById('do-no').value = d.doNo;
   document.getElementById('do-cust').value = d.customer;
   document.getElementById('do-salesperson').value = d.salesperson || '';
   document.getElementById('do-machine').value = d.machine || '';
-  document.getElementById('do-date').textContent = fmtDODate(doDateOf(d));
+  document.getElementById('do-date').value = fmtDODate(doDateOf(d));
   const addr = document.getElementById('do-cust-addr'); if (addr) { addr.textContent = d.customerAddress || ''; addr.contentEditable = 'false'; }
 
   const grp = {};
