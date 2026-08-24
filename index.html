@@ -768,12 +768,20 @@
       <div class="form-row"><label class="field-label">Serial Number</label><input type="text" id="edit-sn" class="mono"></div>
       <div class="form-row"><label class="field-label">เลขล็อต (Lot No.)</label><input type="text" id="edit-lot" class="mono"></div>
       <div class="form-row"><label class="field-label">สถานะ</label>
-        <select id="edit-status">
+        <select id="edit-status" onchange="onEditStatusChange()">
           <option value="Available">✅ พร้อมใช้งาน</option>
           <option value="Sold">📤 โอน/ขายออกแล้ว</option>
           <option value="Repair">🔧 รับซ่อม</option>
           <option value="Claimed">🔴 เคลม/ชำรุด</option>
         </select>
+      </div>
+      <div class="form-row" id="edit-cust-row">
+        <label class="field-label">ลูกค้า / สาขาปลายทาง</label>
+        <input type="text" id="edit-cust" list="customer-dl" placeholder="เว้นว่างไว้ = ไม่ระบุ">
+        <datalist id="customer-dl"></datalist>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.6">
+          💡 ใช้แก้ตอนตัดสต็อกเลือกลูกค้าผิด หรือของเก่าที่ไม่รู้ว่าจ่ายให้ใคร — พิมพ์เองได้ ไม่ต้องมีในทะเบียน
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">

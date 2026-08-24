@@ -178,7 +178,19 @@ function openEdit(id) {
   document.getElementById('edit-sn').value = i.sn;
   document.getElementById('edit-lot').value = i.lot_no || '';
   document.getElementById('edit-status').value = i.status;
+  document.getElementById('edit-cust').value = i.dispatched_to || '';
+  // ตัวเลือกลูกค้าสร้างด้วย DOM ไม่ใช่ innerHTML — ชื่อลูกค้ามี & " ' ปนได้
+  const dl = document.getElementById('customer-dl');
+  dl.innerHTML = '';
+  customers.forEach(c => { const o = document.createElement('option'); o.value = c.name; dl.appendChild(o); });
+  onEditStatusChange();
   document.getElementById('edit-modal').classList.add('open');
+}
+
+// ช่องลูกค้าปลายทางมีความหมายเฉพาะของที่จ่ายออกไปแล้ว — สถานะอื่นซ่อนไว้ไม่ให้กรอกมั่ว
+function onEditStatusChange() {
+  const isSold = document.getElementById('edit-status').value === 'Sold';
+  document.getElementById('edit-cust-row').style.display = isSold ? 'block' : 'none';
 }
 
 async function saveEdit() {
@@ -186,24 +198,44 @@ async function saveEdit() {
   const item = stock.find(x => x.id === id); if (!item) return;
   const oldSN = item.sn;
   const newSN = document.getElementById('edit-sn').value.trim();
+  const newStatus = document.getElementById('edit-status').value;
+  const oldCust = item.dispatched_to || '';
   const payload = {
     category: document.getElementById('edit-cat').value,
     name: document.getElementById('edit-name').value,
     code: document.getElementById('edit-code').value,
     sn: newSN,
     lot_no: document.getElementById('edit-lot').value.trim() || null,
-    status: document.getElementById('edit-status').value,
+    status: newStatus,
   };
   if (newSN !== oldSN) payload.prev_sn = oldSN;
 
+  if (newStatus === 'Sold') {
+    payload.dispatched_to = document.getElementById('edit-cust').value.trim() || null;
+    // ของที่เพิ่งถูกตั้งเป็นจ่ายออกจากหน้านี้ยังไม่มีเวลาจ่าย ถ้าไม่ใส่จะไม่โผล่ในตัวกรองวันไหนเลย
+    if (!item.dispatched_at) payload.dispatched_at = nowISO();
+  } else {
+    // เลิกเป็นของที่จ่ายออกแล้ว ต้องล้างปลายทางทิ้งเหมือนตอนกดคืนสต็อก ไม่งั้นตารางยังขึ้นชื่อลูกค้าค้าง
+    payload.dispatched_to = null;
+    payload.dispatched_at = null;
+  }
+  const newCust = payload.dispatched_to || '';
+
   try {
-    const { error } = await supaClient.from('inventory').update(payload).eq('id', id);
+    // เช็คว่าแก้โดนจริง — RLS ที่ไม่มี update policy จะคืน 200 พร้อม 0 แถว ไม่ใช่ error
+    const { data, error } = await supaClient.from('inventory').update(payload).eq('id', id).select('id');
     if (error) throw error;
+    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขรายการนี้');
     Object.assign(item, payload);
     if (newSN !== oldSN) {
       await logTransaction(today(), '✏️ เปลี่ยน SN', item.name, item.code, newSN, getBalance(item.code), `เปลี่ยน SN: ${oldSN} → ${newSN}`);
     }
-    closeModal('edit-modal'); filterStock(); checkAlerts();
+    if (newCust !== oldCust) {
+      await logTransaction(today(), '✏️ แก้ลูกค้าปลายทาง', item.name, item.code, item.sn, getBalance(item.code),
+                           `${oldCust || '(ไม่ระบุ)'} → ${newCust || '(ไม่ระบุ)'}`);
+    }
+    closeModal('edit-modal');
+    filterStock(); refreshCustomerSelects(); renderOutboundHistory(); checkAlerts();
     toast('แก้ไขสำเร็จ', 'success');
   } catch (err) {
     if (err.code === '23505') toast('SN นี้มีอยู่ในระบบแล้ว (ซ้ำ)', 'error');
