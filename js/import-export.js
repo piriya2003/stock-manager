@@ -64,10 +64,10 @@ function renderReport() {
     + (txnsAllLoaded ? ' (ครบทั้งหมดแล้ว)' : ' — ยังมีของเก่ากว่านี้ กด "โหลดประวัติเก่าเพิ่ม"');
   document.getElementById('report-tbody').innerHTML = data.map(t => `
     <tr>
-      <td class="mono">${t.date}${t.createdAt ? `<div style="font-size:10px;color:var(--t3)">${new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}</td><td>${typeBadge(t.type)}</td>
-      <td>${t.name}</td><td class="code-cell">${t.code}</td>
-      <td class="sn-cell">${t.sn}</td><td style="text-align:center">${t.balance}</td>
-      <td>${t.note||''}</td><td style="font-size:11px;color:var(--t3)">${userName(t.user)}</td>
+      <td class="mono">${escapeHtml(t.date)}${t.createdAt ? `<div style="font-size:10px;color:var(--t3)">${new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}</td><td>${typeBadge(t.type)}</td>
+      <td>${escapeHtml(t.name)}</td><td class="code-cell">${escapeHtml(t.code)}</td>
+      <td class="sn-cell">${escapeHtml(t.sn)}</td><td style="text-align:center">${escapeHtml(t.balance)}</td>
+      <td>${escapeHtml(t.note)||''}</td><td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(t.user))}</td>
     </tr>`).join('');
 }
 
@@ -88,9 +88,10 @@ function processFile(f) {
     document.getElementById('import-summary').textContent = `ไฟล์: ${f.name} (${impRows.length} แถว)`;
     const thead = document.getElementById('preview-thead');
     const tbody = document.getElementById('preview-tbody');
-    if (j[0]) thead.innerHTML = j[0].map(h => `<th style="padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase">${h}</th>`).join('');
+    // เนื้อไฟล์ที่อัปโหลดมาก็ถือเป็นข้อความจากภายนอก — ไฟล์ Excel ที่แอบใส่แท็กมาต้องไม่รันตอนพรีวิว
+    if (j[0]) thead.innerHTML = j[0].map(h => `<th style="padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase">${escapeHtml(h)}</th>`).join('');
     tbody.innerHTML = impRows.slice(0, 5).map(row =>
-      `<tr>${row.map(c => `<td style="padding:7px 12px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)">${c}</td>`).join('')}</tr>`
+      `<tr>${row.map(c => `<td style="padding:7px 12px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)">${escapeHtml(c)}</td>`).join('')}</tr>`
     ).join('');
   };
   r.readAsArrayBuffer(f);

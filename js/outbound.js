@@ -82,7 +82,7 @@ async function doOutboundBulk() {
 function renderOutSession() {
   document.getElementById('o-session-count').textContent = outSession.length;
   document.getElementById('o-session').innerHTML = outSession.slice().reverse().map(i =>
-    `<div class="scan-result"><span class="sn">${i.sn}</span><span style="color:var(--t2);font-size:11px">${i.name}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`
+    `<div class="scan-result"><span class="sn">${escapeHtml(i.sn)}</span><span style="color:var(--t2);font-size:11px">${escapeHtml(i.name)}</span><span class="badge b-orange" style="font-size:9px">📤 OUT</span></div>`
   ).join('');
 }
 
@@ -243,7 +243,7 @@ function renderOutboundHistory() {
   batchList.forEach((b, bi) => {
     const time = b.at ? (fmtDate(b.at) + ' ' + new Date(b.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) : '';
     const head = b.at
-      ? `🧾 ชุด #${b.no} · ${time} · 👤 ${b.cust || '—'} · ${b.items.length} ชิ้น`
+      ? `🧾 ชุด #${b.no} · ${time} · 👤 ${escapeHtml(b.cust) || '—'} · ${b.items.length} ชิ้น`
       : `🧾 ของเก่า (ไม่มีเลขชุด) · ${b.items.length} ชิ้น`;
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
@@ -263,12 +263,12 @@ function renderOutboundHistory() {
     });
     Object.values(prod).forEach(g => {
       html += `<tr>
-        <td style="color:var(--t1);font-weight:500">${g.name}</td>
-        <td><div class="code-cell">${g.code}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${g.category}${g.lots.size ? ' · ล็อต: ' + [...g.lots].join(', ') : ''}</div></td>
+        <td style="color:var(--t1);font-weight:500">${escapeHtml(g.name)}</td>
+        <td><div class="code-cell">${escapeHtml(g.code)}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${escapeHtml(g.category)}${g.lots.size ? ' · ล็อต: ' + [...g.lots].map(escapeHtml).join(', ') : ''}</div></td>
         <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700;font-size:14px">${g.sns.length}</td>
         <td style="font-size:11px;color:var(--t2);font-family:var(--mono);max-width:300px;line-height:1.6;white-space:normal">
-          <button onclick="copySNList(this,'${g.sns.join('|')}')" class="btn btn-ghost btn-sm" style="float:right;margin-left:6px;font-size:10px" title="คัดลอก SN ทั้งหมด บรรทัดละตัว">📋 คัดลอก</button>
-          ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${sn}</span>`).join('\n')}
+          <button onclick="copySNList(this,${jsArg(g.sns.join('|'))})" class="btn btn-ghost btn-sm" style="float:right;margin-left:6px;font-size:10px" title="คัดลอก SN ทั้งหมด บรรทัดละตัว">📋 คัดลอก</button>
+          ${g.sns.map(sn => `<span style="display:inline-block;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;margin:2px 2px;border:1px solid var(--b1)">${escapeHtml(sn)}</span>`).join('\n')}
         </td></tr>`;
     });
   });

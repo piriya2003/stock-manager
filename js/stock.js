@@ -34,14 +34,14 @@ function populateCatFilter() {
   });
 
   const row = (val, label, cls = '') =>
-    `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escapeHtml(val)}')">${escapeHtml(label)}</div>`;
+    `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat(${jsArg(val)})">${escapeHtml(label)}</div>`;
 
   let html = row('', '— ทุกหมวดหมู่ —');
   [...tree.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(cat => {
     const subs = [...tree.get(cat)].sort((a, b) => a.localeCompare(b, 'th'));
     if (!subs.length) { html += row(cat, cat); return; }
     // มีหมวดย่อย → กดที่ชื่อ = ทั้งหมวด, ชี้/กดลูกศร = บานเมนูย่อยออกทางขวา
-    html += `<div class="cat-dd-item${cur === cat ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escapeHtml(cat)}')">
+    html += `<div class="cat-dd-item${cur === cat ? ' active' : ''}" onclick="event.stopPropagation();pickCat(${jsArg(cat)})">
         <span>${escapeHtml(cat)}</span>
         <span class="cat-dd-arrow" onclick="event.stopPropagation();this.parentNode.classList.toggle('show-sub')">›</span>
         <div class="cat-dd-sub">
@@ -145,7 +145,7 @@ function filterStock() {
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
           ${item.status === 'Sold' ? `<button onclick="returnToStock('${item.id}')" class="btn btn-ghost btn-icon btn-sm" title="คืนเป็นพร้อมใช้">${icon('undo')}</button>` : ''}
-          ${item.status === 'Repair' ? `<button onclick="openRepairDetailBySN('${item.sn}')" class="btn btn-orange btn-icon btn-sm" title="ดูรายการซ่อม">${icon('wrench')}</button>` : ''}
+          ${item.status === 'Repair' ? `<button onclick="openRepairDetailBySN(${jsArg(item.sn)})" class="btn btn-orange btn-icon btn-sm" title="ดูรายการซ่อม">${icon('wrench')}</button>` : ''}
           <button onclick="openEdit('${item.id}')" class="btn btn-ghost btn-icon btn-sm" title="แก้ไข">${icon('edit')}</button>
           ${currentRole === 'admin' ? `<button onclick="delItem('${item.id}')" class="btn btn-red btn-icon btn-sm" title="ลบ">${icon('trash')}</button>` : ''}
         </div>

@@ -499,7 +499,7 @@ function openDOView(id) {
     const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${escapeHtml(g.code)}</div>` : '';
     return `<tr data-gi="${gi}">
       <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
-      <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO('${escapeHtml(sn)}')" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
+      <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO(${jsArg(sn)})" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
       <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.sns.length}</td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>

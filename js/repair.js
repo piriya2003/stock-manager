@@ -81,9 +81,9 @@ function renderRepairList() {
     const sc = { 'รอซ่อม': 'wait', 'กำลังซ่อม': 'wip', 'ซ่อมเสร็จ': 'done', 'เคลมเครื่อง': 'done' }[job.status] || 'wait';
     return `<div class="repair-card status-${sc}" onclick="openRepairDetail('${job.id}')">
       <div class="repair-info">
-        <div class="repair-sn">${job.sn}</div><div class="repair-name">${job.name}</div>
-        <div class="repair-symptom">🚨 ${job.symptom}</div>
-        <div class="repair-meta">${repairStatusBadge(job.status)}<span style="font-size:10px;color:var(--t3)">👤 ${job.customer}</span></div>
+        <div class="repair-sn">${escapeHtml(job.sn)}</div><div class="repair-name">${escapeHtml(job.name)}</div>
+        <div class="repair-symptom">🚨 ${escapeHtml(job.symptom)}</div>
+        <div class="repair-meta">${repairStatusBadge(job.status)}<span style="font-size:10px;color:var(--t3)">👤 ${escapeHtml(job.customer)}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -111,15 +111,15 @@ function renderClaimList() {
     const sameSN = !j.replacedSN || String(j.replacedSN) === String(j.sn);
     const replaceCell = sameSN
       ? `<span class="badge b-gray">📍 ใช้ SN เดิม</span>`
-      : `<span class="sn-cell" style="color:var(--green);font-weight:600">${j.replacedSN}</span>`;
+      : `<span class="sn-cell" style="color:var(--green);font-weight:600">${escapeHtml(j.replacedSN)}</span>`;
     return `
     <tr class="do-row" onclick="openRepairDetail('${j.id}')">
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${i + 1}</td>
-      <td class="sn-cell" style="color:var(--red);font-weight:600">${j.sn}</td>
+      <td class="sn-cell" style="color:var(--red);font-weight:600">${escapeHtml(j.sn)}</td>
       <td>${replaceCell}</td>
-      <td style="color:var(--t1)">${j.name}<div style="font-size:10px;color:var(--t3)">${j.code || ''}${j.category ? ' / ' + j.category : ''}</div></td>
-      <td style="color:var(--t2)">${j.customer || '—'}</td>
-      <td style="font-size:11px;color:var(--t2);max-width:220px;white-space:normal;line-height:1.5">${j.claimReason || '—'}</td>
+      <td style="color:var(--t1)">${escapeHtml(j.name)}<div style="font-size:10px;color:var(--t3)">${escapeHtml(j.code) || ''}${j.category ? ' / ' + escapeHtml(j.category) : ''}</div></td>
+      <td style="color:var(--t2)">${escapeHtml(j.customer) || '—'}</td>
+      <td style="font-size:11px;color:var(--t2);max-width:220px;white-space:normal;line-height:1.5">${escapeHtml(j.claimReason) || '—'}</td>
       <td class="mono" style="font-size:11px">${fmtISO(j.finishedAt)}</td>
     </tr>`;
   }).join('');
@@ -257,7 +257,7 @@ function openSwapSNModal(jobId) {
   const job = repairJobs.find(j => j.id === jobId); if (!job) return;
   currentSwapJobId = jobId;
   document.getElementById('swap-old-sn-label').textContent = 'SN เดิม: ' + job.sn;
-  document.getElementById('swap-old-info').innerHTML = `<b>${job.sn}</b> (${job.name})`;
+  document.getElementById('swap-old-info').innerHTML = `<b>${escapeHtml(job.sn)}</b> (${escapeHtml(job.name)})`;
   document.getElementById('swap-new-sn').value = '';
   document.getElementById('swap-new-lookup').style.display = 'none';
   document.getElementById('swap-reason').value = '';
@@ -281,7 +281,7 @@ function onSwapNewSNInput() {
   const item = stock.find(i => String(i.sn) === newSN);
   lookup.style.display = 'block';
   if (item && item.status === 'Available') {
-    info.innerHTML = `<span class="text-green">✅ พร้อมสลับ: ${item.name}</span>`;
+    info.innerHTML = `<span class="text-green">✅ พร้อมสลับ: ${escapeHtml(item.name)}</span>`;
   } else {
     info.innerHTML = `<span class="text-red">❌ ไม่พบหรือไม่พร้อมใช้งาน</span>`;
   }
