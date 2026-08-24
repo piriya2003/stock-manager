@@ -39,5 +39,7 @@ let grnModalMode       = 'create';
 let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว
 
 let impRows = [];
+let impHeaders = [];   // หัวคอลัมน์จากไฟล์ที่อัปโหลด
+let impMap = {};       // ฟิลด์ในระบบ → เลขคอลัมน์ในไฟล์ (-1 = ไม่ใช้)
 let stockSortCol = 'sn';
 let stockSortDir = 'desc';
