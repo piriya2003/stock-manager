@@ -117,5 +117,24 @@ function renderInSession() {
       <span class="scan-no">${idx + 1}</span>
       <span class="scan-sn">${i.sn}</span>
       <span class="scan-side">${i.name}${i.lot_no ? `<br>🏷 ${i.lot_no}` : ''}</span>
+      <button onclick="removeInboundItem('${i.id}')" class="btn btn-ghost btn-sm" style="flex-shrink:0;color:var(--red)" title="ลบรายการนี้ (สแกนผิด/ผิดภาษา)">✕</button>
     </div>`).reverse().join('');
+}
+
+// ลบรายการที่สแกนผิดออกจากเซสชั่นรับเข้า — ยังไม่ได้บันทึกใบ GRN จึงลบออกจากคลังได้เลย ไม่ต้องผ่านขั้นคืนสต็อก
+async function removeInboundItem(id) {
+  const item = inSession.find(i => i.id === id);
+  if (!item) return;
+  if (!confirm(`ลบ SN: ${item.sn} ออกจากเซสชั่นนี้ และลบออกจากคลังสินค้า?\n(ยังไม่ได้บันทึกใบ GRN จึงลบทิ้งได้เลย)`)) return;
+
+  try {
+    const { data, error } = await supaClient.from('inventory').delete().eq('id', id).select('id');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ลบ (เฉพาะแอดมิน)');
+
+    inSession = inSession.filter(i => i.id !== id);
+    stock = stock.filter(i => i.id !== id);
+    renderInSession(); updateBalance(); filterStock(); checkAlerts();
+    toast(`ลบ SN: ${item.sn} ออกจากเซสชั่นแล้ว`, 'success');
+  } catch (err) { toast('ลบไม่สำเร็จ: ' + err.message, 'error'); }
 }
