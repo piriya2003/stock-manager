@@ -12,6 +12,7 @@
 | [`check-item-by-sn.sql`](check-item-by-sn.sql) | อยากรู้ว่าสินค้าชิ้นหนึ่งมีข้อมูลอะไรอยู่จริง ๆ |
 | [`fix-dispatched-at.sql`](fix-dispatched-at.sql) | ของโผล่ผิดวันในหน้า "รายการที่โอน/ขายออก" |
 | [`audit-dispatch-dates.sql`](audit-dispatch-dates.sql) | หาว่ามีของกี่ชิ้นที่วันที่จ่ายออกเพี้ยน |
+| [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |
 
 ## วิธีใช้
 
