@@ -56,7 +56,8 @@ function tab(name) {
   if (name === 'grn-history') renderGRNHistory();
   if (name === 'backup') renderBackupStats();
   if (name === 'inbound') { renderInSession(); setTimeout(() => document.getElementById('i-sn').focus(), 80); }
-  if (name === 'outbound') { setTimeout(() => document.getElementById('o-sn').focus(), 80); renderOutboundHistory(); }
+  if (name === 'outbound') setTimeout(() => document.getElementById('o-sn').focus(), 80);
+  if (name === 'do-create') renderOutboundHistory();
 }
 
 function repairSubTab(name) {
