@@ -98,7 +98,10 @@ begin
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    coalesce((new.raw_user_meta_data->>'role')::public.user_role, 'staff'::public.user_role)
+    -- 🔒 ห้ามอ่าน role จาก raw_user_meta_data — นั่นคือค่าที่ฝั่งผู้ใช้ส่งมาเอง
+    -- ของเดิมอ่านค่านั้น ใครก็สมัครพร้อมแนบ role: 'admin' แล้วได้สิทธิ์แอดมินทันที
+    -- (publishable key อยู่ใน js/config.js เปิดดูได้จากหน้าเว็บ) — สมัครใหม่ต้องเป็น staff เสมอ
+    'staff'::public.user_role
   );
   return new;
 end;

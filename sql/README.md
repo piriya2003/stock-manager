@@ -13,6 +13,7 @@
 | [`fix-dispatched-at.sql`](fix-dispatched-at.sql) | ของโผล่ผิดวันในหน้า "รายการที่โอน/ขายออก" |
 | [`audit-dispatch-dates.sql`](audit-dispatch-dates.sql) | หาว่ามีของกี่ชิ้นที่วันที่จ่ายออกเพี้ยน |
 | [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |
+| [`fix-signup-privilege-escalation.sql`](fix-signup-privilege-escalation.sql) | 🔴 **ด่วน** ปิดช่องโหว่คนนอกสมัครเองเป็นแอดมินได้ — ต้องปิดรับสมัครใน Dashboard ด้วย |
 
 ## วิธีใช้
 
