@@ -88,7 +88,7 @@ function closeGRNModal() { document.getElementById('grn-modal').classList.remove
 function printGRN() { window.print(); }
 
 function renderGRNHistory() {
-  const q = (document.getElementById('grnh-q')?.value || '').toLowerCase();
+  const q = (document.getElementById('grnh-q')?.value || '').trim().toLowerCase();
   let data = [...grnHistory];
   if (q) data = data.filter(d =>
     d.grnNo.toLowerCase().includes(q) ||

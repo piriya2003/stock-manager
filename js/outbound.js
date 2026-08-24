@@ -151,7 +151,7 @@ function normCustName(s) {
 
 // ── รายการสินค้าที่ขายออกแล้ว ตามที่ค้นหาอยู่ (ใช้ร่วมกับปุ่มสร้าง DO ย้อนหลัง) ──
 function getFilteredSoldItems() {
-  const q = (document.getElementById('o-hist-q')?.value || '').toLowerCase();
+  const q = (document.getElementById('o-hist-q')?.value || '').trim().toLowerCase();
   const d = document.getElementById('o-hist-date')?.value || '';
   const cust = document.getElementById('o-hist-cust')?.value || '';
   let soldItems = stock.filter(i => i.status === 'Sold');

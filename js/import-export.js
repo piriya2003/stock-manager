@@ -55,7 +55,7 @@ function exportClaimCSV() {
 function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); }
 
 function renderReport() {
-  const q  = document.getElementById('rp-q').value.toLowerCase();
+  const q  = document.getElementById('rp-q').value.trim().toLowerCase();
   const ft = document.getElementById('rp-type').value;
   const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
   updateTxMoreBtn();

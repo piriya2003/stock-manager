@@ -108,7 +108,7 @@ function snCellHTML(item) {
 
 // คืนรายการสินค้าที่ผ่านการกรอง + เรียงลำดับตามที่เลือกบนหน้าจอ (ใช้ร่วมกับ export)
 function getFilteredStock() {
-  const q   = (document.getElementById('s-q').value || '').toLowerCase();
+  const q   = (document.getElementById('s-q').value || '').trim().toLowerCase();
   const st = document.getElementById('s-status').value;
   const catVal = document.getElementById('s-cat').value;
   const [cat, subCat] = catVal.includes(CAT_SEP) ? catVal.split(CAT_SEP) : [catVal, ''];

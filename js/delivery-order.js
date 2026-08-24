@@ -305,7 +305,8 @@ function printDO() {
 }
 
 function renderDOHistory() {
-  const q  = (document.getElementById('doh-q').value || '').toLowerCase();
+  // ตัดช่องว่างหน้า/หลังก่อนค้น — ไม่งั้นแปะเลข SN ที่ติดช่องว่างมาจะหาไม่เจอทั้งที่มีอยู่
+  const q  = (document.getElementById('doh-q').value || '').trim().toLowerCase();
   const ft = document.getElementById('doh-type').value;
   let data = [...doHistory];
   if (ft) data = data.filter(d => d.type === ft);

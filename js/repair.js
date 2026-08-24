@@ -65,7 +65,7 @@ async function doRepair() {
 
 function renderRepairList() {
   updateRepairBadges();
-  const q  = (document.getElementById('rep-q')?.value || '').toLowerCase();
+  const q  = (document.getElementById('rep-q')?.value || '').trim().toLowerCase();
   const sf = document.getElementById('rep-status-filter')?.value || '';
   let data = repairJobs.filter(j => j.status !== 'เคลมเครื่อง'); // รายการเคลมแยกไปอยู่แท็บ "เคลม"
   if (sf) data = data.filter(j => j.status === sf);
@@ -91,7 +91,7 @@ function renderRepairList() {
 
 // ── รายการเคลม (SN เดิม → SN ใหม่) ──
 function renderClaimList() {
-  const q = (document.getElementById('claim-q')?.value || '').toLowerCase();
+  const q = (document.getElementById('claim-q')?.value || '').trim().toLowerCase();
   let data = repairJobs.filter(j => j.status === 'เคลมเครื่อง');
   if (q) data = data.filter(j =>
     String(j.sn).toLowerCase().includes(q) ||
