@@ -21,18 +21,6 @@ function renderBackupStats() {
 // หมายเหตุ: ปุ่ม "ลบข้อมูลทั้งหมด (รีเซ็ตโรงงาน)" ถูกถอดออกแล้ว — ไม่มีใครใช้ แต่กดพลาดทีเดียวข้อมูลหายหมด
 // ถ้าวันหลังจำเป็นต้องล้างข้อมูลจริงๆ ให้ทำผ่าน Supabase SQL Editor ซึ่งมีขั้นตอนกว่าและย้อนดูได้ว่าใครทำ
 
-// หมายเหตุ: importBackup ฝังกลับเฉพาะ inventory/repair/DO (ไม่แท็ะข้อมูล users
-// เพราะผู้ใช้จัดการผ่าน Supabase Auth แยกต่างหาก ไม่สามารถ insert auth.users
-// จาก frontend ด้วย anon key ได้ — เป็นมาตรการความปลอดภัยของ Supabase เอง)
-function importBackup(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = async ev => {
-    try {
-      const d = JSON.parse(ev.target.result);
-      if (!confirm('การ Restore จะแทนที่ข้อมูล Inventory/Repair/DO ทั้งหมด (ไม่รวมผู้ใช้งาน) ยืนยัน?')) return;
-      toast('ฟีเจอร์ Restore เต็มรูปแบบสำหรับ Supabase ต้องทำผ่าน SQL โดยตรง (ป้องกันข้อมูลพังจาก frontend) — กรุณาติดต่อผู้ดูแลระบบเพื่อ Restore', 'warning');
-    } catch (err) { toast('ไฟล์ backup ไม่ถูกต้อง: ' + err.message, 'error'); }
-  };
-  r.readAsText(f);
-}
+// หมายเหตุ: ส่วน Restore ถูกถอดออกแล้ว (24 ส.ค. 2569) — ของเดิมเลือกไฟล์ได้ ถามยืนยันได้
+// แต่ไม่ได้เขียนข้อมูลกลับสักแถว ได้แค่ toast บอกให้ติดต่อแอดมิน ซึ่งหลอกให้เข้าใจว่ากู้คืนได้
+// การกู้คืนจริงต้องทำผ่าน Supabase SQL Editor — หน้านี้เหลือแค่ Export อย่างเดียวให้ตรงกับความจริง
