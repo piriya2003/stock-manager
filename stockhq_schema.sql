@@ -325,6 +325,19 @@ where inv.sn = src.sn
 
 
 -- ════════════════════════════════════════════════════════════════════════
+--  13b. กู้หมวดหมู่ย่อยย้อนหลังให้ของเก่า จากต้นแบบสินค้าที่ชื่อตรงกัน
+--       (เติมเฉพาะชิ้นที่ยังว่าง — รันซ้ำไม่ทับของที่แก้มือไว้)
+--       เดิมอยู่แยกไฟล์ supabase_migration_inventory_subcategory.sql — รวมเข้ามาที่นี่
+-- ════════════════════════════════════════════════════════════════════════
+update public.inventory inv
+set    subcategory = mp.subcategory
+from   public.master_products mp
+where  inv.subcategory is null
+  and  mp.subcategory is not null
+  and  inv.name = mp.name;
+
+
+-- ════════════════════════════════════════════════════════════════════════
 --  14. Row Level Security
 -- ════════════════════════════════════════════════════════════════════════
 alter table public.users           enable row level security;
