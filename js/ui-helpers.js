@@ -21,6 +21,12 @@ function showSync(state, text) {
 function filterBarcode(rawVal, msgElementId) {
   let cleanVal = rawVal.trim().replace(/^\*+|\*+$/g, '');
   if (!cleanVal) return null;
+  // เครื่องสแกนพิมพ์ตามตำแหน่งปุ่มเหมือนคีย์บอร์ด ถ้าเครื่องตั้งภาษาไทยไว้ตอนสแกน
+  // ตัวอักษร/ตัวเลขจะกลายเป็นภาษาไทยแทน (เช่น "คคถาุตก/-ถจฎ") ต้องกันไว้ไม่ให้บันทึก SN ผิดเข้าระบบ
+  if (/[฀-๿]/.test(cleanVal)) {
+    inlineMsg(msgElementId, '⚠️ สแกนได้เป็นภาษาไทย — เปลี่ยนภาษาคีย์บอร์ดเครื่องเป็นอังกฤษ (EN) แล้วสแกนใหม่', false);
+    return null;
+  }
   if (cleanVal.length === 12 && cleanVal.startsWith('567')) {
     inlineMsg(msgElementId, '⚠️ สแกนโดนรหัส SKU กรุณาสแกน Serial No. (บาร์โค้ดด้านล่าง)', false);
     return null;
