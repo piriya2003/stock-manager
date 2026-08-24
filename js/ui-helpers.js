@@ -112,7 +112,9 @@ function nextDocNo(prefix, existingNos) {
   return prefix + String(maxSeq + 1).padStart(4, '0');
 }
 
-function today() { return new Date().toISOString().split('T')[0]; }
+// "วันนี้" ต้องเป็นวันตามเวลาเครื่อง ไม่ใช่ UTC — ไทยเร็วกว่า UTC 7 ชม.
+// เดิมใช้ toISOString() ก่อน 7 โมงเช้าเลยได้วันของเมื่อวาน ประวัติกับตัวกรองวันที่จึงไม่ตรงกัน
+function today() { return new Date().toLocaleDateString('en-CA'); }
 function nowISO() { return new Date().toISOString(); }
 function nowStr() {
   const n = new Date();

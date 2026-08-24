@@ -14,7 +14,8 @@ async function doOutbound() {
   if (!item) { inlineMsg('o-msg', `❌ SN: ${sn} ไม่มีหรือไม่พร้อมใช้งาน`, false); document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus(); return; }
 
   try {
-    if (!outSession.length) sessionDispatchTime = nowISO();  // เริ่มชุดใหม่
+    // เริ่มชุดใหม่เมื่อยังไม่มีของในเซสชั่น หรือเปลี่ยนวันที่กลางคัน — คนละวันต้องคนละชุด
+    if (!outSession.length || dispatchDay(sessionDispatchTime) !== dt) sessionDispatchTime = dispatchISOFor(dt);
     const dispatchedAt = sessionDispatchTime;
     const { error } = await supaClient.from('inventory').update({ status: 'Sold', dispatched_at: dispatchedAt }).eq('id', item.id);
     if (error) throw error;
@@ -51,7 +52,8 @@ async function doOutboundBulk() {
   if (!toSell.length) return inlineMsg('o-bulk-msg', `❌ ไม่มี SN ที่ตัดได้ (ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`, false);
 
   try {
-    if (!outSession.length) sessionDispatchTime = nowISO();  // เริ่มชุดใหม่
+    // เริ่มชุดใหม่เมื่อยังไม่มีของในเซสชั่น หรือเปลี่ยนวันที่กลางคัน — คนละวันต้องคนละชุด
+    if (!outSession.length || dispatchDay(sessionDispatchTime) !== dt) sessionDispatchTime = dispatchISOFor(dt);
     const dispatchedAt = sessionDispatchTime;
     const { error } = await supaClient.from('inventory')
       .update({ status: 'Sold', dispatched_at: dispatchedAt })
@@ -114,6 +116,15 @@ function genBatchNo(iso) {
 // วันที่จ่ายออกแบบ YYYY-MM-DD ตามเวลาเครื่อง — ใช้เป็นตัวจับกลุ่มและตัวกรองวันที่ให้ตรงกัน
 function dispatchDay(iso) {
   return iso ? new Date(iso).toLocaleDateString('en-CA') : '';
+}
+
+// เวลาจ่ายออกที่จะบันทึกลงสินค้า — ยึด "วันที่" ที่เลือกในฟอร์ม แต่ใช้เวลานาฬิกาปัจจุบัน
+// ถ้าย้อนวันที่ ทั้งประวัติการเคลื่อนไหวและตัวกรองวันที่จะได้ตรงกันเสมอ
+function dispatchISOFor(dateStr) {
+  const n = new Date();
+  const [y, m, d] = String(dateStr || '').split('-').map(Number);
+  if (y && m && d) n.setFullYear(y, m - 1, d);
+  return n.toISOString();
 }
 
 // คัดลอกรายการ SN ออกไปวางที่อื่น — บรรทัดละตัวตามด้วยจุลภาค
