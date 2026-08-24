@@ -143,14 +143,14 @@ function fmtDODate(iso) {
 
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
-  const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${v.code}</div>` : (v.category ? `<div class="do-model">${v.category}</div>` : '');
+  const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${escapeHtml(v.code)}</div>` : (v.category ? `<div class="do-model">${escapeHtml(v.category)}</div>` : '');
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียงน้อย→มาก แสดงครบทุกเลข
-  const sns = sorted.map(s => `<div class="sn">Serial NO : ${s}</div>`).join('');
+  const sns = sorted.map(s => `<div class="sn">Serial NO : ${escapeHtml(s)}</div>`).join('');
   const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-  return `<tr data-qty="${v.qty}" data-name="${String(name).replace(/"/g, '&quot;')}">
+  return `<tr data-qty="${v.qty}" data-name="${escapeHtml(name)}">
       <td class="c">${i + 1}</td>
-      <td><b>${name}</b>${modelLine}${sns}</td>
+      <td><b>${escapeHtml(name)}</b>${modelLine}${sns}</td>
       <td class="c">${v.qty}</td>
       <td><input class="do-num" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
       <td><input class="do-num" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
@@ -261,7 +261,9 @@ function gatherDOData() {
     staff: g('do-salesperson').value || '',
     po:    g('do-machine').value || '',
     date:  g('do-date').value || '',
-    note:  g('do-header-text').innerHTML || '',
+    // innerText เหมือนตอนบันทึกจริง (saveDO/saveDODocEdits) — ถ้าใช้ innerHTML ตรงนี้
+    // จะได้ค่าที่เบราว์เซอร์ encode เอนทิตี้ไว้แล้วรอบหนึ่ง พอ escapeHtml() ซ้ำจะกลายเป็น encode ซ้อน 2 ชั้น
+    note:  g('do-header-text').innerText || '',
     items: g('do-items').innerHTML || '',
     total: g('do-total') ? g('do-total').textContent : fmtMoney(0),
     vat:   g('do-vat') ? g('do-vat').textContent : fmtMoney(0),
@@ -289,11 +291,11 @@ function doDocHTML(label, d) {
       <div class="do-info">
         <div class="do-to">
           <div style="font-weight:600">TO :</div>
-          <div class="do-to-body"><div>${d.cust}</div><div class="do-addr">${d.addr}</div></div>
+          <div class="do-to-body"><div>${escapeHtml(d.cust)}</div><div class="do-addr">${escapeHtml(d.addr)}</div></div>
         </div>
         <div class="do-meta">
           <div class="do-meta-k"><div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div></div>
-          <div class="do-meta-v"><div>${d.no}</div><div>${d.staff}</div><div>${d.po}</div><div>${d.date}</div></div>
+          <div class="do-meta-v"><div>${d.no}</div><div>${escapeHtml(d.staff)}</div><div>${escapeHtml(d.po)}</div><div>${d.date}</div></div>
         </div>
       </div>
       </td></tr></thead><tbody><tr><td>
@@ -313,7 +315,7 @@ function doDocHTML(label, d) {
         <tr><td class="k">VAT 7%</td><td class="v">${d.vat}</td></tr>
         <tr><td class="k">Total</td><td class="v">${d.grand}</td></tr>
       </tbody></table>
-      ${d.note && d.note.trim() ? `<div class="do-note">หมายเหตุ: <span>${d.note}</span></div>` : ''}
+      ${d.note && d.note.trim() ? `<div class="do-note">หมายเหตุ: <span>${escapeHtml(d.note)}</span></div>` : ''}
       <div class="do-received">ข้าพเจ้าได้รับสินค้าข้างต้นจำนวนถูกต้องและสภาพเรียบร้อย &nbsp;/ Received the above goods in good order &amp; condition</div>
       <table class="do-sign"><tbody><tr>
         <td><div class="sig-line"></div>ผู้อนุมัติ / Approver<br><span class="d">วันที่</span></td>
@@ -370,9 +372,9 @@ function renderDOHistory() {
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
-      <td style="color:var(--t1);font-weight:500">${d.customer}</td>
+      <td style="color:var(--t1);font-weight:500">${escapeHtml(d.customer)}</td>
       <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
-      <td style="font-size:11px;color:var(--t3)">${userName(d.createdBy)}</td>
+      <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(d.createdBy))}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();reopenDOForPrint('${d.id}')" class="btn btn-ghost btn-icon btn-sm" title="เปิดใบ (แก้ไข/พิมพ์)">${icon('eye')}</button>
@@ -486,7 +488,7 @@ function openDOView(id) {
 
   document.getElementById('dov-summary').innerHTML = dovGroups.map(g => `
     <div style="display:flex;justify-content:space-between;font-size:12px">
-      <span style="color:var(--t2)">${g.name}</span>
+      <span style="color:var(--t2)">${escapeHtml(g.name)}</span>
       <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${g.sns.length} ชิ้น</span>
     </div>`).join('');
 
@@ -494,10 +496,10 @@ function openDOView(id) {
   document.getElementById('dov-items-tbody').innerHTML = dovGroups.map((g, gi) => {
     const priceVal = g.unitPrice != null ? Number(g.unitPrice).toFixed(2) : '';
     const amtVal = g.amount != null ? Number(g.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-    const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${g.code}</div>` : '';
+    const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${escapeHtml(g.code)}</div>` : '';
     return `<tr data-gi="${gi}">
       <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
-      <td style="color:var(--t1)"><b>${g.name}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${sn}${currentRole === 'admin' ? `<button onclick="removeItemFromDO('${sn}')" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
+      <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO('${escapeHtml(sn)}')" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
       <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.sns.length}</td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>

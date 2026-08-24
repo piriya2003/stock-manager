@@ -30,9 +30,9 @@ function openGRNModal() {
   });
   items.innerHTML = Object.entries(grp).map(([name, v], i) => `
     <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${name}<div style="font-size:10px;color:#888;white-space:nowrap">${v.code} / ${v.category}</div></td>
+      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}<div style="font-size:10px;color:#888;white-space:nowrap">${escapeHtml(v.code)} / ${escapeHtml(v.category)}</div></td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.join(', ')}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }
@@ -110,10 +110,10 @@ function renderGRNHistory() {
     <tr class="do-row" onclick="openGRNView('${d.id}')">
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${d.grnNo}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(d.createdAt)}</td>
-      <td style="color:var(--t1);font-weight:500">${d.supplier || '—'}</td>
-      <td class="mono" style="font-size:11px">${d.lotNo || '—'}</td>
+      <td style="color:var(--t1);font-weight:500">${escapeHtml(d.supplier) || '—'}</td>
+      <td class="mono" style="font-size:11px">${escapeHtml(d.lotNo) || '—'}</td>
       <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
-      <td style="font-size:11px;color:var(--t3)">${userName(d.createdBy)}</td>
+      <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(d.createdBy))}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
           <button onclick="event.stopPropagation();openGRNView('${d.id}')" class="btn btn-ghost btn-icon btn-sm">${icon('eye')}</button>
@@ -139,7 +139,7 @@ function openGRNView(id) {
   (d.items||[]).forEach(i => { grp[i.name] = (grp[i.name] || 0) + 1; });
   document.getElementById('grnv-summary').innerHTML = Object.entries(grp).map(([name, qty]) => `
     <div style="display:flex;justify-content:space-between;font-size:12px">
-      <span style="color:var(--t2)">${name}</span>
+      <span style="color:var(--t2)">${escapeHtml(name)}</span>
       <span style="font-family:var(--mono);font-weight:700;color:var(--cyan)">${qty} ชิ้น</span>
     </div>`).join('');
 
@@ -147,10 +147,10 @@ function openGRNView(id) {
   document.getElementById('grnv-items-tbody').innerHTML = (d.items||[]).map((item, i) => `
     <tr>
       <td style="text-align:center;font-size:11px;color:var(--t3)">${i+1}</td>
-      <td style="color:var(--t1)">${item.name}</td>
-      <td style="color:var(--blue)">${item.category||'—'}</td>
-      <td class="code-cell">${item.code}</td>
-      <td class="sn-cell">${item.sn}</td>
+      <td style="color:var(--t1)">${escapeHtml(item.name)}</td>
+      <td style="color:var(--blue)">${escapeHtml(item.category)||'—'}</td>
+      <td class="code-cell">${escapeHtml(item.code)}</td>
+      <td class="sn-cell">${escapeHtml(item.sn)}</td>
     </tr>`).join('');
   document.getElementById('grn-view-modal').classList.add('open');
 }
@@ -175,9 +175,9 @@ function reopenGRNForPrint(id) {
   });
   document.getElementById('grn-items').innerHTML = Object.entries(grp).map(([name, v], i) => `
     <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${name}<div style="font-size:10px;color:#888;white-space:nowrap">${v.code} / ${v.category}</div></td>
+      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}<div style="font-size:10px;color:#888;white-space:nowrap">${escapeHtml(v.code)} / ${escapeHtml(v.category)}</div></td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.join(', ')}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }

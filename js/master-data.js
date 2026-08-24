@@ -67,7 +67,7 @@ function renderMasterProducts() {
   const el = document.getElementById('master-product-list');
   el.innerHTML = masterProds.length ? masterProds.map((p) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
-      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${p.category || '—'}</span>${p.subcategory ? `<span class="cat-sub"><span class="cat-sub-arrow">↳</span><span class="badge b-purple" style="font-size:9px">${p.subcategory}</span></span>` : ''}<b style="color:var(--t1)">${p.name}</b> <span class="mono" style="color:var(--t3);font-size:10px">${p.code||''}</span></span>
+      <span><span class="badge b-blue" style="font-size:9px;margin-right:6px">${escapeHtml(p.category) || '—'}</span>${p.subcategory ? `<span class="cat-sub"><span class="cat-sub-arrow">↳</span><span class="badge b-purple" style="font-size:9px">${escapeHtml(p.subcategory)}</span></span>` : ''}<b style="color:var(--t1)">${escapeHtml(p.name)}</b> <span class="mono" style="color:var(--t3);font-size:10px">${escapeHtml(p.code)||''}</span></span>
       <span style="display:flex;gap:2px;flex-shrink:0">
         <button onclick="editMasterProduct('${p.id}')" title="แก้ไขหมวดหมู่/ชื่อ/รหัส" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px">✏️</button>
         <button onclick="deleteMasterProduct('${p.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 2px">✕</button>
@@ -137,8 +137,8 @@ function renderCustomerList() {
   const el = document.getElementById('customer-list');
   el.innerHTML = customers.map((c) => `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:var(--s2);padding:8px 12px;border-radius:var(--r);font-size:12px">
-      <span style="color:var(--t1);min-width:0">👤 ${c.name}
-        <div style="color:${c.address ? 'var(--t3)' : 'var(--orange)'};font-size:11px;line-height:1.5;margin-top:2px;white-space:pre-wrap">${c.address || '⚠️ ยังไม่มีที่อยู่ — กด ✏️ เพื่อเพิ่ม'}</div>
+      <span style="color:var(--t1);min-width:0">👤 ${escapeHtml(c.name)}
+        <div style="color:${c.address ? 'var(--t3)' : 'var(--orange)'};font-size:11px;line-height:1.5;margin-top:2px;white-space:pre-wrap">${c.address ? escapeHtml(c.address) : '⚠️ ยังไม่มีที่อยู่ — กด ✏️ เพื่อเพิ่ม'}</div>
       </span>
       <span style="display:flex;gap:2px;flex-shrink:0">
         <button onclick="editCustomer('${c.id}')" title="แก้ไขชื่อ/ที่อยู่" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 2px">✏️</button>
@@ -176,7 +176,7 @@ function refreshCustomerSelects() {
   ['o-cust', 'r-cust'].forEach(id => {
     const s = document.getElementById(id); if (!s) return;
     const prev = s.value;
-    s.innerHTML = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    s.innerHTML = customers.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
     if (customers.some(c => c.id === prev)) s.value = prev;
   });
   // ตัวกรองลูกค้าในหน้าประวัติ — เก็บค่าเป็น "ชื่อลูกค้า" (ตรงกับ dispatched_to)
@@ -189,7 +189,7 @@ function refreshCustomerSelects() {
     customers.forEach(c => seen.set(normCustName(c.name), c.name));
     stock.forEach(i => { const k = normCustName(i.dispatched_to); if (k && !seen.has(k)) seen.set(k, i.dispatched_to); });
     hist.innerHTML = '<option value="">— ทุกลูกค้า —</option>'
-      + [...seen.values()].sort((a, b) => a.localeCompare(b, 'th')).map(n => `<option value="${n}">${n}</option>`).join('');
+      + [...seen.values()].sort((a, b) => a.localeCompare(b, 'th')).map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
     hist.value = prev;
   }
 }
@@ -201,13 +201,13 @@ function updateDataLists() {
   const suppliers = [...new Set(stock.map(i => i.supplier).filter(Boolean))];
   const subcats = [...new Set([...masterProds.map(p => p.subcategory), ...stock.map(i => i.subcategory)].filter(Boolean))];
   const subDl = document.getElementById('subcat-dl');
-  if (subDl) subDl.innerHTML = subcats.map(s => `<option value="${s}">`).join('');
+  if (subDl) subDl.innerHTML = subcats.map(s => `<option value="${escapeHtml(s)}">`).join('');
   const catDl  = document.getElementById('cat-dl');
   const prodDl = document.getElementById('product-dl');
   const codeDl = document.getElementById('code-dl');
   const supDl  = document.getElementById('supplier-dl');
-  if (catDl)  catDl.innerHTML  = cats.map(c => `<option value="${c}">`).join('');
-  if (prodDl) prodDl.innerHTML = names.map(n => `<option value="${n}">`).join('');
-  if (codeDl) codeDl.innerHTML = codes.map(c => `<option value="${c}">`).join('');
-  if (supDl)  supDl.innerHTML  = suppliers.map(s => `<option value="${s}">`).join('');
+  if (catDl)  catDl.innerHTML  = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  if (prodDl) prodDl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+  if (codeDl) codeDl.innerHTML = codes.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  if (supDl)  supDl.innerHTML  = suppliers.map(s => `<option value="${escapeHtml(s)}">`).join('');
 }

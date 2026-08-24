@@ -115,8 +115,8 @@ function renderInSession() {
   el.innerHTML = inSession.map((i, idx) => `
     <div class="scan-row">
       <span class="scan-no">${idx + 1}</span>
-      <span class="scan-sn">${i.sn}</span>
-      <span class="scan-side">${i.name}${i.lot_no ? `<br>🏷 ${i.lot_no}` : ''}</span>
+      <span class="scan-sn">${escapeHtml(i.sn)}</span>
+      <span class="scan-side">${escapeHtml(i.name)}${i.lot_no ? `<br>🏷 ${escapeHtml(i.lot_no)}` : ''}</span>
       <button onclick="removeInboundItem('${i.id}')" class="btn btn-ghost btn-sm" style="flex-shrink:0;color:var(--red)" title="ลบรายการนี้ (สแกนผิด/ผิดภาษา)">✕</button>
     </div>`).reverse().join('');
 }

@@ -20,8 +20,6 @@ function subcatOf(item, m) {
   return item.subcategory || m.get('n:' + item.name) || (item.code ? m.get('c:' + item.code) : '') || '';
 }
 
-const escHtml = v => String(v).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
-
 function populateCatFilter() {
   const menu = document.getElementById('s-cat-menu'); if (!menu) return;
   const cur = document.getElementById('s-cat').value;   // สลับแท็บไปมาแล้วตัวกรองเดิมต้องไม่หลุด
@@ -36,15 +34,15 @@ function populateCatFilter() {
   });
 
   const row = (val, label, cls = '') =>
-    `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escHtml(val)}')">${escHtml(label)}</div>`;
+    `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escapeHtml(val)}')">${escapeHtml(label)}</div>`;
 
   let html = row('', '— ทุกหมวดหมู่ —');
   [...tree.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(cat => {
     const subs = [...tree.get(cat)].sort((a, b) => a.localeCompare(b, 'th'));
     if (!subs.length) { html += row(cat, cat); return; }
     // มีหมวดย่อย → กดที่ชื่อ = ทั้งหมวด, ชี้/กดลูกศร = บานเมนูย่อยออกทางขวา
-    html += `<div class="cat-dd-item${cur === cat ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escHtml(cat)}')">
-        <span>${escHtml(cat)}</span>
+    html += `<div class="cat-dd-item${cur === cat ? ' active' : ''}" onclick="event.stopPropagation();pickCat('${escapeHtml(cat)}')">
+        <span>${escapeHtml(cat)}</span>
         <span class="cat-dd-arrow" onclick="event.stopPropagation();this.parentNode.classList.toggle('show-sub')">›</span>
         <div class="cat-dd-sub">
           ${row(cat, cat + ' — ทั้งหมด', ' all')}
@@ -101,9 +99,9 @@ function sortStock(col) {
 function snCellHTML(item) {
   const timeSub = `<div style="font-size:9px;color:var(--t3);margin-top:2px;font-family:var(--mono)">📥 ${fmtISO(item.received_at)}${item.dispatched_at ? ' · 📤 ' + fmtISO(item.dispatched_at) : ''}</div>`;
   if (item.prev_sn && item.prev_sn !== item.sn) {
-    return `<td class="sn-cell"><div class="sn-arrow-wrap"><span class="sn-old">${item.prev_sn}</span><span class="sn-arrow">↓ สลับ SN</span><span class="sn-new">${item.sn} <span class="sn-swap-badge">เคลม</span></span></div>${timeSub}</td>`;
+    return `<td class="sn-cell"><div class="sn-arrow-wrap"><span class="sn-old">${escapeHtml(item.prev_sn)}</span><span class="sn-arrow">↓ สลับ SN</span><span class="sn-new">${escapeHtml(item.sn)} <span class="sn-swap-badge">เคลม</span></span></div>${timeSub}</td>`;
   }
-  return `<td class="sn-cell">${item.sn}${timeSub}</td>`;
+  return `<td class="sn-cell">${escapeHtml(item.sn)}${timeSub}</td>`;
 }
 
 // คืนรายการสินค้าที่ผ่านการกรอง + เรียงลำดับตามที่เลือกบนหน้าจอ (ใช้ร่วมกับ export)
@@ -138,12 +136,12 @@ function filterStock() {
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map((item, idx) => `<tr>
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
-      <td style="color:var(--blue);font-weight:500">${item.category}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">→ ${subcatOf(item, sm)}</div>` : ''}</td>
-      <td style="color:var(--t1)">${item.name}</td>
-      <td class="code-cell">${item.code}</td>
-      <td class="mono" style="font-size:11px;color:var(--t2)">${item.lot_no || '—'}</td>
+      <td style="color:var(--blue);font-weight:500">${escapeHtml(item.category)}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">→ ${escapeHtml(subcatOf(item, sm))}</div>` : ''}</td>
+      <td style="color:var(--t1)">${escapeHtml(item.name)}</td>
+      <td class="code-cell">${escapeHtml(item.code)}</td>
+      <td class="mono" style="font-size:11px;color:var(--t2)">${escapeHtml(item.lot_no) || '—'}</td>
       ${snCellHTML(item)}
-      <td>${statusBadge(item.status)}${item.dispatched_to ? `<div style="font-size:10px;color:var(--t3);margin-top:3px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.dispatched_to}">👤 ${item.dispatched_to}</div>` : ''}</td>
+      <td>${statusBadge(item.status)}${item.dispatched_to ? `<div style="font-size:10px;color:var(--t3);margin-top:3px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(item.dispatched_to)}">👤 ${escapeHtml(item.dispatched_to)}</div>` : ''}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:5px;justify-content:center">
           ${item.status === 'Sold' ? `<button onclick="returnToStock('${item.id}')" class="btn btn-ghost btn-icon btn-sm" title="คืนเป็นพร้อมใช้">${icon('undo')}</button>` : ''}

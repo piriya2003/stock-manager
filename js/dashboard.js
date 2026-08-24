@@ -58,7 +58,7 @@ function renderDashboard() {
   set('cat-count-badge', cats.length + ' หมวด');
   document.getElementById('cat-list').innerHTML = cats.length ? cats.map(([cat, v]) => `
     <div class="cat-row">
-      <div class="cat-name">${cat}</div>
+      <div class="cat-name">${escapeHtml(cat)}</div>
       <div class="cat-bar"><span style="width:${total ? Math.round(v.total / total * 100) : 0}%"></span></div>
       <div class="cat-n"><b>${v.total}</b><span>พร้อม ${v.avail}</span></div>
     </div>`).join('') : '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
@@ -70,9 +70,9 @@ function renderDashboard() {
     : recent.map(t => `<tr>
         <td class="mono" style="font-size:11px;white-space:nowrap">${t.createdAt ? new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}<div style="color:var(--t3);font-size:10px">${t.date}</div></td>
         <td>${typeBadge(t.type)}</td>
-        <td style="color:var(--t1);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td>
-        <td class="sn-cell">${t.sn}</td>
-        <td style="font-size:11px;color:var(--t3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.note || ''}</td>
+        <td style="color:var(--t1);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(t.name)}</td>
+        <td class="sn-cell">${escapeHtml(t.sn)}</td>
+        <td style="font-size:11px;color:var(--t3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(t.note || '')}</td>
       </tr>`).join('');
 
   // ── ใบ DO ล่าสุด ──
@@ -82,7 +82,7 @@ function renderDashboard() {
     : recent5.map(d => `
       <div class="do-card" onclick="reopenDOForPrint('${d.id}')">
         <div><div class="do-card-num">${d.doNo}</div><div class="do-card-meta">${fmtDate(doDateOf(d))}</div></div>
-        <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.customer}</div><div style="font-size:11px;color:var(--t3)">${d.type || 'โอนสินค้า'}</div></div>
+        <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.customer)}</div><div style="font-size:11px;color:var(--t3)">${escapeHtml(d.type || 'โอนสินค้า')}</div></div>
         <div class="do-summary-chip">${(d.items || []).length} ชิ้น</div>
       </div>`).join('');
 
