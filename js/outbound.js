@@ -248,7 +248,7 @@ function renderOutboundHistory() {
     html += `<tr><td colspan="4" style="background:var(--s2);border-top:2px solid var(--b2);padding:8px 12px">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--t1)">
-          <input type="checkbox" onchange="toggleBatchSelect('${b.key}',this)" ${selectedBatchKeys.has(b.key) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับชุดอื่น">
+          <input type="checkbox" onchange="toggleBatchSelect(${jsArg(b.key)},this)" ${selectedBatchKeys.has(b.key) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับชุดอื่น">
           ${head}
         </label>
         <button onclick="openDOFromBatch(${bi})" class="btn btn-primary btn-sm">📄 สร้าง DO ชุดนี้</button>

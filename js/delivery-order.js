@@ -295,7 +295,7 @@ function doDocHTML(label, d) {
         </div>
         <div class="do-meta">
           <div class="do-meta-k"><div>No.</div><div>Staff:</div><div>PO Number:</div><div>Date Issued:</div></div>
-          <div class="do-meta-v"><div>${d.no}</div><div>${escapeHtml(d.staff)}</div><div>${escapeHtml(d.po)}</div><div>${d.date}</div></div>
+          <div class="do-meta-v"><div>${escapeHtml(d.no)}</div><div>${escapeHtml(d.staff)}</div><div>${escapeHtml(d.po)}</div><div>${escapeHtml(d.date)}</div></div>
         </div>
       </div>
       </td></tr></thead><tbody><tr><td>
@@ -369,7 +369,7 @@ function renderDOHistory() {
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="reopenDOForPrint('${d.id}')">
       <td style="text-align:center">${currentRole === 'admin' ? `<input type="checkbox" onclick="event.stopPropagation()" onchange="toggleDOSelect('${d.id}',this)" ${selectedDOIds.has(d.id) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับใบอื่น">` : ''}</td>
-      <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${d.doNo}</span></td>
+      <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${escapeHtml(d.doNo)}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
       <td style="color:var(--t1);font-weight:500">${escapeHtml(d.customer)}</td>

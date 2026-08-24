@@ -108,7 +108,7 @@ function renderGRNHistory() {
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบรับเข้า</td></tr>'; return; }
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="openGRNView('${d.id}')">
-      <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${d.grnNo}</span></td>
+      <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${escapeHtml(d.grnNo)}</span></td>
       <td class="mono" style="font-size:11px">${fmtDate(d.createdAt)}</td>
       <td style="color:var(--t1);font-weight:500">${escapeHtml(d.supplier) || '—'}</td>
       <td class="mono" style="font-size:11px">${escapeHtml(d.lotNo) || '—'}</td>
