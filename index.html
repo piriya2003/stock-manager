@@ -383,6 +383,20 @@
 
     <div id="tab-do-create" class="tab-content">
       <div class="page-title mb-4">สร้างใบ DO</div>
+
+      <div class="scan-hint mb-4" style="background:rgba(84,155,255,.06);border-color:rgba(84,155,255,.15);max-width:640px">📋 <b>สร้าง DO จากเลข SN โดยตรง</b> — วาง/พิมพ์/สแกน Serial Number ที่จ่ายออกไปแล้ว (คนละวัน/คนละรอบสแกนก็รวมใบเดียวได้) ระบบจะข้าม SN ที่ไม่พบหรือยังไม่ได้จ่ายออกให้อัตโนมัติ</div>
+      <div class="card" style="max-width:640px">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-row">
+            <label class="field-label" style="color:var(--blue)">รายการ SN — คั่นด้วยขึ้นบรรทัด / เว้นวรรค / คอมมา</label>
+            <textarea id="do-sn-list" rows="4" placeholder="เช่น&#10;SK46025110001&#10;SK46025110002&#10;SK46025110003" style="resize:vertical;font-family:var(--mono);font-size:13px"></textarea>
+          </div>
+          <button onclick="openDOFromSNList()" class="btn btn-primary btn-full">📄 สร้าง DO จากรายการนี้</button>
+          <div class="inline-msg" id="do-sn-msg"></div>
+        </div>
+      </div>
+
+      <hr class="divider" style="margin:24px 0">
       <div class="page-header mb-3">
         <div class="page-title" style="font-size:15px">รายการสินค้าที่โอน/ขายออกไปแล้วทั้งหมด</div>
         <div class="flex gap-2 flex-wrap items-center">

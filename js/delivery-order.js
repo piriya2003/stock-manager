@@ -39,6 +39,40 @@ function openDOFromBatch(batchIndex) {
   if (b.cust) document.getElementById('do-cust').value = b.cust;
 }
 
+// สร้าง DO จากเลข SN ที่พิมพ์/วาง/สแกนมาโดยตรง — ไม่ต้องหาผ่านตัวกรองวันที่/ลูกค้า
+// ใช้ตอนของชิ้นเดียวกันถูกจ่ายไปคนละวัน/คนละรอบสแกน แล้วอยากรวมใบเดียวแบบเจาะจงเป็นชิ้นๆ
+function openDOFromSNList() {
+  const raw = document.getElementById('do-sn-list').value || '';
+  const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];
+  if (!list.length) return inlineMsg('do-sn-msg', '❌ กรุณาวาง/พิมพ์หรือสแกน SN ก่อน', false);
+
+  const found = [], notFound = [], notSold = [];
+  list.forEach(sn => {
+    const item = stock.find(i => String(i.sn) === sn);
+    if (!item) notFound.push(sn);
+    else if (item.status !== 'Sold') notSold.push(sn);
+    else found.push(item);
+  });
+  if (!found.length) return inlineMsg('do-sn-msg', `❌ ไม่มี SN ที่ออก DO ได้ (ไม่พบ ${notFound.length}, ยังไม่ได้จ่ายออก ${notSold.length})`, false);
+
+  // SN ที่ระบุมาอาจเป็นของคนละลูกค้า (จ่ายไปคนละรอบ) ต้องรู้ตัวก่อนรวมเป็นใบเดียว
+  const custs = [...new Set(found.map(i => normCustName(i.dispatched_to)).filter(Boolean))];
+  if (custs.length > 1) {
+    const names = [...new Set(found.map(i => i.dispatched_to).filter(Boolean))].join('\n• ');
+    if (!confirm(`SN ที่ระบุเป็นของลูกค้าคนละเจ้า:\n• ${names}\n\nใบ DO ใบเดียวระบุลูกค้าได้คนเดียว จะรวมต่อไหม?`)) return;
+  }
+
+  doFromLiveSession = false;
+  doItems = found.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  const custName = found[0].dispatched_to;
+  prepDOModal(custName ? customers.find(c => normCustName(c.name) === normCustName(custName)) : null);
+  if (custName) document.getElementById('do-cust').value = custName;
+
+  let msg = `✅ พบ ${found.length} รายการ นำเข้าใบ DO แล้ว`;
+  if (notFound.length || notSold.length) msg += `  (ข้าม: ไม่พบ ${notFound.length}, ยังไม่ได้จ่ายออก ${notSold.length})`;
+  inlineMsg('do-sn-msg', msg, true);
+}
+
 function prepDOModal(custOverride) {
   doModalMode = 'create';
   document.getElementById('do-modal-badge').style.display = 'none';
