@@ -16,6 +16,16 @@ async function loadAllData() {
 
   [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes].forEach(r => { if (r.error) throw r.error; });
 
+  // อะไหล่เพิ่มมาทีหลัง — ดึงแยกและยอมให้ล้มเหลวได้ ถ้ายังไม่ได้รัน sql/add-parts.sql
+  // ยัดรวมใน Promise.all ข้างบนไม่ได้ เพราะ error จะทำให้ล็อกอินไม่เข้าทั้งระบบ
+  const [partsRes, movesRes] = await Promise.all([
+    supaClient.from('parts').select('*').order('name'),
+    supaClient.from('part_moves').select('*').order('created_at', { ascending: false }).limit(PART_MOVE_PAGE),
+  ]);
+  partsTableMissing = !!partsRes.error;
+  parts     = partsRes.error ? [] : (partsRes.data || []);
+  partMoves = movesRes.error ? [] : (movesRes.data || []);
+
   // รายชื่อผู้ใช้ไว้แปลง id เป็นชื่อบนเอกสาร/ประวัติ
   // แอดมินอ่านได้ทุกแถว พนักงานทั่วไป RLS จะคืนมาแค่แถวตัวเอง — ไม่ใช่ error ปล่อยผ่านได้
   userNames = {};

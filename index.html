@@ -52,6 +52,10 @@
     <button class="nav-item" id="nav-inbound" onclick="tab('inbound')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>รับเข้าสินค้า</button>
     <button class="nav-item" id="nav-outbound" onclick="tab('outbound')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>โอน / ขาย</button>
     <button class="nav-item" id="nav-do-create" onclick="tab('do-create')"><svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15h6"/></svg>สร้างใบ DO</button>
+    <button class="nav-item" id="nav-parts" onclick="tab('parts')">
+      <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="10" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M12 12v2"/></svg>อะไหล่
+      <span class="nav-badge orange" id="badge-parts" style="display:none">0</span>
+    </button>
     <button class="nav-item" id="nav-maintenance" onclick="tab('maintenance')">
       <svg class="ni-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3Z"/></svg>ซ่อม
       <span class="nav-badge orange" id="badge-repair" style="display:none">0</span>
@@ -430,6 +434,62 @@
       </div>
     </div>
 
+    <div id="tab-parts" class="tab-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">อะไหล่</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">นับเป็นจำนวน ไม่ต้องยิง SN รายชิ้น — เช่น RAM, จอ, คีย์บอร์ด</div>
+        </div>
+        <button onclick="exportPartsCSV()" class="btn btn-ghost btn-sm">📊 Export CSV</button>
+      </div>
+
+      <div class="kpi-strip mb-4">
+        <div class="kpi"><span class="kpi-label">ชนิดอะไหล่</span><span class="kpi-value" id="part-total">0</span></div>
+        <div class="kpi"><span class="kpi-label">รวมทุกชิ้น</span><span class="kpi-value" id="part-pieces">0</span></div>
+        <div class="kpi"><span class="kpi-label">ใกล้หมด</span><span class="kpi-value text-orange" id="part-low">0</span></div>
+      </div>
+
+      <div class="card mb-4" id="parts-form-card">
+        <div class="card-header"><span class="card-title">➕ เพิ่ม / แก้ไขอะไหล่</span></div>
+        <div class="card-body">
+          <div class="grid-3" style="gap:12px">
+            <div class="form-row"><label class="field-label" style="color:var(--blue)">ชื่ออะไหล่ *</label>
+              <input type="text" id="part-name" placeholder="เช่น RAM DDR4 8GB Kingston" list="part-name-dl">
+              <datalist id="part-name-dl"></datalist>
+            </div>
+            <div class="form-row"><label class="field-label">ประเภท</label>
+              <input type="text" id="part-cat" placeholder="เช่น RAM / จอ / คีย์บอร์ด" list="part-cat-dl">
+              <datalist id="part-cat-dl"></datalist>
+            </div>
+            <div class="form-row"><label class="field-label">รหัสอะไหล่</label><input type="text" id="part-code" placeholder="ถ้ามี"></div>
+            <div class="form-row"><label class="field-label">หน่วยนับ</label><input type="text" id="part-unit" value="ชิ้น" placeholder="ชิ้น / ตัว / เส้น"></div>
+            <div class="form-row" id="part-qty-row"><label class="field-label">จำนวนตั้งต้น</label>
+              <input type="number" id="part-qty" min="0" value="0" class="mono">
+            </div>
+            <div class="form-row"><label class="field-label">เตือนเมื่อเหลือต่ำกว่า</label>
+              <input type="number" id="part-min" min="0" value="0" class="mono" title="ใส่ 0 = ไม่ต้องเตือน">
+            </div>
+            <div class="form-row col-span-2"><label class="field-label">หมายเหตุ</label><input type="text" id="part-note" placeholder="ไม่บังคับ"></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button onclick="savePart()" class="btn btn-primary" id="part-save-btn">+ เพิ่มอะไหล่</button>
+            <button onclick="cancelEditPart()" class="btn btn-ghost" id="part-cancel-btn" style="display:none">ยกเลิก</button>
+          </div>
+          <div class="inline-msg" id="part-msg"></div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 flex-wrap items-center mb-3">
+        <input type="text" id="part-q" oninput="renderParts()" placeholder="🔍 ค้นหา ชื่อ / รหัส / ประเภท..." style="width:260px">
+        <select id="part-cat-filter" onchange="renderParts()" style="width:180px"><option value="">— ทุกประเภท —</option></select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer">
+          <input type="checkbox" id="part-low-only" onchange="renderParts()"> เฉพาะที่ใกล้หมด
+        </label>
+      </div>
+
+      <div id="parts-wrap"></div>
+    </div>
+
     <div id="tab-maintenance" class="tab-content">
       <div class="page-header">
         <div class="page-title">ซ่อม</div>
@@ -791,6 +851,27 @@
   </div>
 </div>
 
+<div class="modal-bg" id="part-hist-modal">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title">📜 ประวัติอะไหล่: <span id="part-hist-title"></span></span>
+        <div class="text-muted text-sm mt-1" id="part-hist-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('part-hist-modal')">✕</button>
+    </div>
+    <div class="tbl-wrap" style="max-height:420px;overflow-y:auto">
+      <table>
+        <thead><tr>
+          <th>วันที่</th><th>ประเภท</th><th style="text-align:center">จำนวน</th>
+          <th style="text-align:center">คงเหลือ</th><th>หมายเหตุ</th><th>ผู้ทำรายการ</th>
+        </tr></thead>
+        <tbody id="part-hist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="rename-modal">
   <div class="modal">
     <div class="modal-header">
@@ -1027,6 +1108,7 @@
 <script src="js/outbound.js"></script>
 <script src="js/delivery-order.js"></script>
 <script src="js/repair.js"></script>
+<script src="js/parts.js"></script>
 <script src="js/import-export.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/main.js"></script>

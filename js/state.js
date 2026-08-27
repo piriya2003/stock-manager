@@ -38,6 +38,12 @@ let grnModalMode       = 'create';
 
 let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว
 
+// ── อะไหล่ (นับเป็นจำนวน ไม่ผูก SN) ──
+let parts            = [];     // อะไหล่แต่ละชนิด พร้อมยอดคงเหลือ
+let partMoves        = [];     // ประวัติรับเข้า/เบิกใช้
+let partsTableMissing = false; // true = ยังไม่ได้รัน sql/add-parts.sql — เมนูอะไหล่จะบอกให้ไปรันก่อน
+let editingPartId    = null;   // ไม่ null = ฟอร์มอะไหล่กำลังอยู่ในโหมดแก้ไข
+
 let impRows = [];
 let impHeaders = [];   // หัวคอลัมน์จากไฟล์ที่อัปโหลด
 let impMap = {};       // ฟิลด์ในระบบ → เลขคอลัมน์ในไฟล์ (-1 = ไม่ใช้)

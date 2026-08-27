@@ -247,6 +247,49 @@ create table if not exists public.repair_jobs (
 
 
 -- ════════════════════════════════════════════════════════════════════════
+--  9b. parts / part_moves — อะไหล่ (นับเป็นจำนวน ไม่ผูก SN)
+--      แยกจาก inventory เพราะ inventory คือ 1 แถว = 1 ชิ้น และ sn ห้ามซ้ำ
+--      ส่วนอะไหล่อย่าง RAM/จอ มีทีละหลายสิบชิ้นที่เหมือนกันหมด ไม่มี SN รายชิ้น
+-- ════════════════════════════════════════════════════════════════════════
+create table if not exists public.parts (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  code        text,
+  category    text not null default 'ไม่ระบุ',
+  unit        text not null default 'ชิ้น',
+  qty         integer not null default 0,
+  min_qty     integer not null default 0,          -- ต่ำกว่านี้ถือว่าใกล้หมด (0 = ไม่เตือน)
+  note        text,
+  created_by  uuid references public.users(id),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- กันสร้างชื่อซ้ำจนยอดแตกเป็นสองก้อน — ไม่สนตัวพิมพ์เล็กใหญ่/ช่องว่างหัวท้าย
+create unique index if not exists idx_parts_name_uniq on public.parts (lower(trim(name)));
+create index if not exists idx_parts_category on public.parts (category);
+
+do $$ begin
+  alter table public.parts add constraint parts_qty_non_negative check (qty >= 0);
+exception when duplicate_object then null; end $$;
+
+create table if not exists public.part_moves (
+  id           bigint generated always as identity primary key,
+  part_id      uuid not null references public.parts(id) on delete cascade,
+  move_date    date not null default current_date,
+  type         text not null,                      -- 'รับเข้า' | 'เบิกใช้' | 'ปรับยอด'
+  qty          integer not null,                   -- บวก = เข้า, ลบ = ออก
+  balance      integer not null,                   -- คงเหลือหลังทำรายการนี้
+  note         text,
+  performed_by uuid references public.users(id),
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_part_moves_part on public.part_moves (part_id, created_at desc);
+create index if not exists idx_part_moves_date on public.part_moves (move_date desc);
+
+
+-- ════════════════════════════════════════════════════════════════════════
 --  10. DO — ใบส่งสินค้า
 -- ════════════════════════════════════════════════════════════════════════
 create table if not exists public.do_headers (
@@ -310,6 +353,11 @@ create trigger trg_repair_updated_at
   before update on public.repair_jobs
   for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_parts_updated_at on public.parts;
+create trigger trg_parts_updated_at
+  before update on public.parts
+  for each row execute function public.set_updated_at();
+
 
 -- ════════════════════════════════════════════════════════════════════════
 --  13. กู้ลูกค้าปลายทางย้อนหลังจากใบ DO ที่เคยออกไปแล้ว
@@ -353,6 +401,8 @@ alter table public.do_headers      enable row level security;
 alter table public.do_items        enable row level security;
 alter table public.grn_headers     enable row level security;
 alter table public.grn_items       enable row level security;
+alter table public.parts           enable row level security;
+alter table public.part_moves      enable row level security;
 
 -- ── ล้าง policy ชื่อเก่าที่สะสมมาจาก snippet หลายรุ่น แล้วสร้างชุดมาตรฐานชุดเดียว ──
 do $$
@@ -363,7 +413,8 @@ begin
     from   pg_policies
     where  schemaname = 'public'
       and  tablename in ('users','master_products','customers','inventory','transactions',
-                         'repair_jobs','do_headers','do_items','grn_headers','grn_items')
+                         'repair_jobs','do_headers','do_items','grn_headers','grn_items',
+                         'parts','part_moves')
   loop
     execute format('drop policy if exists %I on %I.%I', p.policyname, p.schemaname, p.tablename);
   end loop;
@@ -459,6 +510,23 @@ create policy "Authenticated users can update customers"
   on public.customers for update to authenticated using (true) with check (true);
 create policy "Authenticated users can delete customers"
   on public.customers for delete to authenticated using (true);
+
+-- parts / part_moves — พนักงานรับเข้า-เบิกได้ (ต้อง update qty ได้) ลบเฉพาะแอดมิน
+create policy "Authenticated users can read parts"
+  on public.parts for select to authenticated using (true);
+create policy "Authenticated users can write parts"
+  on public.parts for insert to authenticated with check (true);
+create policy "Authenticated users can update parts"
+  on public.parts for update to authenticated using (true) with check (true);
+create policy "Only admin can delete parts"
+  on public.parts for delete to authenticated using ( public.is_admin() );
+
+create policy "Authenticated users can read part_moves"
+  on public.part_moves for select to authenticated using (true);
+create policy "Authenticated users can insert part_moves"
+  on public.part_moves for insert to authenticated with check (true);
+create policy "Only admin can delete part_moves"
+  on public.part_moves for delete to authenticated using ( public.is_admin() );
 
 
 -- ════════════════════════════════════════════════════════════════════════
