@@ -21,6 +21,8 @@ window.onload = async () => {
   const d = today();
   document.getElementById('i-date').value = d;
   document.getElementById('o-date').value = d;
+  document.getElementById('part-date').value = d;
+  document.getElementById('part-move-date').value = d;
   updateClock(); setInterval(updateClock, 30000);
   await checkExistingSession(); // auto-login ถ้ามี session ค้างอยู่ (จำการ login ไว้)
 };

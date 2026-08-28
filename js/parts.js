@@ -6,6 +6,17 @@
 const PART_MOVE_PAGE = 300;   // จำนวนประวัติอะไหล่ที่ดึงตอนล็อกอิน
 
 function partById(id) { return parts.find(p => p.id === id); }
+
+// วันที่ที่จะบันทึกลงประวัติตอนกดรับเข้า/เบิก — ว่างไว้ก็ถือว่าวันนี้
+function partMoveDate() {
+  return document.getElementById('part-move-date')?.value || today();
+}
+
+// เตือนให้เห็นว่ากำลังคีย์ย้อนหลัง กันลืมค้างไว้จากรายการที่แล้ว
+function checkPartMoveDate() {
+  const note = document.getElementById('part-move-date-note');
+  if (note) note.style.display = partMoveDate() === today() ? 'none' : '';
+}
 const setPartText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
 
 // ยังไม่ได้รันสคริปต์สร้างตาราง — บอกให้รู้ว่าต้องทำอะไร แทนที่จะขึ้นหน้าว่างเปล่าให้งง
@@ -155,12 +166,13 @@ async function savePart() {
       inlineMsg('part-msg', `✅ แก้ไข "${name}" แล้ว`, true);
     } else {
       const qty = Math.max(0, parseInt(g('part-qty'), 10) || 0);
+      const dt  = document.getElementById('part-date').value || today();
       const { data, error } = await supaClient.from('parts')
         .insert({ ...payload, qty, created_by: currentUserId }).select().single();
       if (error) throw error;
       parts.push(data);
       // ยอดตั้งต้นก็คือการรับเข้าครั้งแรก บันทึกไว้ให้ประวัติครบ ไม่ใช่จู่ๆ มีของโผล่มา
-      if (qty > 0) await logPartMove(data.id, 'รับเข้า', qty, qty, 'ยอดตั้งต้นตอนสร้างรายการ');
+      if (qty > 0) await logPartMove(data.id, 'รับเข้า', qty, qty, 'ยอดตั้งต้นตอนสร้างรายการ', dt);
       inlineMsg('part-msg', `✅ เพิ่ม "${name}" แล้ว (${qty} ${payload.unit})`, true);
     }
     cancelEditPart();
@@ -182,6 +194,7 @@ function editPart(id) {
   document.getElementById('part-note').value = p.note || '';
   // ยอดคงเหลือแก้ตรงนี้ไม่ได้ ต้องผ่านรับเข้า/เบิก เพื่อให้ประวัติตรงกับยอดเสมอ
   document.getElementById('part-qty-row').style.display = 'none';
+  document.getElementById('part-date-row').style.display = 'none';
   document.getElementById('part-save-btn').textContent = '💾 บันทึกการแก้ไข';
   document.getElementById('part-cancel-btn').style.display = 'inline-flex';
   document.getElementById('part-name').focus();
@@ -193,7 +206,9 @@ function cancelEditPart() {
   document.getElementById('part-unit').value = 'ชิ้น';
   document.getElementById('part-min').value = 0;
   document.getElementById('part-qty').value = 0;
+  document.getElementById('part-date').value = today();
   document.getElementById('part-qty-row').style.display = '';
+  document.getElementById('part-date-row').style.display = '';
   document.getElementById('part-save-btn').textContent = '+ เพิ่มอะไหล่';
   document.getElementById('part-cancel-btn').style.display = 'none';
 }
@@ -227,6 +242,7 @@ async function movePart(id, dir) {
   if (newQty < 0) return toast(`เบิกไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
 
   const typ = dir > 0 ? 'รับเข้า' : 'เบิกใช้';
+  const dt  = partMoveDate();
   const note = dir > 0 ? '' : (prompt(`เบิก "${p.name}" ${n} ${p.unit}\n\nเบิกไปทำอะไร? (ไม่ใส่ก็ได้)`, '') ?? null);
   if (dir < 0 && note === null) return;   // กดยกเลิกในกล่องถาม = ไม่เบิก
 
@@ -238,15 +254,17 @@ async function movePart(id, dir) {
     if (!data || !data.length) throw new Error('ยอดเปลี่ยนไปแล้ว (อาจมีคนอื่นเพิ่งทำรายการ) — โหลดหน้าใหม่แล้วลองอีกครั้ง');
 
     Object.assign(p, data[0]);
-    await logPartMove(id, typ, dir * n, newQty, note || null);
+    await logPartMove(id, typ, dir * n, newQty, note || null, dt);
     renderParts();
-    toast(`${typ} ${escapeHtml(p.name)} ${n} ${p.unit} — คงเหลือ ${newQty}`, dir > 0 ? 'success' : 'info');
+    // toast เป็น textContent ล้วน ไม่ต้อง escape (ไม่งั้นชื่อที่มี & " จะโชว์เป็น &amp; &quot;)
+    const dtNote = dt === today() ? '' : ` (ลงวันที่ ${fmtDate(dt)})`;
+    toast(`${typ} ${p.name} ${n} ${p.unit} — คงเหลือ ${newQty}${dtNote}`, dir > 0 ? 'success' : 'info');
   } catch (err) { toast(`${typ}ล้มเหลว: ` + err.message, 'error'); }
 }
 
 // บันทึกประวัติ — ล้มเหลวไม่ควรทำให้ยอดที่ตัดไปแล้วพัง แต่ต้องบอกให้รู้ว่าประวัติหาย
-async function logPartMove(partId, type, qty, balance, note) {
-  const row = { part_id: partId, move_date: today(), type, qty, balance, note: note || null, performed_by: currentUserId };
+async function logPartMove(partId, type, qty, balance, note, moveDate) {
+  const row = { part_id: partId, move_date: moveDate || today(), type, qty, balance, note: note || null, performed_by: currentUserId };
   try {
     const { data, error } = await supaClient.from('part_moves').insert(row).select().single();
     if (error) throw error;
@@ -268,7 +286,7 @@ function openPartHistory(id) {
   const rows = partMoves.filter(m => m.part_id === id);
   document.getElementById('part-hist-tbody').innerHTML = rows.length
     ? rows.map(m => `<tr>
-        <td class="mono" style="font-size:11px;white-space:nowrap">${escapeHtml(m.move_date)}
+        <td class="mono" style="font-size:11px;white-space:nowrap">${escapeHtml(fmtDate(m.move_date))}
           <div style="color:var(--t3);font-size:10px">${m.created_at ? new Date(m.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</div></td>
         <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? '➕ รับเข้า' : '➖ เบิกใช้'}</span></td>
         <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}</td>

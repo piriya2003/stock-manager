@@ -466,6 +466,9 @@
             <div class="form-row" id="part-qty-row"><label class="field-label">จำนวนตั้งต้น</label>
               <input type="number" id="part-qty" min="0" value="0" class="mono">
             </div>
+            <div class="form-row" id="part-date-row"><label class="field-label">วันที่รับเข้า</label>
+              <input type="date" id="part-date" title="วันที่ของยอดตั้งต้น — ใส่ย้อนหลังได้ถ้าของมาถึงก่อนหน้านี้">
+            </div>
             <div class="form-row"><label class="field-label">เตือนเมื่อเหลือต่ำกว่า</label>
               <input type="number" id="part-min" min="0" value="0" class="mono" title="ใส่ 0 = ไม่ต้องเตือน">
             </div>
@@ -484,6 +487,12 @@
         <select id="part-cat-filter" onchange="renderParts()" style="width:180px"><option value="">— ทุกประเภท —</option></select>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer">
           <input type="checkbox" id="part-low-only" onchange="renderParts()"> เฉพาะที่ใกล้หมด
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin-left:auto">
+          วันที่ทำรายการ
+          <input type="date" id="part-move-date" onchange="checkPartMoveDate()" style="width:150px"
+                 title="วันที่ที่จะบันทึกลงประวัติ ตอนกดรับเข้า/เบิก">
+          <span id="part-move-date-note" style="color:var(--orange);font-weight:600;display:none">⚠️ ย้อนหลัง</span>
         </label>
       </div>
 
