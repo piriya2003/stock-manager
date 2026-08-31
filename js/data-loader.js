@@ -21,6 +21,8 @@ async function loadAllData() {
   const [partsRes, movesRes] = await Promise.all([
     supaClient.from('parts').select('*').order('name'),
     supaClient.from('part_moves').select('*').order('created_at', { ascending: false }).limit(PART_MOVE_PAGE),
+    // ยอดรับเข้า/เบิกสะสมต้องนับจากประวัติทุกแถว ไม่ใช่แค่ชุดที่โหลดมาแสดง
+    loadPartTotals(),
   ]);
   partsTableMissing = !!partsRes.error;
   parts     = partsRes.error ? [] : (partsRes.data || []);

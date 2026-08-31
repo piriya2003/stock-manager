@@ -7,6 +7,28 @@ const PART_MOVE_PAGE = 300;   // จำนวนประวัติอะไ�
 
 function partById(id) { return parts.find(p => p.id === id); }
 
+// ยอดสะสมของอะไหล่แต่ละตัว — "รับเข้าทั้งหมดกี่ชิ้น เบิกไปแล้วกี่ชิ้น"
+// เก็บแยกจาก partMoves เพราะ partMoves โหลดมาแค่ 300 รายการล่าสุด ถ้านับจากตรงนั้นยอดจะขาด
+function addPartTotal(partId, qty) {
+  const t = partTotals[partId] || (partTotals[partId] = { in: 0, out: 0 });
+  if (qty > 0) t.in += qty; else t.out -= qty;
+}
+function partTotal(partId) { return partTotals[partId] || { in: 0, out: 0 }; }
+
+// ดึงยอดสะสมตอนล็อกอิน — เอาแค่ 2 คอลัมน์ ต่อให้ประวัติเป็นหมื่นแถวก็ยังเบา
+// วนทีละ 1000 แถวเพราะ PostgREST จำกัดจำนวนแถวต่อครั้งได้ ถ้าขอรวดเดียวยอดอาจขาดแบบเงียบๆ
+async function loadPartTotals() {
+  partTotals = {};
+  const CHUNK = 1000;
+  for (let from = 0; ; from += CHUNK) {
+    const { data, error } = await supaClient.from('part_moves')
+      .select('part_id, qty').range(from, from + CHUNK - 1);
+    if (error) return;   // ยอดสะสมไม่ขึ้นดีกว่าล็อกอินไม่เข้า — คงเหลือยังถูกอยู่
+    (data || []).forEach(m => addPartTotal(m.part_id, m.qty));
+    if (!data || data.length < CHUNK) return;
+  }
+}
+
 // วันที่ที่จะบันทึกลงประวัติตอนกดรับเข้า/เบิก — ว่างไว้ก็ถือว่าวันนี้
 function partMoveDate() {
   return document.getElementById('part-move-date')?.value || today();
@@ -96,6 +118,7 @@ function renderParts() {
     <table>
       <thead><tr>
         <th>ประเภท</th><th>ชื่ออะไหล่</th><th>รหัส</th>
+        <th style="text-align:center">รับเข้าทั้งหมด</th><th style="text-align:center">เบิกไปแล้ว</th>
         <th style="text-align:center">คงเหลือ</th><th style="text-align:center">ขั้นต่ำ</th>
         <th style="text-align:center;width:230px">รับเข้า / เบิกใช้</th>
         <th style="text-align:center;width:90px">จัดการ</th>
@@ -107,10 +130,13 @@ function renderParts() {
 function partRow(p) {
   const isLow = p.min_qty > 0 && p.qty <= p.min_qty;
   const qtyColor = p.qty === 0 ? 'var(--red)' : isLow ? 'var(--orange)' : 'var(--green)';
+  const t = partTotal(p.id);
   return `<tr>
     <td style="color:var(--blue);font-weight:500">${escapeHtml(p.category) || '—'}</td>
     <td style="color:var(--t1)">${escapeHtml(p.name)}${p.note ? `<div style="font-size:10px;color:var(--t3);margin-top:2px">${escapeHtml(p.note)}</div>` : ''}</td>
     <td class="code-cell">${escapeHtml(p.code) || '—'}</td>
+    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${t.in ? 'var(--t2)' : 'var(--t3)'}">${t.in || '—'}</td>
+    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${t.out ? 'var(--orange)' : 'var(--t3)'}">${t.out || '—'}</td>
     <td style="text-align:center">
       <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:${qtyColor}">${p.qty}</span>
       <span style="font-size:10px;color:var(--t3)"> ${escapeHtml(p.unit)}</span>
@@ -222,6 +248,7 @@ async function deletePart(id) {
     if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ลบ (เฉพาะแอดมิน)');
     parts = parts.filter(x => x.id !== id);
     partMoves = partMoves.filter(m => m.part_id !== id);
+    delete partTotals[id];
     if (editingPartId === id) cancelEditPart();
     renderParts();
     toast(`ลบอะไหล่ "${p.name}" แล้ว`, 'info');
@@ -265,6 +292,7 @@ async function movePart(id, dir) {
 // บันทึกประวัติ — ล้มเหลวไม่ควรทำให้ยอดที่ตัดไปแล้วพัง แต่ต้องบอกให้รู้ว่าประวัติหาย
 async function logPartMove(partId, type, qty, balance, note, moveDate) {
   const row = { part_id: partId, move_date: moveDate || today(), type, qty, balance, note: note || null, performed_by: currentUserId };
+  addPartTotal(partId, qty);   // ยอดสะสมบนตารางต้องขยับทันที ไม่ต้องรอโหลดหน้าใหม่
   try {
     const { data, error } = await supaClient.from('part_moves').insert(row).select().single();
     if (error) throw error;
@@ -281,7 +309,9 @@ async function logPartMove(partId, type, qty, balance, note, moveDate) {
 function openPartHistory(id) {
   const p = partById(id); if (!p) return;
   document.getElementById('part-hist-title').textContent = p.name;
-  document.getElementById('part-hist-sub').textContent = `คงเหลือ ${p.qty} ${p.unit}`;
+  const t = partTotal(id);
+  document.getElementById('part-hist-sub').textContent =
+    `รับเข้าทั้งหมด ${t.in} · เบิกไปแล้ว ${t.out} · คงเหลือ ${p.qty} ${p.unit}`;
 
   const rows = partMoves.filter(m => m.part_id === id);
   document.getElementById('part-hist-tbody').innerHTML = rows.length
@@ -304,10 +334,14 @@ function openPartHistory(id) {
 // ══════════════════════════════════════════════════════════════
 function exportPartsCSV() {
   if (!parts.length) return toast('ยังไม่มีอะไหล่ให้ export', 'info');
-  const rows = parts.map(p => ({
-    category: p.category || '', name: p.name || '', code: p.code || '',
-    qty: p.qty, unit: p.unit || '', min_qty: p.min_qty,
-    low: (p.min_qty > 0 && p.qty <= p.min_qty) ? 'ใกล้หมด' : '', note: p.note || '',
-  }));
-  dlCSV(toCSV(rows, ['category', 'name', 'code', 'qty', 'unit', 'min_qty', 'low', 'note']), 'parts_export.csv');
+  const rows = parts.map(p => {
+    const t = partTotal(p.id);
+    return {
+      category: p.category || '', name: p.name || '', code: p.code || '',
+      total_in: t.in, total_out: t.out,
+      qty: p.qty, unit: p.unit || '', min_qty: p.min_qty,
+      low: (p.min_qty > 0 && p.qty <= p.min_qty) ? 'ใกล้หมด' : '', note: p.note || '',
+    };
+  });
+  dlCSV(toCSV(rows, ['category', 'name', 'code', 'total_in', 'total_out', 'qty', 'unit', 'min_qty', 'low', 'note']), 'parts_export.csv');
 }
