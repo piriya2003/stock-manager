@@ -25,6 +25,8 @@ async function loadAllData() {
   partsTableMissing = !!partsRes.error;
   parts     = partsRes.error ? [] : (partsRes.data || []);
   partMoves = movesRes.error ? [] : (movesRes.data || []);
+  // ดึงชุดแรกพอให้เข้าระบบไว ที่เหลือกดโหลดเพิ่มได้จากหน้าประวัติอะไหล่
+  partMovesAllLoaded = !!movesRes.error || partMoves.length < PART_MOVE_PAGE;
 
   // รายชื่อผู้ใช้ไว้แปลง id เป็นชื่อบนเอกสาร/ประวัติ
   // แอดมินอ่านได้ทุกแถว พนักงานทั่วไป RLS จะคืนมาแค่แถวตัวเอง — ไม่ใช่ error ปล่อยผ่านได้

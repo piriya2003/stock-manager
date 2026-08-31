@@ -84,6 +84,7 @@ function tab(name) {
   if (name === 'outbound') setTimeout(() => document.getElementById('o-sn').focus(), 80);
   if (name === 'do-create') renderOutboundHistory();
   if (name === 'parts') { updatePartDataLists(); renderParts(); }
+  if (name === 'part-history') renderPartHistory();
 }
 
 function repairSubTab(name) {
