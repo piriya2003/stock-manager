@@ -105,7 +105,7 @@ function renderGRNHistory() {
   document.getElementById('grnh-count').textContent = data.length;
 
   const tbody = document.getElementById('grn-history-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีประวัติใบรับเข้า</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">${t('ยังไม่มีประวัติใบรับเข้า')}</td></tr>`; return; }
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="openGRNView('${d.id}')">
       <td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${escapeHtml(d.grnNo)}</span></td>

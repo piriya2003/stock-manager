@@ -237,7 +237,7 @@ function renderOutboundHistory() {
 
   const tbody = document.getElementById('o-hist-tbody');
   if (!tbody) return;
-  if (!batchList.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">ยังไม่มีรายการโอน/ขายออก</td></tr>'; return; }
+  if (!batchList.length) { tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${t('ยังไม่มีรายการโอน/ขายออก')}</td></tr>`; return; }
 
   let html = '';
   batchList.forEach((b, bi) => {

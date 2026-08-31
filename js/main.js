@@ -18,6 +18,7 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════════════
 window.onload = async () => {
   initTheme();
+  initLang();
   const d = today();
   document.getElementById('i-date').value = d;
   document.getElementById('o-date').value = d;

@@ -106,7 +106,7 @@ function renderClaimList() {
   updateClaimBadge();
   const tbody = document.getElementById('claim-tbody');
   if (!tbody) return;
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">ยังไม่มีรายการเคลม</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">${t('ยังไม่มีรายการเคลม')}</td></tr>`; return; }
   tbody.innerHTML = data.map((j, i) => {
     const sameSN = !j.replacedSN || String(j.replacedSN) === String(j.sn);
     const replaceCell = sameSN

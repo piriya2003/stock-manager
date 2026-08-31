@@ -365,7 +365,7 @@ function renderDOHistory() {
   updateDOMergeBtn();
 
   const tbody = document.getElementById('do-history-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ยังไม่มีประวัติใบ DO</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="8" class="tbl-empty">${t('ยังไม่มีประวัติใบ DO')}</td></tr>`; return; }
   tbody.innerHTML = data.map(d => `
     <tr class="do-row" onclick="reopenDOForPrint('${d.id}')">
       <td style="text-align:center">${currentRole === 'admin' ? `<input type="checkbox" onclick="event.stopPropagation()" onchange="toggleDOSelect('${d.id}',this)" ${selectedDOIds.has(d.id) ? 'checked' : ''} title="เลือกไว้เพื่อรวมกับใบอื่น">` : ''}</td>

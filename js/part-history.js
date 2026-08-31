@@ -51,9 +51,9 @@ function renderPartHistory() {
   }
 
   fillPmSelect('pm-part', [...parts].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'th'))
-    .map(p => ({ v: p.id, t: p.name })), '— ทุกอะไหล่ —');
+    .map(p => ({ v: p.id, t: p.name })), t('— ทุกอะไหล่ —'));
   fillPmSelect('pm-user', [...new Set(partMoves.map(m => m.performed_by).filter(Boolean))]
-    .map(u => ({ v: u, t: userName(u) })).sort((a, b) => a.t.localeCompare(b.t, 'th')), '— ทุกคน —');
+    .map(u => ({ v: u, t: userName(u) })).sort((a, b) => a.t.localeCompare(b.t, 'th')), t('— ทุกคน —'));
 
   const data = filteredPartMoves();
   setPartText('pm-count', data.length);
@@ -62,21 +62,21 @@ function renderPartHistory() {
   updatePartMoveMoreBtn();
 
   document.getElementById('pm-note').textContent = partMovesAllLoaded
-    ? `โหลดประวัติมาครบทุกรายการแล้ว (${partMoves.length} รายการ)`
-    : `โหลดมา ${partMoves.length} รายการล่าสุด — ของเก่ากว่านี้กด "โหลดประวัติเก่าเพิ่ม"`;
+    ? `${t('โหลดประวัติมาครบทุกรายการแล้ว')} (${partMoves.length})`
+    : `${t('โหลดมาแล้ว')} ${partMoves.length} — ${t('ของเก่ากว่านี้กดปุ่มโหลดประวัติเก่าเพิ่ม')}`;
 
   if (!data.length) {
     wrap.innerHTML = `<div class="card"><div class="card-body"><div class="tbl-empty" style="padding:28px">${
-      partMoves.length ? 'ไม่พบรายการตามที่กรอง' : 'ยังไม่มีประวัติรับเข้า/เบิกใช้'}</div></div></div>`;
+      partMoves.length ? t('ไม่พบรายการตามที่กรอง') : t('ยังไม่มีประวัติรับเข้า/เบิกใช้')}</div></div></div>`;
     return;
   }
 
   wrap.innerHTML = `<div class="card"><div class="tbl-wrap" style="max-height:calc(100vh - 330px);overflow-y:auto">
     <table>
       <thead><tr>
-        <th>วันที่</th><th>อะไหล่</th><th>ประเภท</th>
-        <th style="text-align:center">จำนวน</th><th style="text-align:center">คงเหลือหลังทำ</th>
-        <th>หมายเหตุ / เบิกไปทำอะไร</th><th>ผู้ทำรายการ</th>
+        <th>${t('วันที่')}</th><th>${t('อะไหล่')}</th><th>${t('ประเภท')}</th>
+        <th style="text-align:center">${t('จำนวน')}</th><th style="text-align:center">${t('คงเหลือหลังทำ')}</th>
+        <th>${t('หมายเหตุ / เบิกไปทำอะไร')}</th><th>${t('ผู้ทำรายการ')}</th>
       </tr></thead>
       <tbody>${data.map(m => partMoveRow(m)).join('')}</tbody>
     </table></div></div>`;
@@ -87,9 +87,9 @@ function partMoveRow(m) {
   return `<tr>
     <td class="mono" style="font-size:11px;white-space:nowrap">${escapeHtml(fmtDate(m.move_date))}
       <div style="color:var(--t3);font-size:10px">${m.created_at ? new Date(m.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</div></td>
-    <td style="color:var(--t1)">${p ? escapeHtml(p.name) : '<span style="color:var(--t3)">(ลบไปแล้ว)</span>'}
+    <td style="color:var(--t1)">${p ? escapeHtml(p.name) : `<span style="color:var(--t3)">${t('(ลบไปแล้ว)')}</span>`}
       ${p && p.code ? `<div class="mono" style="font-size:10px;color:var(--t3)">${escapeHtml(p.code)}</div>` : ''}</td>
-    <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? '➕ รับเข้า' : '➖ เบิกใช้'}</span></td>
+    <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? t('➕ รับเข้า') : t('➖ เบิกใช้')}</span></td>
     <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}
       <span style="font-size:10px;color:var(--t3);font-weight:400"> ${escapeHtml(p ? p.unit : '')}</span></td>
     <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>

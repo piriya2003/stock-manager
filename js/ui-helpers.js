@@ -166,32 +166,33 @@ function durationStr(start, end) {
   return `${h} ชม. ${m} นาที`;
 }
 function statusBadge(s) {
-  if (s === 'Available') return '<span class="badge b-green">● พร้อมใช้</span>';
-  if (s === 'Sold') return '<span class="badge b-gray">● โอน/ขาย</span>';
-  if (s === 'Claimed') return '<span class="badge b-red">🔴 เคลม/ชำรุด</span>';
-  return '<span class="badge b-orange">● รับซ่อม</span>';
+  if (s === 'Available') return `<span class="badge b-green">${t('● พร้อมใช้')}</span>`;
+  if (s === 'Sold') return `<span class="badge b-gray">${t('● โอน/ขาย')}</span>`;
+  if (s === 'Claimed') return `<span class="badge b-red">${t('🔴 เคลม/ชำรุด')}</span>`;
+  return `<span class="badge b-orange">${t('● รับซ่อม')}</span>`;
 }
 function repairStatusBadge(s) {
-  if (s === 'รอซ่อม') return '<span class="badge b-orange">🟡 รอซ่อม</span>';
-  if (s === 'กำลังซ่อม') return '<span class="badge b-cyan">🔵 กำลังซ่อม</span>';
-  if (s === 'เคลมเครื่อง') return '<span class="badge b-red">🔴 เคลมเครื่อง</span>';
-  return '<span class="badge b-green">🟢 ซ่อมเสร็จ</span>';
+  if (s === 'รอซ่อม') return `<span class="badge b-orange">${t('🟡 รอซ่อม')}</span>`;
+  if (s === 'กำลังซ่อม') return `<span class="badge b-cyan">${t('🔵 กำลังซ่อม')}</span>`;
+  if (s === 'เคลมเครื่อง') return `<span class="badge b-red">${t('🔴 เคลมเครื่อง')}</span>`;
+  return `<span class="badge b-green">${t('🟢 ซ่อมเสร็จ')}</span>`;
 }
 function typeBadge(t) {
-  if (t.includes('รับเข้า')) return '<span class="badge b-green">📥 รับเข้า</span>';
+  if (t.includes('รับเข้า')) return `<span class="badge b-green">${window.t('📥 รับเข้า')}</span>`;
   // 2 บรรทัดนี้เทียบแบบตรงตัว ไม่ใช่ includes — ไม่งั้นไปกินรายการ 'เคลม (SN เดิม)' / 'เคลมสลับ SN' ของงานเคลมด้วย
-  if (t === 'สินค้าเคลม/ส่งซ่อม') return '<span class="badge b-red">🔴 เคลม/ส่งซ่อม</span>';
-  if (t === 'เบิกสินค้า') return '<span class="badge b-cyan">📦 เบิก</span>';
-  if (t.includes('ซ่อม')) return '<span class="badge b-orange">🔧 ซ่อม</span>';
-  if (t.includes('ขาย')) return '<span class="badge b-blue">💰 ขาย</span>';
-  if (t.includes('คืน')) return '<span class="badge b-purple">♻️ คืน</span>';
-  return '<span class="badge b-gray">📤 ' + t.replace('โอนสินค้า', 'โอน') + '</span>';
+  if (t === 'สินค้าเคลม/ส่งซ่อม') return `<span class="badge b-red">${window.t('🔴 เคลม/ส่งซ่อม')}</span>`;
+  if (t === 'เบิกสินค้า') return `<span class="badge b-cyan">${window.t('📦 เบิก')}</span>`;
+  if (t.includes('ซ่อม')) return `<span class="badge b-orange">${window.t('🔧 ซ่อม')}</span>`;
+  if (t.includes('ขาย')) return `<span class="badge b-blue">${window.t('💰 ขาย')}</span>`;
+  if (t.includes('คืน')) return `<span class="badge b-purple">${window.t('♻️ คืน')}</span>`;
+  // ชนิดรายการเก่าที่ไม่รู้จักยังโชว์ข้อความไทยจากฐานข้อมูลตามเดิม — เป็นข้อมูล ไม่ใช่ข้อความในโปรแกรม
+  return '<span class="badge b-gray">📤 ' + t.replace('โอนสินค้า', window.t('โอน')) + '</span>';
 }
 function doTypeBadge(t) {
-  if (t === 'ขายสินค้า') return '<span class="badge b-blue">💰 ขาย</span>';
-  if (t === 'เบิกสินค้า') return '<span class="badge b-cyan">📦 เบิก</span>';
-  if (t === 'สินค้าเคลม/ส่งซ่อม') return '<span class="badge b-red">🔴 เคลม/ส่งซ่อม</span>';
-  return '<span class="badge b-gray">📤 โอน</span>';
+  if (t === 'ขายสินค้า') return `<span class="badge b-blue">${window.t('💰 ขาย')}</span>`;
+  if (t === 'เบิกสินค้า') return `<span class="badge b-cyan">${window.t('📦 เบิก')}</span>`;
+  if (t === 'สินค้าเคลม/ส่งซ่อม') return `<span class="badge b-red">${window.t('🔴 เคลม/ส่งซ่อม')}</span>`;
+  return `<span class="badge b-gray">${window.t('📤 โอน')}</span>`;
 }
 
 function checkAlerts() {
@@ -238,5 +239,6 @@ function updateClaimBadge() {
 
 function updateClock() {
   const n = new Date();
-  document.getElementById('clock').textContent = n.toLocaleDateString('th-TH') + ' ' + n.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  const loc = currentLang === 'en' ? 'en-GB' : 'th-TH';
+  document.getElementById('clock').textContent = n.toLocaleDateString(loc) + ' ' + n.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
 }

@@ -96,7 +96,7 @@ function renderParts() {
   if (sel) {
     const cats = [...new Set(parts.map(p => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
     const cur = sel.value;
-    sel.innerHTML = '<option value="">— ทุกประเภท —</option>'
+    sel.innerHTML = `<option value="">${t('— ทุกประเภท —')}</option>`
       + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     sel.value = cats.includes(cur) ? cur : '';
   }
@@ -110,18 +110,18 @@ function renderParts() {
 
   if (!data.length) {
     wrap.innerHTML = `<div class="card"><div class="card-body"><div class="tbl-empty" style="padding:28px">${
-      parts.length ? 'ไม่พบอะไหล่ตามที่ค้นหา' : 'ยังไม่มีอะไหล่ — เพิ่มรายการแรกได้จากฟอร์มด้านบน'}</div></div></div>`;
+      parts.length ? t('ไม่พบอะไหล่ตามที่ค้นหา') : t('ยังไม่มีอะไหล่ — เพิ่มรายการแรกได้จากฟอร์มด้านบน')}</div></div></div>`;
     return;
   }
 
   wrap.innerHTML = `<div class="card"><div class="tbl-wrap">
     <table>
       <thead><tr>
-        <th>ประเภท</th><th>ชื่ออะไหล่</th><th>รหัส</th>
-        <th style="text-align:center">รับเข้าทั้งหมด</th><th style="text-align:center">เบิกไปแล้ว</th>
-        <th style="text-align:center">คงเหลือ</th><th style="text-align:center">ขั้นต่ำ</th>
-        <th style="text-align:center;width:230px">รับเข้า / เบิกใช้</th>
-        <th style="text-align:center;width:90px">จัดการ</th>
+        <th>${t('ประเภท')}</th><th>${t('ชื่ออะไหล่')}</th><th>${t('รหัส')}</th>
+        <th style="text-align:center">${t('รับเข้าทั้งหมด')}</th><th style="text-align:center">${t('เบิกไปแล้ว')}</th>
+        <th style="text-align:center">${t('คงเหลือ')}</th><th style="text-align:center">${t('ขั้นต่ำ')}</th>
+        <th style="text-align:center;width:230px">${t('รับเข้า / เบิกใช้')}</th>
+        <th style="text-align:center;width:90px">${t('จัดการ')}</th>
       </tr></thead>
       <tbody>${data.map(p => partRow(p)).join('')}</tbody>
     </table></div></div>`;
@@ -130,32 +130,32 @@ function renderParts() {
 function partRow(p) {
   const isLow = p.min_qty > 0 && p.qty <= p.min_qty;
   const qtyColor = p.qty === 0 ? 'var(--red)' : isLow ? 'var(--orange)' : 'var(--green)';
-  const t = partTotal(p.id);
+  const tot = partTotal(p.id);
   return `<tr>
     <td style="color:var(--blue);font-weight:500">${escapeHtml(p.category) || '—'}</td>
     <td style="color:var(--t1)">${escapeHtml(p.name)}${p.note ? `<div style="font-size:10px;color:var(--t3);margin-top:2px">${escapeHtml(p.note)}</div>` : ''}</td>
     <td class="code-cell">${escapeHtml(p.code) || '—'}</td>
-    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${t.in ? 'var(--t2)' : 'var(--t3)'}">${t.in || '—'}</td>
-    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${t.out ? 'var(--orange)' : 'var(--t3)'}">${t.out || '—'}</td>
+    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${tot.in ? 'var(--t2)' : 'var(--t3)'}">${tot.in || '—'}</td>
+    <td style="text-align:center;font-family:var(--mono);font-size:13px;color:${tot.out ? 'var(--orange)' : 'var(--t3)'}">${tot.out || '—'}</td>
     <td style="text-align:center">
       <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:${qtyColor}">${p.qty}</span>
       <span style="font-size:10px;color:var(--t3)"> ${escapeHtml(p.unit)}</span>
-      ${isLow ? '<div style="font-size:9px;color:var(--orange);font-weight:600">⚠️ ใกล้หมด</div>' : ''}
+      ${isLow ? `<div style="font-size:9px;color:var(--orange);font-weight:600">${t('⚠️ ใกล้หมด')}</div>` : ''}
     </td>
     <td style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--t3)">${p.min_qty || '—'}</td>
     <td>
       <div class="flex gap-1 items-center justify-center">
         <input type="number" min="1" value="1" id="pq-${p.id}" class="mono"
-               style="width:64px;text-align:center;padding:4px" title="จำนวน">
-        <button onclick="movePart(${jsArg(p.id)}, 1)" class="btn btn-success btn-sm" title="รับเข้า">➕ เข้า</button>
-        <button onclick="movePart(${jsArg(p.id)}, -1)" class="btn btn-orange btn-sm" title="เบิกไปใช้">➖ เบิก</button>
+               style="width:64px;text-align:center;padding:4px" title="${t('จำนวน')}">
+        <button onclick="movePart(${jsArg(p.id)}, 1)" class="btn btn-success btn-sm" title="${t('รับเข้า')}">${t('➕ เข้า')}</button>
+        <button onclick="movePart(${jsArg(p.id)}, -1)" class="btn btn-orange btn-sm" title="${t('เบิกไปใช้')}">${t('➖ เบิก')}</button>
       </div>
     </td>
     <td style="text-align:center">
       <div class="flex gap-1 justify-center">
-        <button onclick="openPartHistory(${jsArg(p.id)})" class="btn btn-ghost btn-icon btn-sm" title="ดูประวัติ">${icon('eye')}</button>
-        <button onclick="editPart(${jsArg(p.id)})" class="btn btn-ghost btn-icon btn-sm" title="แก้ไข">${icon('edit')}</button>
-        ${currentRole === 'admin' ? `<button onclick="deletePart(${jsArg(p.id)})" class="btn btn-red btn-icon btn-sm" title="ลบ">${icon('trash')}</button>` : ''}
+        <button onclick="openPartHistory(${jsArg(p.id)})" class="btn btn-ghost btn-icon btn-sm" title="${t('ดูประวัติ')}">${icon('eye')}</button>
+        <button onclick="editPart(${jsArg(p.id)})" class="btn btn-ghost btn-icon btn-sm" title="${t('แก้ไข')}">${icon('edit')}</button>
+        ${currentRole === 'admin' ? `<button onclick="deletePart(${jsArg(p.id)})" class="btn btn-red btn-icon btn-sm" title="${t('ลบ')}">${icon('trash')}</button>` : ''}
       </div>
     </td>
   </tr>`;
@@ -309,22 +309,22 @@ async function logPartMove(partId, type, qty, balance, note, moveDate) {
 function openPartHistory(id) {
   const p = partById(id); if (!p) return;
   document.getElementById('part-hist-title').textContent = p.name;
-  const t = partTotal(id);
+  const tot = partTotal(id);
   document.getElementById('part-hist-sub').textContent =
-    `รับเข้าทั้งหมด ${t.in} · เบิกไปแล้ว ${t.out} · คงเหลือ ${p.qty} ${p.unit}`;
+    `${window.t('รับเข้าทั้งหมด')} ${tot.in} · ${window.t('เบิกไปแล้ว')} ${tot.out} · ${window.t('คงเหลือ')} ${p.qty} ${p.unit}`;
 
   const rows = partMoves.filter(m => m.part_id === id);
   document.getElementById('part-hist-tbody').innerHTML = rows.length
     ? rows.map(m => `<tr>
         <td class="mono" style="font-size:11px;white-space:nowrap">${escapeHtml(fmtDate(m.move_date))}
           <div style="color:var(--t3);font-size:10px">${m.created_at ? new Date(m.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</div></td>
-        <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? '➕ รับเข้า' : '➖ เบิกใช้'}</span></td>
+        <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? t('➕ รับเข้า') : t('➖ เบิกใช้')}</span></td>
         <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}</td>
         <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>
         <td style="font-size:11px;color:var(--t2)">${escapeHtml(m.note) || '—'}</td>
         <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(m.performed_by))}</td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="tbl-empty">ยังไม่มีประวัติ</td></tr>';
+    : `<tr><td colspan="6" class="tbl-empty">${t('ยังไม่มีประวัติ')}</td></tr>`;
 
   document.getElementById('part-hist-modal').classList.add('open');
 }
@@ -335,7 +335,7 @@ function openPartHistory(id) {
 function exportPartsCSV() {
   if (!parts.length) return toast('ยังไม่มีอะไหล่ให้ export', 'info');
   const rows = parts.map(p => {
-    const t = partTotal(p.id);
+    const tot = partTotal(p.id);
     return {
       category: p.category || '', name: p.name || '', code: p.code || '',
       total_in: t.in, total_out: t.out,

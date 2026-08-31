@@ -66,7 +66,7 @@ function renderDashboard() {
   // ── เคลื่อนไหวล่าสุด ──
   const recent = txns.slice(0, 7);
   document.getElementById('recent-tx').innerHTML = !recent.length
-    ? '<tr><td colspan="5" class="tbl-empty">ยังไม่มีประวัติ</td></tr>'
+    ? `<tr><td colspan="5" class="tbl-empty">${t('ยังไม่มีประวัติ')}</td></tr>`
     : recent.map(t => `<tr>
         <td class="mono" style="font-size:11px;white-space:nowrap">${t.createdAt ? new Date(t.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}<div style="color:var(--t3);font-size:10px">${escapeHtml(t.date)}</div></td>
         <td>${typeBadge(t.type)}</td>

@@ -188,7 +188,7 @@ function refreshCustomerSelects() {
     const seen = new Map();
     customers.forEach(c => seen.set(normCustName(c.name), c.name));
     stock.forEach(i => { const k = normCustName(i.dispatched_to); if (k && !seen.has(k)) seen.set(k, i.dispatched_to); });
-    hist.innerHTML = '<option value="">— ทุกลูกค้า —</option>'
+    hist.innerHTML = `<option value="">${t('— ทุกลูกค้า —')}</option>`
       + [...seen.values()].sort((a, b) => a.localeCompare(b, 'th')).map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
     hist.value = prev;
   }

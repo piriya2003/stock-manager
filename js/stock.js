@@ -36,7 +36,7 @@ function populateCatFilter() {
   const row = (val, label, cls = '') =>
     `<div class="cat-dd-item${cls}${cur === val ? ' active' : ''}" onclick="event.stopPropagation();pickCat(${jsArg(val)})">${escapeHtml(label)}</div>`;
 
-  let html = row('', '— ทุกหมวดหมู่ —');
+  let html = row('', t('— ทุกหมวดหมู่ —'));
   [...tree.keys()].sort((a, b) => a.localeCompare(b, 'th')).forEach(cat => {
     const subs = [...tree.get(cat)].sort((a, b) => a.localeCompare(b, 'th'));
     if (!subs.length) { html += row(cat, cat); return; }
@@ -58,7 +58,7 @@ function updateCatLabel() {
   const el = document.getElementById('s-cat-label'); if (!el) return;
   const v = document.getElementById('s-cat').value;
   const [c, s] = v.includes(CAT_SEP) ? v.split(CAT_SEP) : [v, ''];
-  el.textContent = !c ? '— ทุกหมวดหมู่ —' : (s ? `${c} → ${s}` : c);
+  el.textContent = !c ? t('— ทุกหมวดหมู่ —') : (s ? `${c} → ${s}` : c);
 }
 
 function toggleCatMenu(e) {
@@ -133,7 +133,7 @@ function filterStock() {
   const data = getFilteredStock();
   const sm = subcatMap();
   const tbody = document.getElementById('stock-tbody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">ไม่พบสินค้า</td></tr>'; document.getElementById('rec-count').textContent = 0; return; }
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="8" class="tbl-empty">${t('ไม่พบสินค้า')}</td></tr>`; document.getElementById('rec-count').textContent = 0; return; }
   tbody.innerHTML = data.map((item, idx) => `<tr>
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
       <td style="color:var(--blue);font-weight:500">${escapeHtml(item.category)}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">→ ${escapeHtml(subcatOf(item, sm))}</div>` : ''}</td>

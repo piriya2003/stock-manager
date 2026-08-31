@@ -108,7 +108,7 @@ function renderInSession() {
   document.getElementById('i-session-count').textContent = inSession.length;
   const el = document.getElementById('i-session');
   if (!inSession.length) {
-    el.innerHTML = '<div class="scan-empty">ยังไม่มีรายการ<br>ยิงบาร์โค้ดเพื่อเริ่มได้เลย</div>';
+    el.innerHTML = `<div class="scan-empty">${t('ยังไม่มีรายการ')}<br>${t('ยิงบาร์โค้ดเพื่อเริ่มได้เลย')}</div>`;
     return;
   }
   // เลขลำดับนับตามที่สแกนจริง แต่เรียงตัวล่าสุดไว้บนสุด — เลขบนสุดจึงเท่ากับจำนวนที่รับเข้าแล้ว
