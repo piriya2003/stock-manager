@@ -14,6 +14,48 @@ function masterByName(name) {
   return n ? masterProds.find(p => (p.name || '').trim() === n) : null;
 }
 
+// ── กันชื่อสินค้าแตกเป็นสองกอง ──────────────────────────────────────
+// ช่องชื่อพิมพ์อิสระได้ "SgData-ULC" กับ "sgdata-ulc " จึงเป็นคนละสินค้า
+// ในสายตาระบบ ยอดคงเหลือแยกกัน ค้นหาไม่เจอ และไม่มีอะไรเตือน
+// ตัดเว้นวรรคและตัวคั่นออกให้หมดก่อนเทียบ — "SgData-ULC" / "sgdata ulc" / "SgDataULC"
+// ในทางปฏิบัติคือของตัวเดียวกัน แต่ระบบเห็นเป็นคนละชื่อ
+function normName(s) { return String(s ?? '').toLowerCase().replace(/[\s\-_.]+/g, ''); }
+function knownNames() {
+  return [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])].filter(Boolean);
+}
+// คืนชื่อเดิมที่ "เกือบเหมือน" ถ้ามี — ตรงเป๊ะอยู่แล้วถือว่าไม่มีปัญหา
+function similarName(nm) {
+  const n = normName(nm);
+  if (!n) return null;
+  const names = knownNames();
+  if (names.includes(nm)) return null;
+  return names.find(x => normName(x) === n) || null;
+}
+
+function useSimilarName() {
+  const hit = similarName(document.getElementById('i-name').value);
+  if (!hit) return;
+  document.getElementById('i-name').value = hit;
+  onInboundNameChange();
+  toast(`ใช้ชื่อเดิม "${hit}" แล้ว`, 'success');
+}
+
+// ถามครั้งเดียวต่อชื่อที่พิมพ์ — ยิง SN ต่อได้ไม่สะดุด
+let ackSimilarName = {};
+function resolveInboundName(nm) {
+  const hit = similarName(nm);
+  if (!hit) return nm;
+  if (ackSimilarName[nm] !== undefined) return ackSimilarName[nm];
+  const useOld = confirm(`มีสินค้าชื่อ "${hit}" อยู่แล้ว\n`
+    + `ที่พิมพ์มาคือ "${nm}" — ต่างกันแค่ตัวพิมพ์ใหญ่เล็กหรือเว้นวรรค\n\n`
+    + `กด "ตกลง" = ใช้ชื่อเดิม "${hit}"  (แนะนำ)\n`
+    + `กด "ยกเลิก" = ใช้ "${nm}" ตามที่พิมพ์ แยกเป็นสินค้าคนละตัว`);
+  const chosen = useOld ? hit : nm;
+  ackSimilarName[nm] = chosen;
+  if (useOld) { document.getElementById('i-name').value = hit; onInboundNameChange(); }
+  return chosen;
+}
+
 function updateBalance() {
   document.getElementById('i-balance').textContent = getBalance(document.getElementById('i-code').value);
   renderInboundSummary();
@@ -50,8 +92,19 @@ function renderInboundSummary() {
     bit('รหัส', g('i-code'), true),
     bit('หมวด', [g('i-cat'), g('i-subcat')].filter(Boolean).join(' / ')),
     bit('ล็อต', g('i-lot'), true),
+    // ผู้จำหน่าย/PO ค้างในฟอร์มได้เหมือนกัน และไปโผล่บนใบ GRN ถ้าลืมแก้
+    bit('ผู้จำหน่าย', g('i-supplier')),
+    bit('PO', g('i-po'), true),
   ].filter(Boolean);
-  el.innerHTML = `<span style="flex:1;min-width:0">${parts.join('<span style="color:var(--b1)"> · </span>')}</span>`
+
+  // ชื่อที่ต่างจากของเดิมแค่ตัวพิมพ์ใหญ่เล็ก/เว้นวรรค จะแตกเป็นสินค้าคนละตัวโดยไม่มีใครรู้
+  const hit = similarName(nm);
+  const warn = hit
+    ? `<div style="margin-top:6px;color:var(--orange);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+       <span>⚠️ คล้ายกับ "<b>${escapeHtml(hit)}</b>" ที่มีอยู่แล้ว — ถ้าเป็นตัวเดียวกันควรใช้ชื่อเดิม ไม่งั้นยอดจะแยกกัน</span>
+       <button onclick="useSimilarName()" class="btn btn-ghost btn-sm">ใช้ชื่อเดิม</button></div>`
+    : '';
+  el.innerHTML = `<span style="flex:1;min-width:0">${parts.join('<span style="color:var(--b1)"> · </span>')}${warn}</span>`
     + `<button onclick="clearInboundForm()" class="btn btn-ghost btn-sm" style="flex-shrink:0">ล้างฟอร์ม</button>`;
 }
 
@@ -60,6 +113,7 @@ function clearInboundForm() {
   ['i-name', 'i-code', 'i-cat', 'i-subcat', 'i-lot', 'i-supplier', 'i-po', 'i-sn', 'i-bulk']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   inlineMsg('i-msg', '', true);
+  ackSimilarName = {};
   updateBalance();
   document.getElementById('i-name').focus();
 }
@@ -81,10 +135,11 @@ function isMissingSubcat(error, subcat) {
 }
 
 async function doInbound() {
-  const { dt, cat, subcat, nm, cd, lot, sup, po } = inboundFields();
+  const { dt, cat, subcat, cd, lot, sup, po } = inboundFields();
   const sn  = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
   if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
-  if (!nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
+  if (!inboundFields().nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
+  const nm = resolveInboundName(inboundFields().nm);
 
   try {
     const row = { category: cat, name: nm, code: cd, sn, status: 'Available', created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po };
@@ -110,8 +165,9 @@ async function doInbound() {
 
 // รับเข้าหลายรายการทีเดียว จากรายการ SN (ไม่ต้องสแกน)
 async function doInboundBulk() {
-  const { dt, cat, subcat, nm, cd, lot, sup, po } = inboundFields();
-  if (!nm) return inlineMsg('i-bulk-msg', '❌ กรุณาระบุชื่อสินค้าในช่องด้านบนก่อน', false);
+  const { dt, cat, subcat, cd, lot, sup, po } = inboundFields();
+  if (!inboundFields().nm) return inlineMsg('i-bulk-msg', '❌ กรุณาระบุชื่อสินค้าในช่องด้านบนก่อน', false);
+  const nm = resolveInboundName(inboundFields().nm);
 
   const raw = document.getElementById('i-bulk').value || '';
   const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];

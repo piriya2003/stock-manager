@@ -307,8 +307,8 @@
               </div>
             </div>
             <div class="grid-2">
-              <div class="form-row"><label class="field-label">ผู้จำหน่าย (Supplier)</label><input type="text" id="i-supplier" placeholder="เช่น บริษัท ABC จำกัด" list="supplier-dl"></div>
-              <div class="form-row"><label class="field-label">เลขที่ PO</label><input type="text" id="i-po" placeholder="เลขที่ใบสั่งซื้อ (ถ้ามี)"></div>
+              <div class="form-row"><label class="field-label">ผู้จำหน่าย (Supplier)</label><input type="text" id="i-supplier" placeholder="เช่น บริษัท ABC จำกัด" list="supplier-dl" oninput="renderInboundSummary()"></div>
+              <div class="form-row"><label class="field-label">เลขที่ PO</label><input type="text" id="i-po" placeholder="เลขที่ใบสั่งซื้อ (ถ้ามี)" oninput="renderInboundSummary()"></div>
             </div>
             <div class="form-row"><label class="field-label" style="color:var(--purple)">เลขล็อต (Lot No.)</label><input type="text" id="i-lot" placeholder="เลขล็อต/รุ่นการผลิต (ถ้ามี)" oninput="renderInboundSummary()"></div>
             <div id="i-summary" style="border:1px solid var(--b1);border-left:3px solid var(--blue);border-radius:var(--r);padding:10px 12px;font-size:12px;line-height:1.7;display:flex;align-items:center;gap:10px;flex-wrap:wrap"></div>
