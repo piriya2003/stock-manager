@@ -395,7 +395,9 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl td{padding:6px 7px;vertical-align:top;font-size:11px}
 .do-doc .do-items-tbl td.c{text-align:center;font-weight:600}
 .do-doc .do-items-tbl td b{font-size:11.5px;line-height:1.5}
-.do-doc .do-items-tbl .do-model{font-weight:700;font-size:11.5px;line-height:1.5}
+/* ชื่อสินค้าเป็นบล็อกของตัวเอง — เลข SN เป็น inline-block แล้ว ถ้าชื่อยังเป็น inline
+   เลขตัวแรกจะไหลไปต่อท้ายชื่อในบรรทัดเดียวกัน */
+.do-doc .do-items-tbl .do-name{font-weight:700;font-size:11.5px;line-height:1.5}
 /* เลข SN เรียง 2 คอลัมน์ ใบที่มีของเป็นร้อยชิ้นจะได้ไม่กินกระดาษเป็นสิบแผ่น
    ใช้ inline-block ไม่ใช่ column-count เพราะตอนพิมพ์ข้ามหน้า multicol ใน Chrome
    คุมไม่ได้ ส่วน inline-block เป็นการไหลของบรรทัดปกติ ตัดหน้าตรงไหนก็ได้ */

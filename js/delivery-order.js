@@ -143,9 +143,8 @@ function fmtDODate(iso) {
 
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
-  // ใต้ชื่อสินค้าโชว์ได้แค่ "รหัสสินค้า" — หมวดหมู่เป็นข้อมูลไว้จัดการภายใน ไม่ใช่ของที่ลูกค้าต้องเห็นบนใบ
-  // ของที่ไม่มีรหัสก็ปล่อยว่าง ดีกว่าเอาหมวดหมู่มาใส่แทน
-  const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${escapeHtml(v.code)}</div>` : '';
+  // ใต้ชื่อสินค้าไม่โชว์อะไรเลย — รหัสสินค้ากับหมวดหมู่เป็นข้อมูลไว้จัดการภายใน
+  // ไม่ใช่ของที่ลูกค้าต้องเห็นบนเอกสาร (ยังมีคอลัมน์ "รหัสสินค้า" ซ้ายสุดเป็นเลขลำดับอยู่)
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียงน้อย→มาก แสดงครบทุกเลข
   // เรียงเป็น 2 คอลัมน์ (ดูที่ .sn ใน style.css) — ใบที่มีของเป็นร้อยชิ้นจะได้ไม่กินกระดาษเป็นสิบแผ่น
   const sns = sorted.map(s => `<span class="sn">Serial NO : ${escapeHtml(s)}</span>`).join('');
@@ -153,7 +152,7 @@ function doItemRow(name, v, i) {
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
   return `<tr data-qty="${v.qty}" data-name="${escapeHtml(name)}">
       <td class="c">${i + 1}</td>
-      <td><b>${escapeHtml(name)}</b>${modelLine}${sns}</td>
+      <td><div class="do-name">${escapeHtml(name)}</div>${sns}</td>
       <td class="c">${v.qty}</td>
       <td><input class="do-num" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
       <td><input class="do-num" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
