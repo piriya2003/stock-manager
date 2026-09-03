@@ -2,15 +2,62 @@
 //  INBOUND
 // ══════════════════════════════════════════════════════════════
 function getBalance(code) { return stock.filter(i => i.code === code && i.status === 'Available').length; }
+function masterByCode(code) { return masterProds.find(p => (p.code || '') === (code || '').trim()); }
+
 function updateBalance() {
   const code = document.getElementById('i-code').value;
   document.getElementById('i-balance').textContent = getBalance(code);
-  const mp = masterProds.find(p => p.code === code);
+  const mp = masterByCode(code);
   if (mp) {
     if (!document.getElementById('i-name').value) document.getElementById('i-name').value = mp.name;
     if (!document.getElementById('i-cat').value)  document.getElementById('i-cat').value  = mp.category;
     if (!document.getElementById('i-subcat').value && mp.subcategory) document.getElementById('i-subcat').value = mp.subcategory;
   }
+  renderNameCodeNote();
+}
+
+// ── ชื่อกับรหัสไม่ตรงกัน ต้องเห็นก่อนบันทึก ──────────────────────────
+// ฟอร์มนี้ตั้งใจไม่ล้างช่องชื่อ/รหัสหลังบันทึก เพื่อให้ยิง SN รัวๆ ต่อได้
+// แต่พอเปลี่ยน "รหัส" เป็นตัวใหม่ ชื่อเก่าที่ค้างอยู่จะติดไปด้วยแบบเงียบๆ
+// (เติมชื่ออัตโนมัติทำงานเฉพาะตอนช่องชื่อว่าง จึงไม่ช่วยในกรณีนี้)
+// เคยทำให้ของ 60 ชิ้นเข้าคลังผิดชื่อมาแล้ว — ดู sql/fix-ulc-item-names.sql
+function renderNameCodeNote() {
+  const el = document.getElementById('i-name-note');
+  if (!el) return;
+  const code = document.getElementById('i-code').value.trim();
+  const nm   = document.getElementById('i-name').value.trim();
+  const mp   = masterByCode(code);
+  if (!code || !nm || !mp || mp.name === nm) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  el.innerHTML = `<span style="color:var(--orange);font-weight:600">⚠️ ชื่อกับรหัสไม่ตรงกัน</span>
+    <span style="color:var(--t2)"> — รหัส <b class="mono">${escapeHtml(code)}</b> เป็นของ
+    "<b>${escapeHtml(mp.name)}</b>" แต่ช่องชื่อคือ "<b>${escapeHtml(nm)}</b>"</span>
+    <button onclick="useMasterName()" class="btn btn-ghost btn-sm" style="margin-left:6px">ใช้ชื่อตามรหัส</button>`;
+}
+
+function useMasterName() {
+  const mp = masterByCode(document.getElementById('i-code').value);
+  if (!mp) return;
+  document.getElementById('i-name').value = mp.name;
+  if (mp.category) document.getElementById('i-cat').value = mp.category;
+  if (mp.subcategory) document.getElementById('i-subcat').value = mp.subcategory;
+  renderNameCodeNote();
+  toast(`ใช้ชื่อ "${mp.name}" ตามรหัสสินค้าแล้ว`, 'success');
+}
+
+// ถามครั้งเดียวต่อคู่ ชื่อ+รหัส — ถ้าตั้งใจใช้ชื่อต่างจากต้นแบบ จะได้ยิง SN ต่อได้ไม่สะดุด
+let ackNameMismatch = null;
+function confirmNameCode(nm, cd) {
+  const mp = masterByCode(cd);
+  if (!mp || mp.name === nm) return true;
+  const key = cd + '|' + nm;
+  if (ackNameMismatch === key) return true;
+  const ok = confirm(`⚠️ ชื่อสินค้ากับรหัสไม่ตรงกัน\n\n`
+    + `รหัส ${cd} = "${mp.name}"\n`
+    + `แต่กำลังจะบันทึกเป็น "${nm}"\n\n`
+    + `ยืนยันใช้ชื่อ "${nm}" หรือไม่?`);
+  if (ok) ackNameMismatch = key;
+  return ok;
 }
 
 // ค่าที่กรอกไว้ในฟอร์มรับเข้า ใช้ร่วมกันทั้งแบบสแกนทีละชิ้นและแบบวางทีเดียวหลายตัว
@@ -34,6 +81,7 @@ async function doInbound() {
   const sn  = filterBarcode(document.getElementById('i-sn').value, 'i-msg');
   if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
   if (!nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
+  if (!confirmNameCode(nm, cd)) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
 
   try {
     const row = { category: cat, name: nm, code: cd, sn, status: 'Available', created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po };
@@ -61,6 +109,7 @@ async function doInbound() {
 async function doInboundBulk() {
   const { dt, cat, subcat, nm, cd, lot, sup, po } = inboundFields();
   if (!nm) return inlineMsg('i-bulk-msg', '❌ กรุณาระบุชื่อสินค้าในช่องด้านบนก่อน', false);
+  if (!confirmNameCode(nm, cd)) return;
 
   const raw = document.getElementById('i-bulk').value || '';
   const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];

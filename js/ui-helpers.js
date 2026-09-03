@@ -80,7 +80,7 @@ function tab(name) {
   if (name === 'do-history') renderDOHistory();
   if (name === 'grn-history') renderGRNHistory();
   if (name === 'backup') renderBackupStats();
-  if (name === 'inbound') { renderInSession(); setTimeout(() => document.getElementById('i-sn').focus(), 80); }
+  if (name === 'inbound') { renderInSession(); renderNameCodeNote(); setTimeout(() => document.getElementById('i-sn').focus(), 80); }
   if (name === 'outbound') setTimeout(() => document.getElementById('o-sn').focus(), 80);
   if (name === 'do-create') renderOutboundHistory();
   if (name === 'parts') { updatePartDataLists(); renderParts(); }
