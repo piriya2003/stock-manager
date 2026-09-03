@@ -396,7 +396,10 @@ input[type=file]{display:none}
 .do-doc .do-items-tbl td.c{text-align:center;font-weight:600}
 .do-doc .do-items-tbl td b{font-size:11.5px;line-height:1.5}
 .do-doc .do-items-tbl .do-model{font-weight:700;font-size:11.5px;line-height:1.5}
-.do-doc .do-items-tbl .sn{font-size:10.5px;line-height:1.55}
+/* เลข SN เรียง 2 คอลัมน์ ใบที่มีของเป็นร้อยชิ้นจะได้ไม่กินกระดาษเป็นสิบแผ่น
+   ใช้ inline-block ไม่ใช่ column-count เพราะตอนพิมพ์ข้ามหน้า multicol ใน Chrome
+   คุมไม่ได้ ส่วน inline-block เป็นการไหลของบรรทัดปกติ ตัดหน้าตรงไหนก็ได้ */
+.do-doc .do-items-tbl .sn{display:inline-block;width:50%;vertical-align:top;font-size:10.5px;line-height:1.55;white-space:nowrap}
 /* ช่องราคา/จำนวนเงิน — พิมพ์แก้ได้ (บนจอมีเส้นประบอกว่าแก้ได้ เวลาพิมพ์เป็นตัวเลขเปล่าๆ) */
 .do-doc .do-items-tbl .do-num{width:100%;box-sizing:border-box;border:none;border-bottom:1px dotted #c4c4c4;background:transparent!important;color:#111!important;
   text-align:right;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;padding:1px 2px;outline:none}

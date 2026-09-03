@@ -145,7 +145,8 @@ function fmtDODate(iso) {
 function doItemRow(name, v, i) {
   const modelLine = (v.code && v.code !== '-') ? `<div class="do-model">${escapeHtml(v.code)}</div>` : (v.category ? `<div class="do-model">${escapeHtml(v.category)}</div>` : '');
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียงน้อย→มาก แสดงครบทุกเลข
-  const sns = sorted.map(s => `<div class="sn">Serial NO : ${escapeHtml(s)}</div>`).join('');
+  // เรียงเป็น 2 คอลัมน์ (ดูที่ .sn ใน style.css) — ใบที่มีของเป็นร้อยชิ้นจะได้ไม่กินกระดาษเป็นสิบแผ่น
+  const sns = sorted.map(s => `<span class="sn">Serial NO : ${escapeHtml(s)}</span>`).join('');
   const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
   return `<tr data-qty="${v.qty}" data-name="${escapeHtml(name)}">
