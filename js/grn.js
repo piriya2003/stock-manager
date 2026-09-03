@@ -30,7 +30,7 @@ function openGRNModal() {
   });
   items.innerHTML = Object.entries(grp).map(([name, v], i) => `
     <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}<div style="font-size:10px;color:#888;white-space:nowrap">${escapeHtml(v.code)} / ${escapeHtml(v.category)}</div></td>
+      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
       <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
     </tr>`).join('');
@@ -175,7 +175,7 @@ function reopenGRNForPrint(id) {
   });
   document.getElementById('grn-items').innerHTML = Object.entries(grp).map(([name, v], i) => `
     <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}<div style="font-size:10px;color:#888;white-space:nowrap">${escapeHtml(v.code)} / ${escapeHtml(v.category)}</div></td>
+      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
       <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
     </tr>`).join('');
