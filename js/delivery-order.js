@@ -619,9 +619,9 @@ async function removeItemFromDO(sn) {
 
     if (willReturn) {
       const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
-      const { error: iErr } = await supaClient.from('inventory').update(back).eq('id', item.id);
-      if (iErr) throw iErr;
-      Object.assign(item, back);
+      const won = await updateInventoryIf(item.id, back, [['status', 'eq', 'Sold']]);
+      if (!won.size) toast('ถอดออกจากใบแล้ว แต่ของไม่ได้คืนเข้าคลัง — มีคนอื่นย้ายไปก่อน', 'warning');
+      else Object.assign(item, back);
       await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, sn, getBalance(item.code), `ถอดออกจากใบ ${d.doNo}`);
     }
 
@@ -651,7 +651,8 @@ async function addItemsToDO() {
   const list = [...new Set(raw.split(/[\s,]+/).map(s => s.trim().replace(/^\*+|\*+$/g, '')).filter(Boolean))];
   if (!list.length) return inlineMsg('dov-add-msg', '❌ กรุณายิงบาร์โค้ดหรือวางรายการ SN ก่อน', false);
 
-  const toAdd = [], notFound = [], notAvail = [];
+  let toAdd = [];               // ตัดตัวที่คนอื่นชิงไปก่อนออกทีหลัง จึงต้องเป็น let
+  const notFound = [], notAvail = [];
   list.forEach(sn => {
     const item = stock.find(i => String(i.sn) === sn && i.status === 'Available');
     if (item) toAdd.push(item);
@@ -669,9 +670,13 @@ async function addItemsToDO() {
   (d.items || []).forEach(i => { if (i.unitPrice != null && priceByName[i.name] == null) priceByName[i.name] = Number(i.unitPrice); });
 
   try {
-    const { error: uErr } = await supaClient.from('inventory')
-      .update({ status: 'Sold', dispatched_at: batchAt }).in('id', toAdd.map(i => i.id));
-    if (uErr) throw uErr;
+    // ตัดได้เฉพาะของที่ยังว่างอยู่จริง ตัวที่คนอื่นชิงไปก่อนต้องไม่ขึ้นใบ
+    const wonAdd = await updateInventoryIf(toAdd.map(i => i.id), { status: 'Sold', dispatched_at: batchAt },
+                                            [['status', 'eq', 'Available']]);
+    const lostAdd = toAdd.filter(i => !wonAdd.has(i.id));
+    toAdd = toAdd.filter(i => wonAdd.has(i.id));
+    if (!toAdd.length) return inlineMsg('dov-add-msg', raceMsg(`เพิ่มไม่สำเร็จทั้ง ${lostAdd.length} รายการ`), false);
+    if (lostAdd.length) toast(`⚠️ ข้าม ${lostAdd.length} รายการ มีคนตัดไปก่อน: ${lostAdd.map(i => i.sn).join(', ')}`, 'warning');
 
     const { data: inserted, error: iErr } = await supaClient.from('do_items').insert(
       toAdd.map(i => ({
@@ -845,9 +850,10 @@ async function deleteDO(id) {
 
     if (restore && stillOut.length) {
       const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
-      const { error: rErr } = await supaClient.from('inventory').update(back).in('id', stillOut.map(i => i.id));
-      if (rErr) throw rErr;
-      for (const item of stillOut) {
+      const wonBack = await updateInventoryIf(stillOut.map(i => i.id), back, [['status', 'eq', 'Sold']]);
+      const lostBack = stillOut.filter(i => !wonBack.has(i.id));
+      if (lostBack.length) toast(`⚠️ คืนของไม่ได้ ${lostBack.length} ชิ้น — มีคนอื่นย้ายไปก่อน: ${lostBack.map(i => i.sn).join(', ')}`, 'warning');
+      for (const item of stillOut.filter(i => wonBack.has(i.id))) {
         Object.assign(item, back);
         await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `ลบใบ ${d.doNo} แล้วคืนของเข้าคลัง`);
       }

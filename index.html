@@ -94,6 +94,7 @@
       <span style="font-size:11px;color:var(--t3)" id="shortcut-hint"><span class="kbd">F2</span> รับเข้า &nbsp;<span class="kbd">F3</span> โอน/ขาย &nbsp;<span class="kbd">F4</span> ซ่อม</span>
     </div>
     <div class="topbar-right">
+      <button id="sync-now-btn" class="btn btn-ghost btn-icon" onclick="syncNow()" title="ตรวจหาข้อมูลใหม่เดี๋ยวนี้" style="border-radius:50%;font-size:15px">⟳</button>
       <button id="lang-toggle" class="btn btn-ghost btn-sm" onclick="toggleLang()" style="font-weight:700;min-width:44px">EN</button>
       <button id="theme-toggle" class="btn btn-ghost btn-icon" onclick="toggleTheme()" style="border-radius: 50%; font-size: 16px;">☀️</button>
       <span class="clock-badge" id="clock"></span>
@@ -1165,6 +1166,7 @@
 <script src="js/part-history.js"></script>
 <script src="js/import-export.js"></script>
 <script src="js/backup.js"></script>
+<script src="js/live-sync.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

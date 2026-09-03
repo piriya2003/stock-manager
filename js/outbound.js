@@ -17,8 +17,13 @@ async function doOutbound() {
     // เริ่มชุดใหม่เมื่อยังไม่มีของในเซสชั่น หรือเปลี่ยนวันที่กลางคัน — คนละวันต้องคนละชุด
     if (!outSession.length || dispatchDay(sessionDispatchTime) !== dt) sessionDispatchTime = dispatchISOFor(dt);
     const dispatchedAt = sessionDispatchTime;
-    const { error } = await supaClient.from('inventory').update({ status: 'Sold', dispatched_at: dispatchedAt }).eq('id', item.id);
-    if (error) throw error;
+    // ตัดได้เฉพาะของที่ยังว่างอยู่จริงในฐานข้อมูล ไม่ใช่ที่หน้าจอเห็นว่าว่าง
+    const won = await updateInventoryIf(item.id, { status: 'Sold', dispatched_at: dispatchedAt }, [['status', 'eq', 'Available']]);
+    if (!won.size) {
+      inlineMsg('o-msg', raceMsg(`SN: ${sn} ถูกจ่ายออกไปแล้ว`), false);
+      document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus();
+      return;
+    }
     item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
     recordDispatchTo([item.id], custName);
     outSession.push(item); persistOutSession();
@@ -55,25 +60,32 @@ async function doOutboundBulk() {
     // เริ่มชุดใหม่เมื่อยังไม่มีของในเซสชั่น หรือเปลี่ยนวันที่กลางคัน — คนละวันต้องคนละชุด
     if (!outSession.length || dispatchDay(sessionDispatchTime) !== dt) sessionDispatchTime = dispatchISOFor(dt);
     const dispatchedAt = sessionDispatchTime;
-    const { error } = await supaClient.from('inventory')
-      .update({ status: 'Sold', dispatched_at: dispatchedAt })
-      .in('id', toSell.map(i => i.id));
-    if (error) throw error;
+    // ตัดเฉพาะแถวที่ยังว่างอยู่จริง — ตัวที่คนอื่นชิงไปก่อนจะไม่ถูกคืนกลับมาใน won
+    const won = await updateInventoryIf(toSell.map(i => i.id), { status: 'Sold', dispatched_at: dispatchedAt },
+                                        [['status', 'eq', 'Available']]);
+    const done = toSell.filter(i => won.has(i.id));
+    const lost = toSell.filter(i => !won.has(i.id));
+    if (!done.length) return inlineMsg('o-bulk-msg', raceMsg(`ตัดสต็อกไม่สำเร็จทั้ง ${lost.length} รายการ`), false);
 
-    for (const item of toSell) {
+    for (const item of done) {
       item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
       outSession.push(item);
       await logTransaction(dt, typ, item.name, item.code, item.sn, getBalance(item.code), `→ ${custName}`);
     }
-    recordDispatchTo(toSell.map(i => i.id), custName);
+    recordDispatchTo(done.map(i => i.id), custName);
     persistOutSession();
     renderOutSession(); renderOutboundHistory(); checkAlerts();
     document.getElementById('o-bulk').value = '';
 
-    let msg = `✅ ตัดสต็อก ${toSell.length} รายการ → ${custName}`;
-    if (notFound.length || notAvail.length) msg += `  (ข้าม: ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`;
+    let msg = `✅ ตัดสต็อก ${done.length} รายการ → ${custName}`;
+    const skipped = [];
+    if (notFound.length) skipped.push(`ไม่พบ ${notFound.length}`);
+    if (notAvail.length) skipped.push(`ไม่พร้อม ${notAvail.length}`);
+    if (lost.length) skipped.push(`มีคนตัดไปก่อน ${lost.length}`);
+    if (skipped.length) msg += `  (ข้าม: ${skipped.join(', ')})`;
     inlineMsg('o-bulk-msg', msg, true);
-    toast(`ตัดสต็อก ${toSell.length} รายการสำเร็จ`, 'success');
+    if (lost.length) toast(`⚠️ ${lost.length} รายการมีคนตัดไปก่อนแล้ว: ${lost.map(i => i.sn).join(', ')}`, 'warning');
+    toast(`ตัดสต็อก ${done.length} รายการสำเร็จ`, 'success');
     if (notFound.length) console.warn('SN ไม่พบในระบบ:', notFound.join(', '));
     if (notAvail.length) console.warn('SN ไม่พร้อมตัด (ขาย/ซ่อม/เคลมไปแล้ว):', notAvail.join(', '));
   } catch (err) { inlineMsg('o-bulk-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }

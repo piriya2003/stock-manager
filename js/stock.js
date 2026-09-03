@@ -160,8 +160,9 @@ async function returnToStock(id) {
   try {
     // ของกลับเข้าคลังแล้ว ต้องล้างปลายทางด้วย ไม่งั้นในตารางจะยังขึ้นชื่อลูกค้าทั้งที่ของอยู่กับเรา
     const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
-    const { error } = await supaClient.from('inventory').update(back).eq('id', id);
-    if (error) throw error;
+    // ต้องยังเป็นสถานะเดิมที่หน้าจอเห็น ไม่งั้นแปลว่ามีคนอื่นจัดการของชิ้นนี้ไปแล้ว
+    const won = await updateInventoryIf(id, back, [['status', 'eq', old]]);
+    if (!won.size) return toast(raceMsg(`SN: ${item.sn} ถูกย้ายสถานะไปแล้ว`), 'error');
     Object.assign(item, back);
     await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `คืนจากสถานะ: ${old}`);
     filterStock(); checkAlerts();

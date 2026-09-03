@@ -85,6 +85,7 @@ async function finishLogin(session) {
   tab('overview');
   checkAlerts(); updateDOBadge(); updateGRNBadge(); updateClaimBadge();
   startSessionTimer();
+  startLiveSync();   // ตามข้อมูลที่คนอื่นแก้ โดยไม่ต้องล็อกอินใหม่
   toast('เข้าสู่ระบบสำเร็จ', 'success');
 }
 
@@ -100,6 +101,7 @@ async function doLogout() {
   await supaClient.auth.signOut();
   currentUser = null; currentRole = null; currentUserId = null;
   stopSessionTimer();
+  stopLiveSync();
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('f-user').value = '';

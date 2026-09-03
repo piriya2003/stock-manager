@@ -35,8 +35,9 @@ async function doRepair() {
   if (!item) return inlineMsg('r-msg', '❌ ไม่พบ SN ในระบบ', false);
 
   try {
-    const { error: uErr } = await supaClient.from('inventory').update({ status: 'Repair' }).eq('id', item.id);
-    if (uErr) throw uErr;
+    // ต้องยังเป็นสถานะเดิมที่หน้าจอเห็นตอนกด ไม่งั้นแปลว่ามีคนอื่นย้ายของไปแล้ว
+    const won = await updateInventoryIf(item.id, { status: 'Repair' }, [['status', 'eq', item.status]]);
+    if (!won.size) return inlineMsg('r-msg', raceMsg(`SN: ${sn} ถูกย้ายสถานะไปแล้ว`), false);
     item.status = 'Repair';
 
     const { data: job, error: jErr } = await supaClient.from('repair_jobs').insert({
@@ -206,9 +207,10 @@ async function deleteRepairJob(id) {
     if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ลบงานซ่อม (เฉพาะแอดมิน)');
 
     if (willFree) {
-      const { error: iErr } = await supaClient.from('inventory').update({ status: 'Available' }).eq('id', item.id);
-      if (iErr) throw iErr;
-      item.status = 'Available';
+      const won = await updateInventoryIf(item.id, { status: 'Available' }, [['status', 'eq', 'Repair']]);
+      if (won.size) item.status = 'Available';
+      // ลบใบไปแล้ว จึงไม่ล้มทั้งรายการ แค่บอกว่าสถานะของไม่ได้เปลี่ยนตาม
+      else toast('ลบใบแล้ว แต่สถานะสินค้าไม่ได้เปลี่ยน — มีคนอื่นย้ายของไปก่อน', 'warning');
     }
     repairJobs = repairJobs.filter(j => j.id !== id);
     closeModal('repair-detail-modal');
@@ -242,10 +244,11 @@ async function advanceRepairStatus(newStatus) {
 
     if (newStatus === 'ซ่อมเสร็จ') {
       const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
-      const { error: invErr } = await supaClient.from('inventory').update(back).eq('sn', job.sn);
-      if (invErr) throw invErr;
       const item = stock.find(i => String(i.sn) === job.sn);
-      if (item) Object.assign(item, back);
+      // ใบซ่อมอัปเดตไปแล้ว ถ้าของถูกคนอื่นย้ายไปก่อนก็ไม่ล้มทั้งรายการ แค่บอกให้รู้
+      const won = item ? await updateInventoryIf(item.id, back, [['status', 'eq', 'Repair']]) : new Set();
+      if (won.size) Object.assign(item, back);
+      else toast('ปิดงานซ่อมแล้ว แต่สถานะสินค้าไม่ได้เปลี่ยน — มีคนอื่นย้ายของไปก่อน', 'warning');
       await logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), 'ซ่อมเสร็จเรียบร้อย');
     }
     closeModal('repair-detail-modal'); renderRepairList(); checkAlerts();
@@ -298,8 +301,9 @@ async function confirmSwapSN() {
   if (swapMode === 'same') {
     try {
       if (oldItem) {
-        const { error } = await supaClient.from('inventory').update({ status: 'Sold', claim_reason: reason }).eq('id', oldItem.id);
-        if (error) throw error;
+        const won = await updateInventoryIf(oldItem.id, { status: 'Sold', claim_reason: reason },
+                                            [['status', 'eq', oldItem.status]]);
+        if (!won.size) return toast(raceMsg(`SN: ${oldSN} ถูกย้ายสถานะไปแล้ว`), 'error');
         Object.assign(oldItem, { status: 'Sold', claim_reason: reason });
       }
       const { error: jobErr } = await supaClient.from('repair_jobs').update({
@@ -325,11 +329,10 @@ async function confirmSwapSN() {
 
   try {
     if (oldItem) {
-      const { error } = await supaClient.from('inventory').update({
-        status: 'Claimed', claimed_at: nowISO(), claim_reason: reason, replaced_by_sn: newSN,
-      }).eq('id', oldItem.id);
-      if (error) throw error;
-      Object.assign(oldItem, { status: 'Claimed', claimed_at: nowISO(), claim_reason: reason, replaced_by_sn: newSN });
+      const patch = { status: 'Claimed', claimed_at: nowISO(), claim_reason: reason, replaced_by_sn: newSN };
+      const won = await updateInventoryIf(oldItem.id, patch, [['status', 'eq', oldItem.status]]);
+      if (!won.size) return toast(raceMsg(`SN เดิม ${oldSN} ถูกย้ายสถานะไปแล้ว`), 'error');
+      Object.assign(oldItem, patch);
     }
 
     // เครื่องใหม่ออกจากคลังไปหาลูกค้าเจ้าเดิม — ต้องบันทึกปลายทาง/เวลาให้ครบเหมือนการจ่ายออกปกติ
@@ -338,8 +341,9 @@ async function confirmSwapSN() {
       status: 'Sold', prev_sn: oldSN, dispatched_at: nowISO(),
       dispatched_to: (oldItem && oldItem.dispatched_to) || job.customer || null,
     };
-    const { error: newErr } = await supaClient.from('inventory').update(newDispatch).eq('id', newItem.id);
-    if (newErr) throw newErr;
+    // เครื่องใหม่ต้องยังว่างอยู่จริง — สองคนอาจหยิบเครื่องทดแทนตัวเดียวกันไปเคลมคนละใบ
+    const wonNew = await updateInventoryIf(newItem.id, newDispatch, [['status', 'eq', 'Available']]);
+    if (!wonNew.size) return toast(raceMsg(`เครื่องใหม่ ${newSN} ถูกจ่ายออกไปแล้ว`), 'error');
     Object.assign(newItem, newDispatch);
 
     const { error: jobErr } = await supaClient.from('repair_jobs').update({

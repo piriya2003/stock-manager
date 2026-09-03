@@ -117,6 +117,32 @@ function userName(id) {
   return userNames[id] || (String(id).slice(0, 8) + '…');
 }
 
+// ══════════════════════════════════════════════════════════════
+//  เขียนทับกันไม่ได้ — อัปเดตสินค้าแบบมีเงื่อนไข
+//  หน้าจอโหลดข้อมูลตอนล็อกอินครั้งเดียว สิ่งที่คนอื่นทำหลังจากนั้นเราไม่เห็น
+//  ถ้าสั่งแค่ "แก้แถว id นี้" ฐานข้อมูลจะทำตามเสมอ สองคนจึงจ่ายของชิ้นเดียวกันได้
+//  ทั้งคู่ และคนที่กดทีหลังทับข้อมูลของคนแรกแบบเงียบๆ
+//
+//  ใส่เงื่อนไข "ถ้ายังเป็นสถานะที่ฉันเห็นตอนกด" เข้าไปในคำสั่งเดียวกัน แล้วดูว่า
+//  ฐานข้อมูลคืนมากี่แถว — แถวที่ไม่ได้คืนมาคือแถวที่มีคนอื่นแก้ไปก่อน
+//  conds เขียนเป็น [['status','eq','Available']] หรือ [['status','neq','Available']]
+// ══════════════════════════════════════════════════════════════
+async function updateInventoryIf(ids, patch, conds = []) {
+  const list = (Array.isArray(ids) ? ids : [ids]).filter(Boolean);
+  if (!list.length) return new Set();
+  let q = supaClient.from('inventory').update(patch).in('id', list);
+  conds.forEach(([col, op, val]) => { q = op === 'neq' ? q.neq(col, val) : q.eq(col, val); });
+  const { data, error } = await q.select('id');
+  if (error) throw error;
+  return new Set((data || []).map(r => r.id));
+}
+
+// ข้อความตอนแพ้การแข่งขัน — 0 แถวแยกไม่ออกว่า "คนอื่นชิงไป" หรือ "ไม่มีสิทธิ์แก้"
+// จึงต้องพูดให้ครอบคลุมทั้งสองแบบ ไม่ไปกล่าวหาเพื่อนร่วมงานทั้งที่อาจเป็นเรื่องสิทธิ์
+function raceMsg(what) {
+  return `⛔ ${what} — อาจมีคนอื่นทำรายการนี้ไปก่อน หรือคุณไม่มีสิทธิ์แก้ กดโหลดข้อมูลใหม่แล้วลองอีกครั้ง`;
+}
+
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function inlineMsg(id, msg, ok) {
