@@ -29,10 +29,12 @@ function openGRNModal() {
     grp[i.name].qty++; grp[i.name].sns.push(i.sn);
   });
   items.innerHTML = Object.entries(grp).map(([name, v], i) => `
-    <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
-      <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
+    <tr>
+      <td style="padding:6px 8px;white-space:nowrap">${i+1}. ${escapeHtml(name)}</td>
+      <td style="text-align:center;padding:6px 8px;font-weight:700">${v.qty}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;font-family:monospace">${
+        v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
+             .map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }
@@ -174,10 +176,12 @@ function reopenGRNForPrint(id) {
     grp[i.name].qty++; grp[i.name].sns.push(i.sn);
   });
   document.getElementById('grn-items').innerHTML = Object.entries(grp).map(([name, v], i) => `
-    <tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
-      <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
+    <tr>
+      <td style="padding:6px 8px;white-space:nowrap">${i+1}. ${escapeHtml(name)}</td>
+      <td style="text-align:center;padding:6px 8px;font-weight:700">${v.qty}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;font-family:monospace">${
+        v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
+             .map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }
