@@ -293,12 +293,11 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
             <div class="grid-2">
               <div class="form-row"><label class="field-label">วันที่รับ</label><input type="date" id="i-date"></div>
-              <div class="form-row"><label class="field-label">หมวดหมู่หลัก</label><input type="text" id="i-cat" placeholder="เช่น POS, ปริ้นเตอร์" list="cat-dl"></div>
+              <div class="form-row"><label class="field-label">หมวดหมู่หลัก</label><input type="text" id="i-cat" placeholder="เช่น POS, ปริ้นเตอร์" list="cat-dl" oninput="renderInboundSummary()"></div>
             </div>
-            <div class="form-row"><label class="field-label">หมวดหมู่ย่อย</label><input type="text" id="i-subcat" placeholder="เช่น สลิม, ตั้งโต๊ะ (ไม่ใส่ก็ได้)" list="subcat-dl"></div>
+            <div class="form-row"><label class="field-label">หมวดหมู่ย่อย</label><input type="text" id="i-subcat" placeholder="เช่น สลิม, ตั้งโต๊ะ (ไม่ใส่ก็ได้)" list="subcat-dl" oninput="renderInboundSummary()"></div>
             <div class="form-row col-span-2"><label class="field-label" style="color:var(--blue)">ชื่อสินค้า *</label>
-              <input type="text" id="i-name" placeholder="ชื่อสินค้า" list="product-dl" oninput="renderNameCodeNote()">
-              <div id="i-name-note" style="display:none;margin-top:6px;font-size:11px;line-height:1.6"></div>
+              <input type="text" id="i-name" placeholder="ชื่อสินค้า" list="product-dl" oninput="onInboundNameChange()">
             </div>
             <div class="grid-2">
               <div class="form-row"><label class="field-label">รหัสสินค้า</label><input type="text" id="i-code" oninput="updateBalance()" placeholder="รหัส (ถ้ามี)" list="code-dl"></div>
@@ -311,7 +310,8 @@
               <div class="form-row"><label class="field-label">ผู้จำหน่าย (Supplier)</label><input type="text" id="i-supplier" placeholder="เช่น บริษัท ABC จำกัด" list="supplier-dl"></div>
               <div class="form-row"><label class="field-label">เลขที่ PO</label><input type="text" id="i-po" placeholder="เลขที่ใบสั่งซื้อ (ถ้ามี)"></div>
             </div>
-            <div class="form-row"><label class="field-label" style="color:var(--purple)">เลขล็อต (Lot No.)</label><input type="text" id="i-lot" placeholder="เลขล็อต/รุ่นการผลิต (ถ้ามี)"></div>
+            <div class="form-row"><label class="field-label" style="color:var(--purple)">เลขล็อต (Lot No.)</label><input type="text" id="i-lot" placeholder="เลขล็อต/รุ่นการผลิต (ถ้ามี)" oninput="renderInboundSummary()"></div>
+            <div id="i-summary" style="border:1px solid var(--b1);border-left:3px solid var(--blue);border-radius:var(--r);padding:10px 12px;font-size:12px;line-height:1.7;display:flex;align-items:center;gap:10px;flex-wrap:wrap"></div>
             <div class="form-row">
               <label class="field-label" style="color:var(--blue)">สแกน Serial Number <span class="kbd">Enter</span> เพื่อบันทึก</label>
               <input type="text" id="i-sn" class="scan-field" placeholder="คลิกที่นี่แล้วยิงบาร์โค้ด..." onkeypress="if(event.key==='Enter')doInbound()">
