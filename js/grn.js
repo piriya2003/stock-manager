@@ -32,7 +32,7 @@ function openGRNModal() {
     <tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }
@@ -177,7 +177,7 @@ function reopenGRNForPrint(id) {
     <tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px;white-space:nowrap;vertical-align:top">${i+1}. ${escapeHtml(name)}</td>
       <td style="text-align:center;padding:6px 8px">${v.qty}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(escapeHtml).join(', ')}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#777;font-family:monospace">${v.sns.map(s => `<span class="grn-sn">${escapeHtml(s)}</span>`).join('')}</td>
     </tr>`).join('');
   document.getElementById('grn-modal').classList.add('open');
 }
