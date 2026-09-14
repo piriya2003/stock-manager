@@ -600,8 +600,26 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   }
 
+  /* ย่อเหลือแถวเดียว ชื่อผู้ใช้ + ปุ่มออกจากระบบ — ห้ามซ่อนทั้งก้อน ไม่งั้นมือถือจะไม่มีทางออกจากระบบ */
   .sidebar-footer {
-    display: none !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .sidebar-footer .user-row {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 5px 8px;
+  }
+  .sidebar-footer .session-timer {
+    display: none;
+  }
+  .sidebar-footer .btn {
+    width: auto;
+    margin: 0;
+    flex-shrink: 0;
   }
 
   #main {
