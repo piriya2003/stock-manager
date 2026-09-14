@@ -42,10 +42,11 @@ function updateTxMoreBtn() {
 async function logTransaction(date, type, name, code, sn, balance, note) {
   const row = { tx_date: date, type, item_name: name, item_code: code, sn, balance, note, performed_by: currentUserId };
   const local = { date, type, name, code, sn, balance, note, user: currentUserId, createdAt: nowISO() };
-  txns.unshift(local);
   try {
     const { data, error } = await supaClient.from('transactions').insert(row).select().single();
     if (error) throw error;
     if (data) local.id = data.id;   // เก็บ id ไว้กันโหลดซ้ำตอนกดโหลดประวัติเก่าเพิ่ม
+    // ใส่ลงหน้าจอหลังบันทึกสำเร็จเท่านั้น — เดิมใส่ก่อน พอบันทึกล้มเหลวรายการยังค้างโชว์ แล้วหายไปตอนรีเฟรช
+    txns.unshift(local);
   } catch (err) { console.error('logTransaction failed:', err); showSync('error', '✗ บันทึก log ล้มเหลว'); }
 }
