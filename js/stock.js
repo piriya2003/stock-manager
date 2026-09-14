@@ -4,6 +4,31 @@
 // ตัวคั่นค่าใน dropdown หมวดหมู่: "POS" = ทั้งหมวด, "POS⟩สลิม" = เจาะหมวดย่อย
 const CAT_SEP = '⟩';
 
+// หมวดหมู่พิมพ์อิสระได้ "CASH DRAWER" กับ "cash drawer " จึงแตกเป็นสองหมวด กรองหมวดหนึ่งแล้วของอีกกองหาย
+// เทียบด้วยคีย์ที่ตัดเว้นวรรคส่วนเกินและไม่สนตัวพิมพ์ใหญ่เล็กเสมอ — ข้อมูลเก่าในฐานข้อมูลไม่ถูกแก้
+function catKey(s) { return String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+
+// คีย์หมวด → ตัวสะกดที่ใช้แสดง (เลือกตัวที่ใช้บ่อยสุดในคลังและต้นแบบสินค้า)
+function catLabels(field = 'category') {
+  const count = new Map();
+  [...stock, ...masterProds].forEach(x => {
+    const raw = String(x[field] ?? '').replace(/\s+/g, ' ').trim();
+    if (!raw) return;
+    const k = raw.toLowerCase();
+    if (!count.has(k)) count.set(k, new Map());
+    count.get(k).set(raw, (count.get(k).get(raw) || 0) + 1);
+  });
+  const labels = new Map();
+  count.forEach((spellings, k) => labels.set(k, [...spellings].sort((a, b) => b[1] - a[1])[0][0]));
+  return labels;
+}
+
+// ตอนบันทึกหมวดใหม่ ถ้าตรงกับหมวดที่มีอยู่แล้ว (ต่างแค่ตัวพิมพ์/เว้นวรรค) ให้ใช้ตัวสะกดเดิม จะได้ไม่เกิดหมวดแตกเพิ่ม
+function canonCat(s, field = 'category') {
+  const v = String(s ?? '').replace(/\s+/g, ' ').trim();
+  return v ? (catLabels(field).get(v.toLowerCase()) || v) : v;
+}
+
 // ของที่รับเข้าตั้งแต่มีช่องหมวดหมู่ย่อย จะเก็บค่าไว้ที่ตัวสินค้าเอง
 // ส่วนของเก่าที่รับเข้ามาก่อนหน้านั้นยังไม่มี ต้องโยงกลับไปดูที่ "ต้นแบบสินค้า" ด้วยชื่อ (หรือรหัส)
 // ทำเป็น Map ครั้งเดียวแล้วใช้ซ้ำ ไม่ไล่หาทีละชิ้น
@@ -26,11 +51,14 @@ function populateCatFilter() {
   const m = subcatMap();
 
   // หมวดหลัก → หมวดย่อยที่ "มีของอยู่จริงในคลัง" เท่านั้น (เลือกแล้วต้องไม่เจอตารางว่าง)
+  // จับกลุ่มด้วย catKey ไม่ใช่ตัวสะกดดิบ — หมวดที่ต่างกันแค่ตัวพิมพ์จะรวมเป็นแถวเดียว
+  const labels = catLabels(), subLabels = catLabels('subcategory');
   const tree = new Map();
   stock.forEach(i => {
-    if (!tree.has(i.category)) tree.set(i.category, new Set());
+    const cat = labels.get(catKey(i.category)) || i.category;
+    if (!tree.has(cat)) tree.set(cat, new Set());
     const sub = subcatOf(i, m);
-    if (sub) tree.get(i.category).add(sub);
+    if (sub) tree.get(cat).add(subLabels.get(catKey(sub)) || sub);
   });
 
   const row = (val, label, cls = '') =>
@@ -113,8 +141,8 @@ function getFilteredStock() {
   const sm = subcatMap();
   let data = stock.filter(i =>
     (!st || i.status === st) &&
-    (!cat || i.category === cat) &&
-    (!subCat || subcatOf(i, sm) === subCat) &&
+    (!cat || catKey(i.category) === catKey(cat)) &&
+    (!subCat || catKey(subcatOf(i, sm)) === catKey(subCat)) &&
     (!q || i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q) || (i.prev_sn && String(i.prev_sn).toLowerCase().includes(q)) || i.category.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || (i.lot_no && i.lot_no.toLowerCase().includes(q)) || (i.supplier && i.supplier.toLowerCase().includes(q)) || (i.dispatched_to && i.dispatched_to.toLowerCase().includes(q)) || subcatOf(i, sm).toLowerCase().includes(q))
   );
   data.sort((a, b) => {

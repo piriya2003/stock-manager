@@ -49,10 +49,12 @@ function renderDashboard() {
 
   // ── ตามหมวดหมู่ ──
   const catMap = {};
+  const labels = catLabels();   // หมวดที่ต่างกันแค่ตัวพิมพ์/เว้นวรรค นับรวมเป็นหมวดเดียว
   stock.forEach(i => {
-    if (!catMap[i.category]) catMap[i.category] = { total: 0, avail: 0 };
-    catMap[i.category].total++;
-    if (i.status === 'Available') catMap[i.category].avail++;
+    const cat = labels.get(catKey(i.category)) || i.category;
+    if (!catMap[cat]) catMap[cat] = { total: 0, avail: 0 };
+    catMap[cat].total++;
+    if (i.status === 'Available') catMap[cat].avail++;
   });
   const cats = Object.entries(catMap).sort((a, b) => b[1].total - a[1].total);
   set('cat-count-badge', cats.length + ' หมวด');

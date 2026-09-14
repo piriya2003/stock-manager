@@ -196,7 +196,7 @@ async function confirmImport() {
     if (stock.find(i => String(i.sn) === sn)) { dupInStock++; return; }
     seen.add(sn);
     candidates.push({
-      category: cell(row, 'category') || 'ทั่วไป',
+      category: canonCat(cell(row, 'category')) || 'ทั่วไป',
       name:     cell(row, 'name')     || 'ไม่ระบุ',
       code:     cell(row, 'code')     || '-',
       sn,

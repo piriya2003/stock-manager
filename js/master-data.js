@@ -4,8 +4,8 @@
 let editingMasterId = null;   // ไม่ null = ฟอร์มต้นแบบสินค้ากำลังอยู่ในโหมดแก้ไข
 
 async function saveMasterProduct() {
-  const cat    = document.getElementById('m-cat').value.trim();
-  const subcat = document.getElementById('m-subcat').value.trim();
+  const cat    = canonCat(document.getElementById('m-cat').value);
+  const subcat = canonCat(document.getElementById('m-subcat').value, 'subcategory');
   const name   = document.getElementById('m-name').value.trim();
   const code   = document.getElementById('m-code').value.trim();
   if (!name) return toast('กรุณาใส่ชื่อสินค้า', 'error');
@@ -195,11 +195,12 @@ function refreshCustomerSelects() {
 }
 
 function updateDataLists() {
-  const cats  = [...new Set([...stock.map(i => i.category), ...masterProds.map(p => p.category)])].filter(Boolean);
+  // ตัวเลือกหมวดให้เหลือตัวสะกดเดียวต่อหมวด ไม่เสนอ "CASH DRAWER" กับ "cash drawer" คู่กัน
+  const cats  = [...catLabels().values()];
   const names = [...new Set([...stock.map(i => i.name), ...masterProds.map(p => p.name)])];
   const codes = [...new Set([...stock.map(i => i.code), ...masterProds.map(p => p.code)])].filter(c => c && c !== '-');
   const suppliers = [...new Set(stock.map(i => i.supplier).filter(Boolean))];
-  const subcats = [...new Set([...masterProds.map(p => p.subcategory), ...stock.map(i => i.subcategory)].filter(Boolean))];
+  const subcats = [...catLabels('subcategory').values()];
   const subDl = document.getElementById('subcat-dl');
   if (subDl) subDl.innerHTML = subcats.map(s => `<option value="${escapeHtml(s)}">`).join('');
   const catDl  = document.getElementById('cat-dl');

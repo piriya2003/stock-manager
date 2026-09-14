@@ -123,7 +123,7 @@ function inboundFields() {
   const g = id => document.getElementById(id).value.trim();
   return {
     dt: document.getElementById('i-date').value || today(),
-    cat: g('i-cat') || 'ไม่ระบุ', subcat: g('i-subcat'),
+    cat: canonCat(g('i-cat')) || 'ไม่ระบุ', subcat: canonCat(g('i-subcat'), 'subcategory'),
     nm: g('i-name'), cd: g('i-code') || '-',
     lot: g('i-lot') || null, sup: g('i-supplier') || null, po: g('i-po') || null,
   };
