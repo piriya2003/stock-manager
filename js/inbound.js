@@ -140,6 +140,12 @@ async function doInbound() {
   if (!sn) { document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
   if (!inboundFields().nm) return inlineMsg('i-msg', '❌ กรุณาระบุชื่อสินค้า', false);
   const nm = resolveInboundName(inboundFields().nm);
+  // SN ที่มีอยู่แล้วไม่ต้องถาม เดี๋ยวฐานข้อมูลแจ้งว่าซ้ำเอง
+  if (!stock.some(i => String(i.sn) === sn) && !confirmOddSNs([sn], nm)) {
+    inlineMsg('i-msg', `⏸ ยังไม่บันทึก SN: ${sn} — ตรวจกับฉลากแล้วสแกนใหม่`, false);
+    document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus();
+    return;
+  }
 
   try {
     const row = { category: cat, name: nm, code: cd, sn, status: 'Available', created_by: currentUserId, lot_no: lot, supplier: sup, po_no: po };
@@ -177,6 +183,7 @@ async function doInboundBulk() {
   const dup = [], toAdd = [];
   list.forEach(sn => (stock.some(i => String(i.sn) === sn) ? dup : toAdd).push(sn));
   if (!toAdd.length) return inlineMsg('i-bulk-msg', `❌ ทุก SN มีในระบบแล้ว (${dup.length} รายการ)`, false);
+  if (!confirmOddSNs(toAdd, nm)) return inlineMsg('i-bulk-msg', '⏸ ยังไม่บันทึก — ตรวจ SN กับฉลากแล้วลองใหม่', false);
 
   try {
     const mkRows = withSub => toAdd.map(sn => {

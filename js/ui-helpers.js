@@ -53,6 +53,39 @@ function filterBarcode(rawVal, msgElementId) {
   return cleanVal;
 }
 
+// SN ที่หน้าตาต่างจาก SN อื่นของสินค้าชื่อเดียวกัน — เช่นยาวไม่เท่า หรือตัวแรกไม่เหมือน
+// (เคยหลุดเข้าคลัง: "60700032" เหลือแค่ 8 ตัวท้าย, "D41020260700069" ขาดตัว C นำหน้า)
+// ไม่ตั้งกฎตายตัว เพราะแต่ละรุ่นหน้าตาไม่เหมือนกัน — เรียนรูปแบบจากของที่มีอยู่แล้ว
+// ต้องมีของเดิมอย่างน้อย 3 ชิ้น และ 80% ขึ้นไปต้องหน้าตาเหมือนกัน ถึงจะถือว่ามีรูปแบบ
+// คืนข้อความเหตุผล หรือ '' ถ้าดูปกติ/ยังไม่มีข้อมูลพอเทียบ — แค่เตือน ไม่เคยแก้เลขให้เอง
+function snOddReason(sn, name) {
+  const key = normName(name);
+  const peers = stock.filter(i => normName(i.name) === key && String(i.sn) !== String(sn)).map(i => String(i.sn));
+  if (peers.length < 3) return '';
+  const mode = vals => {
+    const c = new Map(); vals.forEach(v => c.set(v, (c.get(v) || 0) + 1));
+    const [val, n] = [...c].sort((a, b) => b[1] - a[1])[0];
+    return n / vals.length >= 0.8 ? val : null;
+  };
+  const s = String(sn), reasons = [];
+  const len = mode(peers.map(p => p.length));
+  if (len != null && s.length !== len) reasons.push(`ยาว ${s.length} ตัว แต่ SN อื่นของสินค้านี้ยาว ${len} ตัว`);
+  const first = mode(peers.map(p => p[0].toUpperCase()));
+  if (first != null && s[0].toUpperCase() !== first) reasons.push(`ขึ้นต้นด้วย "${s[0]}" แต่ SN อื่นขึ้นต้นด้วย "${first}"`);
+  return reasons.join(' และ');
+}
+
+// ถามก่อนบันทึก SN ที่หน้าตาแปลก — ตกลง = บันทึกตามที่สแกน, ยกเลิก = ไม่บันทึก
+function confirmOddSNs(list, name) {
+  const odd = list.map(sn => ({ sn, why: snOddReason(sn, name) })).filter(x => x.why);
+  if (!odd.length) return true;
+  const shown = odd.slice(0, 10).map(x => `• ${x.sn} — ${x.why}`).join('\n');
+  const more = odd.length > 10 ? `\n…และอีก ${odd.length - 10} รายการ` : '';
+  return confirm(`⚠️ SN ${odd.length} รายการหน้าตาไม่เหมือน SN อื่นของ "${name}"\n\n${shown}${more}\n\n`
+    + `ตรวจกับฉลากก่อน — อาจสแกนไม่ครบหรือพิมพ์ผิด\n`
+    + `กด "ตกลง" = บันทึกตามนี้  |  กด "ยกเลิก" = ยังไม่บันทึก`);
+}
+
 // ══════════════════════════════════════════════════════════════
 //  UI HELPERS
 // ══════════════════════════════════════════════════════════════

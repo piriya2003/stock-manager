@@ -213,7 +213,14 @@ async function confirmImport() {
   if (!candidates.length) {
     return inlineMsg('import-map-msg', `❌ ไม่มีรายการใหม่ให้นำเข้า${skipped.length ? ' (ข้าม: ' + skipped.join(', ') + ')' : ''}`, false);
   }
-  if (!confirm(`นำเข้า ${candidates.length} รายการ?${skipped.length ? '\n\nข้าม: ' + skipped.join(', ') : ''}`)) return;
+  // SN ที่หน้าตาต่างจาก SN อื่นของสินค้าชื่อเดียวกันในคลัง — แจ้งไว้ในกล่องยืนยันเดียวกัน ไม่ถามแยก
+  const odd = candidates.map(c => ({ sn: c.sn, why: snOddReason(c.sn, c.name) })).filter(x => x.why);
+  const oddMsg = odd.length
+    ? `\n\n⚠️ SN หน้าตาแปลก ${odd.length} รายการ (ตรวจกับฉลากก่อน):\n`
+      + odd.slice(0, 10).map(x => `• ${x.sn} — ${x.why}`).join('\n')
+      + (odd.length > 10 ? `\n…และอีก ${odd.length - 10} รายการ` : '')
+    : '';
+  if (!confirm(`นำเข้า ${candidates.length} รายการ?${skipped.length ? '\n\nข้าม: ' + skipped.join(', ') : ''}${oddMsg}`)) return;
 
   try {
     const { data, error } = await supaClient.from('inventory').insert(candidates).select();
