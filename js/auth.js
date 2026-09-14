@@ -118,21 +118,9 @@ function showLoginForm() {
   document.getElementById('form-forgot').style.display = 'none';
   document.getElementById('form-login').style.display = 'flex';
 }
-
-async function doForgotPassword() {
-  const email = document.getElementById('f-forgot-email').value.trim();
-  if (!email) return toast('กรุณากรอกอีเมล', 'error');
-  try {
-    const { error } = await supaClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname,
-    });
-    if (error) throw error;
-    toast('ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว (เช็คใน Inbox/Spam)', 'success');
-    showLoginForm();
-  } catch (err) {
-    toast('ส่งลิงก์ล้มเหลว: ' + err.message, 'error');
-  }
-}
+// เดิมมี doForgotPassword() ส่งลิงก์รีเซ็ตทางอีเมล — ถูกเอาออก (14 ก.ย. 2569)
+// บัญชีเป็น @stockhq.local รับเมลไม่ได้ และไม่มีหน้าตั้งรหัสใหม่รองรับ แต่ปุ่มกลับขึ้นว่า "ส่งแล้ว" ทุกครั้ง
+// ตอนนี้หน้าลืมรหัสผ่านบอกให้ติดต่อแอดมินแทน อย่าใส่ปุ่มส่งลิงก์กลับมา ถ้ายังไม่มีอีเมลจริงและ flow PASSWORD_RECOVERY
 
 // ══════════════════════════════════════════════════════════════
 //  SESSION TIMER (UI เฉยๆ — Supabase ต่ออายุ token ให้อัตโนมัติ)

@@ -18,8 +18,9 @@ const EN = {
   // ── หน้าเข้าสู่ระบบ ──
   'เข้าสู่ระบบ': 'Sign in',
   'ลืมรหัสผ่าน?': 'Forgot password?',
-  'อีเมลที่ใช้สมัคร': 'Registered email',
-  'ส่งลิงก์รีเซ็ตรหัสผ่าน': 'Send reset link',
+  '🔑 ลืมรหัสผ่าน ติดต่อแอดมิน': '🔑 Forgot your password? Contact an admin',
+  'บัญชีในระบบนี้ไม่ได้ผูกกับอีเมลจริง จึงส่งลิงก์รีเซ็ตรหัสผ่านให้ไม่ได้': 'Accounts here are not linked to a real email, so a reset link cannot be sent.',
+  'แจ้งชื่อผู้ใช้ของคุณกับแอดมิน เพื่อตั้งรหัสผ่านใหม่ให้': 'Give your username to an admin and they will set a new password.',
   '← กลับไปเข้าสู่ระบบ': '← Back to sign in',
   'ชื่อผู้ใช้': 'Username',
   'รหัสผ่าน': 'Password',

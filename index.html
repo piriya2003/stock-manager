@@ -25,8 +25,12 @@
         <div style="text-align:right"><a href="#" onclick="showForgotPassword();return false" style="font-size:11px;color:var(--blue);text-decoration:none">ลืมรหัสผ่าน?</a></div>
       </div>
       <div id="form-forgot" style="display:none;flex-direction:column;gap:12px">
-        <div class="form-row"><label class="field-label">อีเมลที่ใช้สมัคร</label><input type="email" id="f-forgot-email" placeholder="you@example.com" onkeypress="if(event.key==='Enter')doForgotPassword()"></div>
-        <button onclick="doForgotPassword()" class="btn btn-primary btn-full">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+        <!-- บัญชีเป็น <ชื่อเล่น>@stockhq.local รับอีเมลไม่ได้ ระบบส่งลิงก์รีเซ็ตให้เองไม่ได้ — ต้องให้แอดมินตั้งรหัสใหม่ใน Supabase -->
+        <div style="background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:14px 16px;line-height:1.6">
+          <div style="font-weight:600;color:var(--t1);margin-bottom:4px">🔑 ลืมรหัสผ่าน ติดต่อแอดมิน</div>
+          <div style="font-size:12px;color:var(--t2)">บัญชีในระบบนี้ไม่ได้ผูกกับอีเมลจริง จึงส่งลิงก์รีเซ็ตรหัสผ่านให้ไม่ได้</div>
+          <div style="font-size:12px;color:var(--t2)">แจ้งชื่อผู้ใช้ของคุณกับแอดมิน เพื่อตั้งรหัสผ่านใหม่ให้</div>
+        </div>
         <button onclick="showLoginForm()" class="btn btn-ghost btn-full">← กลับไปเข้าสู่ระบบ</button>
       </div>
     </div>
