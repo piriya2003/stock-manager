@@ -584,7 +584,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 
   /* จัดปุ่มเมนูบนมือถือ */
   .nav-item {
-    display: inline-flex !important;
+    display: inline-flex;   /* ห้ามใส่ !important — จะทับการซ่อนเมนูแอดมินจาก auth.js ทำให้พนักงานเห็นเมนูบนจอแคบ */
     width: auto !important;
     padding: 8px 14px !important;
     margin: 0 !important;
