@@ -927,6 +927,27 @@
   </div>
 </div>
 
+<!-- เบิกอะไหล่ — เดิมถามเหตุผลด้วย prompt() ของเบราว์เซอร์ ซึ่งพิมพ์ได้บรรทัดเดียว -->
+<div class="modal-bg" id="part-move-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title">➖ เบิกอะไหล่</span>
+        <div class="text-muted text-sm mt-1" id="part-move-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('part-move-modal')">✕</button>
+    </div>
+    <div class="form-row">
+      <label class="field-label">เบิกไปทำอะไร? (ไม่ใส่ก็ได้ — พิมพ์หลายบรรทัดได้)</label>
+      <textarea id="part-move-note" rows="6" placeholder="เช่น&#10;เปลี่ยนให้เครื่องลูกค้า ร้านเอ&#10;SN C41020260700001&#10;ช่างสมชายเป็นคนเปลี่ยน" style="resize:vertical;line-height:1.6"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="confirmPartIssue()" class="btn btn-primary" style="flex:1">✅ ยืนยันเบิก</button>
+      <button onclick="closeModal('part-move-modal')" class="btn btn-ghost">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="rename-modal">
   <div class="modal">
     <div class="modal-header">

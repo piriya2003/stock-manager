@@ -93,7 +93,7 @@ function partMoveRow(m) {
     <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}
       <span style="font-size:10px;color:var(--t3);font-weight:400"> ${escapeHtml(p ? p.unit : '')}</span></td>
     <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>
-    <td style="font-size:11px;color:var(--t2)">${escapeHtml(m.note) || '—'}</td>
+    <td style="font-size:11px;color:var(--t2);white-space:pre-wrap;word-break:break-word;max-width:260px">${escapeHtml(m.note) || '—'}</td>
     <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(m.performed_by))}</td>
   </tr>`;
 }

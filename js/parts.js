@@ -259,19 +259,45 @@ async function deletePart(id) {
 //  รับเข้า / เบิกใช้
 // ══════════════════════════════════════════════════════════════
 // dir = 1 รับเข้า, -1 เบิกใช้
+// เบิกจะเปิดหน้าต่างถามเหตุผลก่อน (พิมพ์หลายบรรทัดได้) แล้วค่อยมาต่อที่ doPartMove
+// เดิมใช้ prompt() ของเบราว์เซอร์ ซึ่งพิมพ์ได้บรรทัดเดียว เขียนเหตุผลยาวๆ ไม่ได้
+let pendingPartIssue = null;   // { id, n } ที่รอกดยืนยันในหน้าต่างเบิก
+
 async function movePart(id, dir) {
   const p = partById(id); if (!p) return;
   const input = document.getElementById('pq-' + id);
   const n = parseInt(input?.value, 10);
   if (!Number.isFinite(n) || n <= 0) return toast('ใส่จำนวนให้ถูกต้องก่อน', 'error');
+  if (p.qty + dir * n < 0) return toast(`เบิกไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
 
+  if (dir > 0) return doPartMove(id, 1, n, '');
+
+  pendingPartIssue = { id, n };
+  const dt = partMoveDate();
+  document.getElementById('part-move-sub').textContent =
+    `${p.name} — ${n} ${p.unit} (คงเหลือหลังเบิก ${p.qty - n})` + (dt === today() ? '' : ` · ลงวันที่ ${fmtDate(dt)}`);
+  document.getElementById('part-move-note').value = '';
+  document.getElementById('part-move-modal').classList.add('open');
+  setTimeout(() => document.getElementById('part-move-note').focus(), 80);
+}
+
+// กดยืนยันในหน้าต่างเบิก
+function confirmPartIssue() {
+  if (!pendingPartIssue) return closeModal('part-move-modal');
+  const { id, n } = pendingPartIssue;
+  pendingPartIssue = null;
+  const note = document.getElementById('part-move-note').value.trim();
+  closeModal('part-move-modal');
+  return doPartMove(id, -1, n, note);
+}
+
+async function doPartMove(id, dir, n, note) {
+  const p = partById(id); if (!p) return;
   const newQty = p.qty + dir * n;
   if (newQty < 0) return toast(`เบิกไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
 
   const typ = dir > 0 ? 'รับเข้า' : 'เบิกใช้';
   const dt  = partMoveDate();
-  const note = dir > 0 ? '' : (prompt(`เบิก "${p.name}" ${n} ${p.unit}\n\nเบิกไปทำอะไร? (ไม่ใส่ก็ได้)`, '') ?? null);
-  if (dir < 0 && note === null) return;   // กดยกเลิกในกล่องถาม = ไม่เบิก
 
   try {
     // อัปเดตยอดโดยอ้างยอดเดิมด้วย — ถ้ามีคนอื่นเพิ่งแก้ไปก่อน จะได้ 0 แถวแทนที่จะทับยอดเขา
@@ -321,7 +347,7 @@ function openPartHistory(id) {
         <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? t('➕ รับเข้า') : t('➖ เบิกใช้')}</span></td>
         <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}</td>
         <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>
-        <td style="font-size:11px;color:var(--t2)">${escapeHtml(m.note) || '—'}</td>
+        <td style="font-size:11px;color:var(--t2);white-space:pre-wrap;word-break:break-word;max-width:260px">${escapeHtml(m.note) || '—'}</td>
         <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(m.performed_by))}</td>
       </tr>`).join('')
     : `<tr><td colspan="6" class="tbl-empty">${t('ยังไม่มีประวัติ')}</td></tr>`;

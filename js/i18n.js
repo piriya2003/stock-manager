@@ -219,6 +219,9 @@ const EN = {
   'รวมชุดที่ติ๊กเลือกไว้เป็นใบ DO ใบเดียว': 'Merge the ticked batches into one DO',
 
   // ── อะไหล่ ──
+  '➖ เบิกอะไหล่': '➖ Issue parts',
+  'เบิกไปทำอะไร? (ไม่ใส่ก็ได้ — พิมพ์หลายบรรทัดได้)': 'What is it for? (optional — multiple lines allowed)',
+  '✅ ยืนยันเบิก': '✅ Confirm',
   'นับเป็นจำนวน ไม่ต้องยิง SN รายชิ้น — เช่น RAM, จอ, คีย์บอร์ด':
     'Counted by quantity, no per-piece SN — RAM, monitors, keyboards and so on',
   'ชนิดอะไหล่': 'Part types',
