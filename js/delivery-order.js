@@ -16,27 +16,48 @@ function openDOModal() {
   prepDOModal();
 }
 
+// หาลูกค้าในทะเบียนจากชื่อที่ติดอยู่กับตัวสินค้า — ไม่สนเว้นวรรคเกิน/ตัวพิมพ์ (ดู normCustName)
+function custByName(name) {
+  const k = normCustName(name);
+  return k ? customers.find(c => normCustName(c.name) === k) || null : null;
+}
+
+// เปิดใบ DO ของ "ของที่จ่ายออกไปแล้ว" — ลูกค้าบนใบต้องเป็นเจ้าของของในใบเสมอ
+// เดิมทางประวัติไม่ได้บอกเจ้าของ ส่วนทางชุดการจ่ายเทียบชื่อตรงตัวเป๊ะ พอหาไม่เจอก็ตกไปใช้
+// ลูกค้าที่ค้างเลือกอยู่ในหน้าโอน/ขาย ใบของ TOPS เลยออกมาพร้อมที่อยู่ของร้านอื่น
+// ownerName ว่าง = ไม่รู้เจ้าของ (ของเก่ามาก) จึงยอมใช้ลูกค้าที่เลือกค้างไว้แทนแบบเดิม
+function openDOForSold(items, ownerName) {
+  doFromLiveSession = false;
+  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  const owner = ownerName ? custByName(ownerName) : undefined;
+  prepDOModal(owner);
+  // เจ้าของที่ไม่อยู่ในทะเบียนลูกค้า — ใส่ชื่อตามที่ติดกับสินค้า ที่อยู่ให้กรอกเอง
+  if (ownerName && !owner) document.getElementById('do-cust').value = ownerName;
+}
+
+// ของหลายชิ้นที่จะรวมเป็นใบเดียว ถ้าเป็นของลูกค้าคนละเจ้าต้องถามก่อน (ใบหนึ่งระบุลูกค้าได้คนเดียว)
+function confirmMixedOwners(items) {
+  const custs = [...new Set(items.map(i => normCustName(i.dispatched_to)).filter(Boolean))];
+  if (custs.length < 2) return true;
+  const names = [...new Set(items.map(i => i.dispatched_to).filter(Boolean))].join('\n• ');
+  return confirm(`สินค้าที่เลือกเป็นของลูกค้าคนละเจ้า:\n• ${names}\n\nใบ DO ใบเดียวระบุลูกค้าได้คนเดียว จะรวมต่อไหม?`);
+}
+
 function openDOFromHistory() {
   const items = getFilteredSoldItems();
   if (!items.length) return toast('ไม่มีรายการสินค้าที่ขายออก (ตามที่กรองอยู่)', 'error');
-  doFromLiveSession = false;
-  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
-  prepDOModal();
-  // เติมชื่อลูกค้าจากตัวกรองลูกค้าในหน้าประวัติ (ถ้าเลือกไว้)
+  // ถ้าเลือกกรองลูกค้าไว้ ของทุกชิ้นเป็นของเจ้านั้นอยู่แล้ว ไม่งั้นใช้เจ้าของของชิ้นแรกที่รู้เจ้าของ
   const histCust = document.getElementById('o-hist-cust')?.value;
-  if (histCust) document.getElementById('do-cust').value = histCust;
+  if (!histCust && !confirmMixedOwners(items)) return;
+  openDOForSold(items, histCust || items.find(i => i.dispatched_to)?.dispatched_to || '');
 }
 
 // สร้าง DO เฉพาะ "ชุดการจ่าย" เดียว (ตามเวลาที่จ่ายออก)
 function openDOFromBatch(batchIndex) {
   const b = outboundBatches[batchIndex];
   if (!b || !b.items.length) return toast('ไม่พบรายการในชุดนี้', 'error');
-  doFromLiveSession = false;
-  doItems = b.items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
   // ใบนี้เป็นของ "ลูกค้าเจ้าของชุด" ไม่ใช่ลูกค้าที่ค้างเลือกอยู่ในหน้าสแกน
-  // ถ้าไม่ส่งเข้าไป ที่อยู่บนหัวใบจะเป็นของลูกค้าคนละเจ้า
-  prepDOModal(b.cust ? customers.find(c => c.name === b.cust) : null);
-  if (b.cust) document.getElementById('do-cust').value = b.cust;
+  openDOForSold(b.items, b.cust);
 }
 
 // สร้าง DO จากเลข SN ที่พิมพ์/วาง/สแกนมาโดยตรง — ไม่ต้องหาผ่านตัวกรองวันที่/ลูกค้า
@@ -56,17 +77,8 @@ function openDOFromSNList() {
   if (!found.length) return inlineMsg('do-sn-msg', `❌ ไม่มี SN ที่ออก DO ได้ (ไม่พบ ${notFound.length}, ยังไม่ได้จ่ายออก ${notSold.length})`, false);
 
   // SN ที่ระบุมาอาจเป็นของคนละลูกค้า (จ่ายไปคนละรอบ) ต้องรู้ตัวก่อนรวมเป็นใบเดียว
-  const custs = [...new Set(found.map(i => normCustName(i.dispatched_to)).filter(Boolean))];
-  if (custs.length > 1) {
-    const names = [...new Set(found.map(i => i.dispatched_to).filter(Boolean))].join('\n• ');
-    if (!confirm(`SN ที่ระบุเป็นของลูกค้าคนละเจ้า:\n• ${names}\n\nใบ DO ใบเดียวระบุลูกค้าได้คนเดียว จะรวมต่อไหม?`)) return;
-  }
-
-  doFromLiveSession = false;
-  doItems = found.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
-  const custName = found[0].dispatched_to;
-  prepDOModal(custName ? customers.find(c => normCustName(c.name) === normCustName(custName)) : null);
-  if (custName) document.getElementById('do-cust').value = custName;
+  if (!confirmMixedOwners(found)) return;
+  openDOForSold(found, found.find(i => i.dispatched_to)?.dispatched_to || '');
 
   let msg = `✅ พบ ${found.length} รายการ นำเข้าใบ DO แล้ว`;
   if (notFound.length || notSold.length) msg += `  (ข้าม: ไม่พบ ${notFound.length}, ยังไม่ได้จ่ายออก ${notSold.length})`;
@@ -90,8 +102,10 @@ function prepDOModal(custOverride) {
   document.getElementById('do-manage-btn').style.display = 'none';
   document.getElementById('do-no').value = genDONo();
   document.getElementById('do-date').value = fmtDODate(nowISO());
+  // custOverride: ลูกค้าในทะเบียน / null = รู้เจ้าของแต่ไม่อยู่ในทะเบียน / undefined = ใช้ที่เลือกค้างในหน้าสแกน
+  // ห้ามถอยไปใช้หน้าสแกนเมื่อได้ null — ไม่งั้นใบจะได้ที่อยู่ของลูกค้าคนละเจ้า
   const custSel = document.getElementById('o-cust');
-  const custObj = custOverride || customers.find(c => c.id === custSel.value);
+  const custObj = custOverride !== undefined ? custOverride : customers.find(c => c.id === custSel.value);
   doCustId = custObj ? custObj.id : null;   // ใช้ตอนบันทึก แทนการอ่านค่าจาก dropdown หน้าสแกนซ้ำ
   document.getElementById('do-cust').value = custObj ? custObj.name : '';
 
