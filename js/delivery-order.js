@@ -123,15 +123,40 @@ function doDateOf(d) {
 
 // อ่านวันที่ที่พิมพ์บนหัวใบ (รูปแบบ 21-Aug-2026) กลับเป็น YYYY-MM-DD สำหรับเก็บลงฐานข้อมูล
 // พิมพ์มั่วหรือเว้นว่าง → ใช้วันนี้แทน ดีกว่าบันทึกค่าที่อ่านไม่ออกลงไป
+// ช่องวันที่บนใบพิมพ์เองได้ คนกรอกจึงพิมพ์มาได้หลายแบบ — 24/07/2569 พอๆ กับ 24-Jul-2026
+// เดิมรู้จักแค่ 24-Jul-2026 กับ 2026-07-24 แบบอื่นตกไปเป็น "วันนี้" เงียบๆ ใบที่ออกย้อนหลังเลยลงวันที่ผิด
+// คืน '' เมื่ออ่านไม่ออก ให้ฝั่งที่เรียกเตือนแทนที่จะเดาวันให้
+const TH_MONTHS = ['มกรา','กุมภา','มีนา','เมษา','พฤษภา','มิถุนา','กรกฎา','สิงหา','กันยา','ตุลา','พฤศจิกา','ธันวา'];
 function parseDODate(text) {
   const s = String(text || '').trim();
-  const m = s.match(/^(\d{1,2})[-/\s]([A-Za-z]{3,})[-/\s](\d{4})$/);
+  if (!s) return today();
+
+  // ปี พ.ศ. → ค.ศ. (2569 → 2026) — ใช้กับทุกรูปแบบด้านล่าง
+  const ce = y => (Number(y) >= 2400 ? Number(y) - 543 : Number(y));
+  const mk = (y, mo, d) => {
+    const dt = new Date(ce(y), mo - 1, Number(d));
+    // กันวันที่ไม่มีจริง เช่น 31/02/2026 (JS จะเลื่อนไปเป็น 3 มี.ค. ให้เงียบๆ)
+    if (dt.getFullYear() !== ce(y) || dt.getMonth() !== mo - 1 || dt.getDate() !== Number(d)) return '';
+    return `${ce(y)}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  };
+
+  // 24-Jul-2026 / 24 กรกฎาคม 2569 / 24-ก.ค.-69 ไม่รับ (ปีต้อง 4 หลัก)
+  let m = s.match(/^(\d{1,2})[-/.\s]+([A-Za-z฀-๿.]{2,})[-/.\s]+(\d{4})$/);
   if (m) {
-    const i = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0, 3).toLowerCase());
-    if (i >= 0) return `${m[3]}-${String(i + 1).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+    const name = m[2].replace(/\./g, '').toLowerCase();
+    let i = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(name.slice(0, 3));
+    if (i < 0) i = TH_MONTHS.findIndex(th => name.startsWith(th.slice(0, 4)));
+    if (i >= 0) return mk(m[3], i + 1, m[1]);
+    return '';
   }
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? today() : d.toLocaleDateString('en-CA');
+  // 24/07/2026 · 24-07-2569 · 24.07.2026
+  m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (m) return mk(m[3], Number(m[2]), m[1]);
+  // 2026-07-24
+  m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (m) return mk(m[1], Number(m[2]), m[3]);
+
+  return '';
 }
 
 function fmtDODate(iso) {
@@ -201,6 +226,8 @@ async function saveDO() {
   if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
   if (!custVal) return toast('กรุณาระบุชื่อลูกค้า', 'error');
   if (!doItems.length) return toast('ไม่มีรายการสินค้าในใบ DO', 'error');
+  const doDate = parseDODate(document.getElementById('do-date').value);
+  if (!doDate) return toast('อ่านวันที่บนใบไม่ออก — ใช้แบบ 24/07/2569 หรือ 24-Jul-2026', 'error');
 
   // อ่านราคาต่อหน่วย/จำนวนเงินจากแต่ละแถวสินค้า (ต่อกลุ่ม) เพื่อแนบไปกับทุก SN ในกลุ่มนั้น
   const priceByName = {};
@@ -216,7 +243,7 @@ async function saveDO() {
 
   try {
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
-      do_no: doNo, do_date: parseDODate(document.getElementById('do-date').value), type: typ, customer_id: custId, customer_name: custVal,
+      do_no: doNo, do_date: doDate, type: typ, customer_id: custId, customer_name: custVal,
       customer_address: custAddr, salesperson: salesVal, machine: machineVal,
       header_text: headerText, created_by: currentUserId,
     }).select().single();
@@ -781,10 +808,12 @@ async function saveDODocEdits() {
   const cust = document.getElementById('do-cust').value.trim();
   if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
   if (!cust) return toast('กรุณาระบุชื่อลูกค้า', 'error');
+  const editedDate = parseDODate(document.getElementById('do-date').value);
+  if (!editedDate) return toast('อ่านวันที่บนใบไม่ออก — ใช้แบบ 24/07/2569 หรือ 24-Jul-2026', 'error');
 
   const headerPayload = {
     do_no: doNo,
-    do_date: parseDODate(document.getElementById('do-date').value),
+    do_date: editedDate,
     customer_name: cust,
     customer_address: document.getElementById('do-cust-addr')?.innerText.trim() || '',
     salesperson: document.getElementById('do-salesperson').value.trim(),

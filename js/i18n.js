@@ -414,7 +414,7 @@ const EN = {
   'เว้นว่างไว้ = ไม่ระบุ': 'Leave blank for none',
   'ที่อยู่ลูกค้าที่พิมพ์บนใบ DO': 'Customer address printed on the DO',
   'หมายเหตุที่จะแสดงบนใบ DO': 'Note shown on the DO',
-  'เช่น 21-Aug-2026': 'e.g. 21-Aug-2026',
+  'เช่น 21/08/2569': 'e.g. 21-Aug-2026',
 
   // ── ข้อความที่ JS วาดเอง: ป้ายสถานะ ──
   '● พร้อมใช้': '● Available',
