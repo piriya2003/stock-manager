@@ -79,6 +79,7 @@ async function finishLogin(session) {
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
   restoreOutSession();
+  restorePartsDOQueue();
   showSync('success', '✓ โหลดข้อมูลสำเร็จ');
 
   refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();

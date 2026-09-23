@@ -127,6 +127,14 @@
         <div class="kpi"><div class="kpi-label">เคลม / ชำรุด</div><div class="kpi-value text-red" id="d-claimed">0</div><div class="kpi-sub" id="d-claimed-pct"></div></div>
       </div>
 
+      <!-- อะไหล่ (นับเป็นจำนวน ไม่มี SN) — คนละหน้ากับสินค้าคงคลัง แต่รวมยอดไว้ที่นี่ให้เห็นในที่เดียว -->
+      <div class="kpi-strip" id="d-parts-strip" style="margin-top:8px;display:none">
+        <div class="kpi"><div class="kpi-label">อะไหล่ (ไม่มี SN)</div><div class="kpi-value" id="d-parts-total">0</div></div>
+        <div class="kpi"><div class="kpi-label">รวมทุกชิ้น</div><div class="kpi-value" id="d-parts-pieces">0</div></div>
+        <div class="kpi"><div class="kpi-label">ใกล้หมด</div><div class="kpi-value text-orange" id="d-parts-low">0</div></div>
+        <div class="kpi"><div class="kpi-label">รอออกใบ DO</div><div class="kpi-value text-blue" id="d-parts-queue">0</div></div>
+      </div>
+
       <div class="dash-grid">
         <div class="dash-col">
         <!-- ของเข้า-ออก 7 วันล่าสุด -->
@@ -414,6 +422,20 @@
           </div>
           <button onclick="openDOFromSNList()" class="btn btn-primary btn-full">📄 สร้าง DO จากรายการนี้</button>
           <div class="inline-msg" id="do-sn-msg"></div>
+        </div>
+      </div>
+
+      <hr class="divider" style="margin:24px 0">
+      <div class="page-header mb-3">
+        <div class="page-title" style="font-size:15px">อะไหล่ที่ตัดขายแล้ว (ไม่มี SN) — รอออกใบ DO</div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin:-8px 0 12px">💡 ตัดขายอะไหล่จากแท็บ "อะไหล่" ก่อน ยอดจะถูกตัดทันที แล้วมารวมออกเป็นใบ DO ที่นี่ได้ทีหลัง — ลูกค้าคนเดียวกันรวมเป็นใบเดียว</div>
+      <div class="card">
+        <div class="tbl-wrap" style="max-height:260px;overflow-y:auto">
+          <table>
+            <thead><tr><th>ลูกค้า</th><th>รายการ</th><th style="text-align:center">รวม (ชิ้น)</th><th></th></tr></thead>
+            <tbody id="parts-do-tbody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -947,6 +969,29 @@
     <div style="display:flex;gap:8px;margin-top:16px">
       <button onclick="confirmPartIssue()" class="btn btn-primary" style="flex:1">✅ ยืนยันเบิก</button>
       <button onclick="closeModal('part-move-modal')" class="btn btn-ghost">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ตัดขายอะไหล่ (ไม่มี SN) ให้ลูกค้า — ตัดยอดทันที แล้วเข้าคิวรอออกใบ DO ที่แท็บ "สร้างใบ DO" -->
+<div class="modal-bg" id="part-sell-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title">🚚 ตัดขายอะไหล่</span>
+        <div class="text-muted text-sm mt-1" id="part-sell-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('part-sell-modal')">✕</button>
+    </div>
+    <div class="form-row"><label class="field-label" style="color:var(--orange)">ลูกค้า / ปลายทาง *</label><select id="part-sell-cust"></select></div>
+    <div class="form-row">
+      <label class="field-label">หมายเหตุ (ไม่บังคับ)</label>
+      <textarea id="part-sell-note" rows="3" placeholder="ไม่บังคับ" style="resize:vertical;line-height:1.6"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:2px">💡 ตัดยอดทันที แล้วรวมเป็นใบ DO ได้ทีหลังที่แท็บ "สร้างใบ DO"</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="confirmPartSell()" class="btn btn-primary" style="flex:1">✅ ยืนยันตัดขาย</button>
+      <button onclick="closeModal('part-sell-modal')" class="btn btn-ghost">ยกเลิก</button>
     </div>
   </div>
 </div>

@@ -149,6 +149,7 @@ function partRow(p) {
                style="width:64px;text-align:center;padding:4px" title="${t('จำนวน')}">
         <button onclick="movePart(${jsArg(p.id)}, 1)" class="btn btn-success btn-sm" title="${t('รับเข้า')}">${t('➕ เข้า')}</button>
         <button onclick="movePart(${jsArg(p.id)}, -1)" class="btn btn-orange btn-sm" title="${t('เบิกไปใช้')}">${t('➖ เบิก')}</button>
+        <button onclick="sellPart(${jsArg(p.id)})" class="btn btn-primary btn-sm" title="${t('ตัดขายให้ลูกค้า — เข้าคิวรอออกใบ DO')}">${t('🚚 ขาย')}</button>
       </div>
     </td>
     <td style="text-align:center">
@@ -313,6 +314,82 @@ async function doPartMove(id, dir, n, note) {
     const dtNote = dt === today() ? '' : ` (ลงวันที่ ${fmtDate(dt)})`;
     toast(`${typ} ${p.name} ${n} ${p.unit} — คงเหลือ ${newQty}${dtNote}`, dir > 0 ? 'success' : 'info');
   } catch (err) { toast(`${typ}ล้มเหลว: ` + err.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ตัดขายอะไหล่ (ไม่มี SN) ให้ลูกค้า — ตัดยอดทันทีเหมือนเบิก แต่มีปลายทาง
+//  แล้วเข้าคิวรอออกใบ DO (ดู renderPartsDOQueue / openDOFromPartsQueue ใน js/delivery-order.js)
+//  ทำแยกจาก doPartMove เพราะต้องรู้ผลสำเร็จแน่ชัดก่อนจะเข้าคิว ไม่ปนกับเบิกใช้ภายใน
+// ══════════════════════════════════════════════════════════════
+let pendingPartSell = null;   // { id, n } ที่รอกดยืนยันในหน้าต่างตัดขาย
+
+function sellPart(id) {
+  const p = partById(id); if (!p) return;
+  const input = document.getElementById('pq-' + id);
+  const n = parseInt(input?.value, 10);
+  if (!Number.isFinite(n) || n <= 0) return toast('ใส่จำนวนให้ถูกต้องก่อน', 'error');
+  if (n > p.qty) return toast(`ตัดขายไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
+
+  pendingPartSell = { id, n };
+  document.getElementById('part-sell-sub').textContent =
+    `${p.name} — ${n} ${p.unit} (คงเหลือหลังตัด ${p.qty - n})`;
+  const sel = document.getElementById('part-sell-cust');
+  if (sel) {
+    sel.innerHTML = `<option value="">${t('— เลือกลูกค้า —')}</option>` + customers.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    sel.value = '';
+  }
+  document.getElementById('part-sell-note').value = '';
+  document.getElementById('part-sell-modal').classList.add('open');
+  setTimeout(() => sel?.focus(), 80);
+}
+
+async function confirmPartSell() {
+  if (!pendingPartSell) return closeModal('part-sell-modal');
+  const { id, n } = pendingPartSell;
+  const p = partById(id);
+  if (!p) { pendingPartSell = null; return closeModal('part-sell-modal'); }
+  const custId = document.getElementById('part-sell-cust').value;
+  const cust = customers.find(c => c.id === custId);
+  if (!cust) return toast('กรุณาเลือกลูกค้า/ปลายทาง', 'error');
+  const note = document.getElementById('part-sell-note').value.trim();
+  const newQty = p.qty - n;
+  if (newQty < 0) return toast(`ตัดขายไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
+
+  try {
+    // อ้างยอดเดิมด้วย — กันสองคนตัดขาย/เบิกพร้อมกันแล้วทับยอดกัน (แบบเดียวกับ doPartMove)
+    const { data, error } = await supaClient.from('parts')
+      .update({ qty: newQty }).eq('id', id).eq('qty', p.qty).select();
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('ยอดเปลี่ยนไปแล้ว (อาจมีคนอื่นเพิ่งทำรายการ) — โหลดหน้าใหม่แล้วลองอีกครั้ง');
+
+    Object.assign(p, data[0]);
+    const dt = partMoveDate();
+    await logPartMove(id, 'ขาย', -n, newQty, `→ ${cust.name}${note ? ' — ' + note : ''}`, dt);
+
+    partsDOQueue.push({
+      id: 'pq-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      partId: id, name: p.name, code: p.code || '', category: p.category || '', unit: p.unit || 'ชิ้น',
+      qty: n, custId: cust.id, custName: cust.name,
+    });
+    persistPartsDOQueue();
+    renderPartsDOQueue();
+
+    pendingPartSell = null;
+    closeModal('part-sell-modal');
+    renderParts();
+    toast(`ตัดขาย ${p.name} ${n} ${p.unit} → ${cust.name} สำเร็จ — รอออกใบ DO ที่แท็บ "สร้างใบ DO"`, 'success');
+  } catch (err) { toast('ตัดขายล้มเหลว: ' + err.message, 'error'); }
+}
+
+// จำคิวลง localStorage (กันหายเมื่อรีเฟรช) — แบบเดียวกับ persistOutSession ในหน้าโอน/ขาย
+function persistPartsDOQueue() {
+  try { localStorage.setItem('shq_parts_do_queue', JSON.stringify(partsDOQueue)); } catch (e) { /* localStorage เต็ม/ปิด — ข้ามได้ */ }
+}
+function restorePartsDOQueue() {
+  try {
+    const raw = localStorage.getItem('shq_parts_do_queue');
+    partsDOQueue = raw ? (JSON.parse(raw) || []) : [];
+  } catch (e) { partsDOQueue = []; }
 }
 
 // บันทึกประวัติ — ล้มเหลวไม่ควรทำให้ยอดที่ตัดไปแล้วพัง แต่ต้องบอกให้รู้ว่าประวัติหาย

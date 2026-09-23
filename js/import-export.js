@@ -29,10 +29,11 @@ function exportDOHistoryCSV() {
   const rows = [];
   doHistory.forEach(d => {
     (d.items||[]).forEach(item => {
-      rows.push({ doNo: d.doNo, date: fmtDate(doDateOf(d)), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: userName(d.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+      // รายการจากอะไหล่ไม่มี SN — เว้น itemSN ว่างไว้ ดูจำนวนที่ itemQty แทน
+      rows.push({ doNo: d.doNo, date: fmtDate(doDateOf(d)), type: d.type, customer: d.customer, salesperson: d.salesperson||'', createdBy: userName(d.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn || '', itemQty: item.qty || '' });
     });
   });
-  dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN']), 'do_history_export.csv');
+  dlCSV(toCSV(rows, ['doNo','date','type','customer','salesperson','createdBy','itemName','itemCode','itemCategory','itemSN','itemQty']), 'do_history_export.csv');
 }
 function exportGRNHistoryCSV() {
   const rows = [];

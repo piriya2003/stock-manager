@@ -26,9 +26,13 @@ function custByName(name) {
 // เดิมทางประวัติไม่ได้บอกเจ้าของ ส่วนทางชุดการจ่ายเทียบชื่อตรงตัวเป๊ะ พอหาไม่เจอก็ตกไปใช้
 // ลูกค้าที่ค้างเลือกอยู่ในหน้าโอน/ขาย ใบของ TOPS เลยออกมาพร้อมที่อยู่ของร้านอื่น
 // ownerName ว่าง = ไม่รู้เจ้าของ (ของเก่ามาก) จึงยอมใช้ลูกค้าที่เลือกค้างไว้แทนแบบเดิม
+// items ปกติมี .sn (สินค้าที่มี SN, นับ 1 แถว = 1 ชิ้น) — ถ้ามี .qty แทน ถือว่ามาจากอะไหล่ที่ไม่มี SN
+// (1 แถว = ทั้งจำนวน) ต้องคงรูปนี้ไว้ ไม่ไปแปลงเป็น sn เพราะ groupDOItems ใช้แยกสองแบบนี้อยู่
 function openDOForSold(items, ownerName) {
   doFromLiveSession = false;
-  doItems = items.map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
+  doItems = items.map(i => i.qty != null
+    ? { name: i.name, code: i.code, category: i.category, qty: i.qty, partId: i.partId }
+    : { name: i.name, code: i.code, category: i.category, sn: String(i.sn) });
   const owner = ownerName ? custByName(ownerName) : undefined;
   prepDOModal(owner);
   // เจ้าของที่ไม่อยู่ในทะเบียนลูกค้า — ใส่ชื่อตามที่ติดกับสินค้า ที่อยู่ให้กรอกเอง
@@ -85,7 +89,44 @@ function openDOFromSNList() {
   inlineMsg('do-sn-msg', msg, true);
 }
 
+// ══════════════════════════════════════════════════════════════
+//  อะไหล่ที่ตัดขายแล้ว (ไม่มี SN) — รอออกใบ DO
+//  ตัดยอด+ลง part_moves ไปแล้วตั้งแต่ตอนกด "ตัดขาย" ในหน้าอะไหล่ (ดู js/parts.js)
+//  ตรงนี้แค่รวบเป็นใบ DO ทีหลัง เหมือนของที่มี SN ที่ตัดสต็อกไปแล้วรอออกใบ
+// ══════════════════════════════════════════════════════════════
+function renderPartsDOQueue() {
+  const tbody = document.getElementById('parts-do-tbody');
+  if (!tbody) return;
+  const groups = {};
+  partsDOQueue.forEach(q => {
+    const key = q.custId || normCustName(q.custName) || '—';
+    if (!groups[key]) groups[key] = { custId: q.custId, custName: q.custName, items: [], qty: 0 };
+    groups[key].items.push(q);
+    groups[key].qty += q.qty;
+  });
+  const list = Object.values(groups);
+  window.__partsQueueGroups = list;   // ให้ openDOFromPartsQueue(gi) อ้าง index เดียวกับที่วาดตรงนี้
+  tbody.innerHTML = list.length ? list.map((g, gi) => `
+    <tr>
+      <td>${escapeHtml(g.custName || '—')}</td>
+      <td>${g.items.map(it => `${escapeHtml(it.name)} × ${it.qty} ${escapeHtml(it.unit || 'ชิ้น')}`).join(', ')}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;color:var(--orange)">${g.qty}</td>
+      <td style="text-align:center"><button onclick="openDOFromPartsQueue(${gi})" class="btn btn-primary btn-sm">📄 สร้าง DO</button></td>
+    </tr>`).join('') : `<tr><td colspan="4" class="tbl-empty">${t('ยังไม่มีอะไหล่ที่ตัดขายรอออกใบ')}</td></tr>`;
+}
+
+// สร้างใบ DO จากอะไหล่ที่ตัดขายไว้ให้ลูกค้าคนเดียวกัน (gi = index ในกลุ่มที่วาดโดย renderPartsDOQueue)
+function openDOFromPartsQueue(gi) {
+  const g = (window.__partsQueueGroups || [])[gi];
+  if (!g || !g.items.length) return toast('ไม่พบรายการ', 'error');
+  openDOForSold(g.items, g.custName);
+  pendingPartsDOBatch = g.items.slice();   // ตั้งหลัง prepDOModal (ที่ openDOForSold เรียก) เพราะมันล้างค่านี้ทิ้งก่อนเสมอ
+}
+
 function prepDOModal(custOverride) {
+  // ล้างค้างจากครั้งก่อนเสมอ — เปิดใบ DO ใบใหม่ที่ไม่ได้มาจากคิวอะไหล่ ต้องไม่พาลบรายการในคิวของครั้งก่อน
+  // (openDOFromPartsQueue ตั้งค่านี้เอง "หลัง" เรียก prepDOModal อีกที)
+  pendingPartsDOBatch = null;
   doModalMode = 'create';
   document.getElementById('do-modal-badge').style.display = 'none';
   document.getElementById('do-modal-hint').textContent = 'กรอกข้อมูลและกด "บันทึก DO" เพื่อบันทึกประวัติ';
@@ -116,11 +157,7 @@ function prepDOModal(custOverride) {
   if (!doItems.length) {
     items.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';
   } else {
-    const grp = {};
-    doItems.forEach(i => {
-      if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category };
-      grp[i.name].qty++; grp[i.name].sns.push(i.sn);
-    });
+    const grp = groupDOItems(doItems);
     items.innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   }
   recalcDOTotals();
@@ -180,6 +217,24 @@ function fmtDODate(iso) {
   return `${String(d.getDate()).padStart(2, '0')}-${m}-${d.getFullYear()}`;
 }
 
+// รวมรายการในใบ DO ตามชื่อสินค้า — ใช้ร่วมกันทั้งตอนสร้างใหม่ (prepDOModal), เปิดพิมพ์ซ้ำ
+// (reopenDOForPrint) และหน้าดูใบเดิม (openDOView) กันไม่ให้ logic แยกกัน 3 ที่แล้วแก้ไม่ครบ
+//
+// สินค้าทั่วไปนับ "1 แถวใน items = 1 ชิ้น" ผ่าน .sn (ไม่มี SN ก็ไม่ควรมาทางนี้)
+// รายการจากอะไหล่ไม่มี SN รายชิ้น เลยส่งมาเป็น 1 แถว = ทั้งจำนวนผ่าน .qty แทน (sn เป็น null/undefined)
+// รวมยอดสุดท้ายต้องบวกทั้งสองทาง (g.qty = จำนวน SN ที่นับได้ + จำนวนจากอะไหล่)
+function groupDOItems(items) {
+  const grp = {};
+  (items || []).forEach(i => {
+    if (!grp[i.name]) grp[i.name] = { name: i.name, code: i.code, category: i.category, sns: [], ids: [], noSnQty: 0, unitPrice: i.unitPrice, amount: i.amount };
+    const g = grp[i.name];
+    if (i.id != null) g.ids.push(i.id);
+    if (i.qty != null) g.noSnQty += i.qty; else g.sns.push(i.sn);
+  });
+  Object.values(grp).forEach(g => { g.qty = g.sns.length + g.noSnQty; });
+  return grp;
+}
+
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
   // ใต้ชื่อสินค้าไม่โชว์อะไรเลย — รหัสสินค้ากับหมวดหมู่เป็นข้อมูลไว้จัดการภายใน
@@ -187,11 +242,13 @@ function doItemRow(name, v, i) {
   const sorted = v.sns.slice().sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })); // เรียงน้อย→มาก แสดงครบทุกเลข
   // เรียงเป็น 2 คอลัมน์ (ดูที่ .sn ใน style.css) — ใบที่มีของเป็นร้อยชิ้นจะได้ไม่กินกระดาษเป็นสิบแผ่น
   const sns = sorted.map(s => `<span class="sn">Serial NO : ${escapeHtml(s)}</span>`).join('');
+  // ส่วนที่มาจากอะไหล่ (ไม่มี SN) — บอกจำนวนไว้เฉยๆ แทนรายชื่อ SN
+  const noSn = v.noSnQty ? `<span class="sn" style="opacity:.7">(${t('ไม่มี SN')} — ${v.noSnQty} ${t('ชิ้น')})</span>` : '';
   const priceVal = v.unitPrice != null ? Number(v.unitPrice).toFixed(2) : '';
   const amtVal = v.amount != null ? Number(v.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
   return `<tr data-qty="${v.qty}" data-name="${escapeHtml(name)}">
       <td class="c">${i + 1}</td>
-      <td><div class="do-name">${escapeHtml(name)}</div>${sns}</td>
+      <td><div class="do-name">${escapeHtml(name)}</div>${sns}${noSn}</td>
       <td class="c">${v.qty}</td>
       <td><input class="do-num" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOAmount(this)" title="ราคาต่อหน่วย (พิมพ์ได้)"></td>
       <td><input class="do-num" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOTotals()" title="จำนวนเงิน (คำนวณให้ หรือพิมพ์ทับเองได้)"></td>
@@ -266,8 +323,10 @@ async function saveDO() {
       throw hErr;
     }
 
+    // รายการจากอะไหล่ (i.qty != null) ไม่มี SN — 1 แถวในฐานข้อมูลแทนทั้งจำนวน sn เป็น null
     const itemRows = doItems.map(i => ({
-      do_header_id: header.id, item_name: i.name, item_code: i.code, item_category: i.category, sn: String(i.sn),
+      do_header_id: header.id, item_name: i.name, item_code: i.code, item_category: i.category,
+      sn: i.qty != null ? null : String(i.sn), qty: i.qty ?? null, part_id: i.partId ?? null,
       unit_price: priceByName[i.name]?.price ?? null, amount: priceByName[i.name]?.amount ?? null,
     }));
     const { data: insertedItems, error: iErr } = await supaClient.from('do_items').insert(itemRows).select();
@@ -278,7 +337,8 @@ async function saveDO() {
       salesperson: salesVal, machine: machineVal, headerText,
       items: (insertedItems || doItems).map(i => ({
         id: i.id, name: i.item_name ?? i.name, code: i.item_code ?? i.code, category: i.item_category ?? i.category,
-        sn: String(i.sn), unitPrice: i.unit_price ?? priceByName[i.item_name ?? i.name]?.price ?? null,
+        sn: i.sn != null ? String(i.sn) : null, qty: i.qty ?? null,
+        unitPrice: i.unit_price ?? priceByName[i.item_name ?? i.name]?.price ?? null,
         amount: i.amount ?? priceByName[i.item_name ?? i.name]?.amount ?? null,
       })),
       createdAt: header.created_at, createdBy: currentUserId,
@@ -291,6 +351,14 @@ async function saveDO() {
     toast(`บันทึกใบ DO: ${doNo} สำเร็จ`, 'success');
     setTimeout(() => { saveBtn.textContent = '💾 บันทึก DO'; saveBtn.style.background = '#22d3ee'; }, 3000);
     if (doFromLiveSession) { outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession(); }
+    // ใบนี้มาจากคิวอะไหล่ที่ตัดขายไว้แล้ว — เอารายการที่เพิ่งออกใบออกจากคิว (ตัดยอด/ลง part_moves ไปแล้วตอนกด "ตัดขาย")
+    if (pendingPartsDOBatch) {
+      const doneIds = new Set(pendingPartsDOBatch.map(q => q.id));
+      partsDOQueue = partsDOQueue.filter(q => !doneIds.has(q.id));
+      persistPartsDOQueue();
+      pendingPartsDOBatch = null;
+      renderPartsDOQueue();
+    }
   } catch (err) { toast('บันทึก DO ล้มเหลว: ' + err.message, 'error'); }
 }
 
@@ -476,11 +544,13 @@ async function mergeSelectedDOs() {
     }
 
     // จำนวนเงินเก็บเป็นยอดรวมของทั้งกลุ่มสินค้า — กลุ่มมีของมากขึ้นต้องคิดใหม่
+    // รายการจากอะไหล่ (ไม่มี SN) 1 แถว อาจแทนหลายชิ้นผ่าน .qty — นับจำนวนจริง ไม่ใช่แค่จำนวนแถว
     for (const name of [...new Set(keep.items.map(i => i.name))]) {
       const rows = keep.items.filter(i => i.name === name);
       const price = rows.find(i => i.unitPrice != null)?.unitPrice;
       if (price == null) continue;
-      const amount = Math.round(Number(price) * rows.length * 100) / 100;
+      const totalQty = rows.reduce((s, r) => s + (r.qty ?? 1), 0);
+      const amount = Math.round(Number(price) * totalQty * 100) / 100;
       const { error } = await supaClient.from('do_items')
         .update({ unit_price: price, amount }).eq('do_header_id', keep.id).eq('item_name', name).select('id');
       if (error) throw error;
@@ -520,30 +590,26 @@ function openDOView(id) {
   document.getElementById('dov-note').value = d.headerText || '';
 
   // จัดกลุ่มตามสินค้า (เหมือนในใบพิมพ์) — แก้ราคาต่อกลุ่ม ไม่ใช่ต่อ SN
-  const grp = {};
-  (d.items||[]).forEach(i => {
-    if (!grp[i.name]) grp[i.name] = { name: i.name, code: i.code, category: i.category, sns: [], ids: [], unitPrice: i.unitPrice, amount: i.amount };
-    grp[i.name].sns.push(i.sn);
-    if (i.id != null) grp[i.name].ids.push(i.id);
-  });
-  dovGroups = Object.values(grp);
+  dovGroups = Object.values(groupDOItems(d.items));
   dovGroups.forEach(g => g.sns.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })));
 
   document.getElementById('dov-summary').innerHTML = dovGroups.map(g => `
     <div style="display:flex;justify-content:space-between;font-size:12px">
       <span style="color:var(--t2)">${escapeHtml(g.name)}</span>
-      <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${g.sns.length} ชิ้น</span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${g.qty} ชิ้น</span>
     </div>`).join('');
 
-  document.getElementById('dov-item-count').textContent = (d.items||[]).length;
+  document.getElementById('dov-item-count').textContent = dovGroups.reduce((s, g) => s + g.qty, 0);
   document.getElementById('dov-items-tbody').innerHTML = dovGroups.map((g, gi) => {
     const priceVal = g.unitPrice != null ? Number(g.unitPrice).toFixed(2) : '';
     const amtVal = g.amount != null ? Number(g.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
     const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${escapeHtml(g.code)}</div>` : '';
+    // ส่วนที่ไม่มี SN (มาจากอะไหล่) ถอดออกทีละชิ้นไม่ได้ — มีแค่ป้ายบอกจำนวน ไม่มีปุ่ม ✕
+    const noSn = g.noSnQty ? `<span class="dov-sn" style="opacity:.7">(${t('ไม่มี SN')} — ${g.noSnQty} ${t('ชิ้น')})</span>` : '';
     return `<tr data-gi="${gi}">
       <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
-      <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO(${jsArg(sn)})" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}</div></td>
-      <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.sns.length}</td>
+      <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO(${jsArg(sn)})" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}${noSn}</div></td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.qty}</td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
       <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>
     </tr>`;
@@ -559,7 +625,7 @@ function calcDOViewAmount(gi, inp) {
   const g = dovGroups[gi]; if (!g) return;
   const price = parseFloat(String(inp.value).replace(/,/g, ''));
   if (!isFinite(price)) amt.value = '';
-  else amt.value = (g.sns.length * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  else amt.value = (g.qty * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   recalcDOViewTotals();
 }
 
@@ -802,11 +868,7 @@ function reopenDOForPrint(id) {
   document.getElementById('do-date').value = fmtDODate(doDateOf(d));
   const addr = document.getElementById('do-cust-addr'); if (addr) addr.textContent = d.customerAddress || '';
 
-  const grp = {};
-  (d.items||[]).forEach(i => {
-    if (!grp[i.name]) grp[i.name] = { qty: 0, sns: [], code: i.code, category: i.category, unitPrice: i.unitPrice, amount: i.amount };
-    grp[i.name].qty++; grp[i.name].sns.push(i.sn);
-  });
+  const grp = groupDOItems(d.items);
   document.getElementById('do-items').innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('');
   recalcDOTotals();
   setDODocEditable(false);
@@ -878,7 +940,9 @@ async function deleteDO(id) {
 
   // ของในใบยังถูกตัดสต็อกอยู่ — ต้องให้คนตัดสินใจเอง ว่าออกใบผิด (คืนของ) หรือส่งไปแล้วจริง (ไม่คืน)
   // ตัดสินใจแทนไม่ได้ทั้งสองทาง เพราะเดาผิดแล้วสต็อกเพี้ยนทันที
-  const sns = (d.items || []).map(i => String(i.sn));
+  // รายการจากอะไหล่ (ไม่มี SN) ไม่อยู่ใน stock อยู่แล้ว ตัดออกก่อนกันเทียบเพี้ยนเป็น "null"
+  // — ลบใบที่มีของจากอะไหล่ ยอดอะไหล่จะไม่ถูกคืนให้อัตโนมัติ ต้องคืนเองในหน้าอะไหล่ถ้าจำเป็น
+  const sns = (d.items || []).filter(i => i.sn != null).map(i => String(i.sn));
   const stillOut = stock.filter(i => sns.includes(String(i.sn)) && i.status === 'Sold');
   let restore = false;
   if (stillOut.length) {

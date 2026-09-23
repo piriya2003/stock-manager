@@ -35,6 +35,19 @@ function renderDashboard() {
   set('d-repair-pct', pct(repair)); set('d-claimed-pct', pct(claimed));
   set('d-asof', 'ข้อมูล ณ ' + nowStr());
 
+  // อะไหล่ (ไม่มี SN) — คนละตารางกับสินค้าคงคลังด้านบน แต่รวมยอดไว้ในแดชบอร์ดเดียวกัน
+  // ซ่อนบล็อกนี้ถ้ายังไม่ได้รัน sql/add-parts.sql (partsTableMissing) จะได้ไม่โชว์เลข 0 หลอกๆ
+  const partsStrip = document.getElementById('d-parts-strip');
+  if (partsStrip) {
+    partsStrip.style.display = partsTableMissing ? 'none' : 'flex';
+    if (!partsTableMissing) {
+      set('d-parts-total', parts.length);
+      set('d-parts-pieces', parts.reduce((s, p) => s + (p.qty || 0), 0));
+      set('d-parts-low', parts.filter(p => p.min_qty > 0 && p.qty <= p.min_qty).length);
+      set('d-parts-queue', partsDOQueue.reduce((s, q) => s + q.qty, 0));
+    }
+  }
+
   // ── ของเข้า–ออก 7 วัน ──
   const flow = dashFlow();
   const peak = Math.max(1, ...flow.map(f => Math.max(f.inN, f.outN)));

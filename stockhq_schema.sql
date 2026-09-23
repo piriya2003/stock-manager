@@ -323,6 +323,11 @@ create table if not exists public.do_items (
 alter table public.do_items add column if not exists unit_price numeric;
 alter table public.do_items add column if not exists amount     numeric;
 
+-- รายการจากอะไหล่ (ตัดขายเป็นจำนวน ไม่มี SN) — sn เป็น null, qty เก็บจำนวนแทน
+alter table public.do_items alter column sn drop not null;
+alter table public.do_items add column if not exists qty     integer;
+alter table public.do_items add column if not exists part_id uuid references public.parts(id);
+
 
 -- ════════════════════════════════════════════════════════════════════════
 --  11. Index
