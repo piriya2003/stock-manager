@@ -230,6 +230,10 @@ function statusBadge(s) {
   if (s === 'Claimed') return `<span class="badge b-red">${t('🔴 เคลม/ชำรุด')}</span>`;
   return `<span class="badge b-orange">${t('● รับซ่อม')}</span>`;
 }
+// ชื่อสถานะแบบข้อความล้วน — ใช้ใน confirm / ข้อความสรุป ที่ใส่ป้าย HTML ไม่ได้
+const STATUS_TEXT = { Available: 'พร้อมใช้', Sold: 'โอน/ขาย', Repair: 'รับซ่อม', Claimed: 'เคลม/ชำรุด' };
+function statusText(s) { return STATUS_TEXT[s] || s; }
+
 function repairStatusBadge(s) {
   if (s === 'รอซ่อม') return `<span class="badge b-orange">${t('🟡 รอซ่อม')}</span>`;
   if (s === 'กำลังซ่อม') return `<span class="badge b-cyan">${t('🔵 กำลังซ่อม')}</span>`;

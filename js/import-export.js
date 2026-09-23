@@ -93,10 +93,23 @@ const IMPORT_FIELDS = [
 // สถานะต้องตรงกับ enum ในฐานข้อมูล — ค่าแปลกๆ จากไฟล์ทำให้ insert ล้มทั้งชุด
 // เจอค่าที่ไม่รู้จักให้ถอยเป็น Available แทนที่จะพังทั้งไฟล์
 const IMPORT_STATUSES = ['Available', 'Sold', 'Repair', 'Claimed'];
-function normImportStatus(v) {
-  const s = String(v ?? '').trim().toLowerCase();
-  return IMPORT_STATUSES.find(x => x.toLowerCase() === s) || 'Available';
+// คำที่คนเขียนในช่องสถานะจริงๆ — เดิมเทียบกับ 4 คำอังกฤษเท่านั้น ไฟล์ที่เขียนเป็นไทย
+// เลยกลายเป็น "พร้อมใช้" ทั้งแฟ้มโดยไม่มีอะไรเตือน ของที่ขายไปแล้วจึงเด้งกลับเข้าคลัง
+const STATUS_ALIASES = {
+  Available: ['available', 'instock', 'in stock', 'stock', 'พร้อมใช้', 'พร้อมใช้งาน', 'พร้อม', 'ในคลัง', 'คงคลัง', 'คงเหลือ', 'ว่าง', 'ปกติ'],
+  Sold:      ['sold', 'transferred', 'transfer', 'issued', 'out', 'ขาย', 'ขายแล้ว', 'ขายออก', 'โอน', 'โอนแล้ว', 'โอน/ขาย', 'โอน / ขาย', 'โอนขาย', 'เบิก', 'เบิกแล้ว', 'จ่ายออก', 'จ่ายแล้ว', 'ออกแล้ว', 'ส่งแล้ว'],
+  Repair:    ['repair', 'repairing', 'service', 'ซ่อม', 'ส่งซ่อม', 'รับซ่อม', 'รอซ่อม', 'กำลังซ่อม', 'อยู่ระหว่างซ่อม'],
+  Claimed:   ['claimed', 'claim', 'damaged', 'broken', 'เคลม', 'เคลมแล้ว', 'ส่งเคลม', 'ชำรุด', 'เสีย', 'เคลม/ชำรุด', 'เคลม / ชำรุด'],
+};
+// คืน null เมื่ออ่านไม่ออก เพื่อให้ฝั่งที่เรียกนับและเตือนได้ ว่าจะถูกบันทึกเป็น "พร้อมใช้"
+function matchImportStatus(v) {
+  const s = String(v ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!s) return null;
+  const hit = IMPORT_STATUSES.find(x => x.toLowerCase() === s);
+  if (hit) return hit;
+  return Object.keys(STATUS_ALIASES).find(k => STATUS_ALIASES[k].includes(s)) || null;
 }
+function normImportStatus(v) { return matchImportStatus(v) || 'Available'; }
 
 function normHeader(h) { return String(h ?? '').toLowerCase().replace(/[\s_\-.()]/g, ''); }
 
@@ -157,8 +170,17 @@ function renderImportMapUI() {
   document.getElementById('preview-maprow').innerHTML = impHeaders.map((h, i) =>
     `<th style="padding:4px 12px;font-size:10px;font-weight:600;color:${labelOf[i] ? 'var(--blue)' : 'var(--t3)'}">${labelOf[i] ? '→ ' + escapeHtml(labelOf[i]) : '— ข้าม —'}</th>`).join('');
 
+  // ช่องสถานะโชว์ด้วยว่าคำในไฟล์จะถูกบันทึกเป็นสถานะไหน — เดิมเห็นแต่ค่าจากไฟล์
+  // คำที่ระบบอ่านไม่ออกจะกลายเป็น "พร้อมใช้" เงียบๆ ต้องเห็นก่อนกดนำเข้า
+  const statusCell = raw => {
+    const hit = matchImportStatus(raw);
+    const label = statusText(hit || 'Available');
+    return `<div style="font-size:10px;color:${hit ? 'var(--blue)' : 'var(--orange)'};margin-top:2px">`
+         + `→ ${escapeHtml(label)}${hit ? '' : ' ' + escapeHtml('(อ่านไม่ออก)')}</div>`;
+  };
   document.getElementById('preview-tbody').innerHTML = impRows.slice(0, 5).map(row =>
-    `<tr>${impHeaders.map((h, i) => `<td style="padding:7px 12px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)">${escapeHtml(row[i] ?? '')}</td>`).join('')}</tr>`
+    `<tr>${impHeaders.map((h, i) => `<td style="padding:7px 12px;color:var(--t2);border-top:1px solid rgba(255,255,255,.03)">${escapeHtml(row[i] ?? '')}${
+      i === impMap.status ? statusCell(row[i]) : ''}</td>`).join('')}</tr>`
   ).join('');
 
   const missing = IMPORT_FIELDS.filter(f => f.required && impMap[f.key] < 0);
@@ -188,13 +210,14 @@ async function confirmImport() {
   };
 
   const candidates = [], seen = new Set();
-  let noSN = 0, dupInFile = 0, dupInStock = 0;
+  let noSN = 0, dupInFile = 0, dupInStock = 0, unreadable = 0;
   impRows.forEach(row => {
     const sn = cell(row, 'sn').replace(/^\*+|\*+$/g, '');
     if (!sn) { noSN++; return; }
     if (seen.has(sn)) { dupInFile++; return; }
     if (stock.find(i => String(i.sn) === sn)) { dupInStock++; return; }
     seen.add(sn);
+    if (impMap.status >= 0 && !matchImportStatus(cell(row, 'status'))) unreadable++;
     candidates.push({
       category: canonCat(cell(row, 'category')) || 'ทั่วไป',
       name:     cell(row, 'name')     || 'ไม่ระบุ',
@@ -220,7 +243,15 @@ async function confirmImport() {
       + odd.slice(0, 10).map(x => `• ${x.sn} — ${x.why}`).join('\n')
       + (odd.length > 10 ? `\n…และอีก ${odd.length - 10} รายการ` : '')
     : '';
-  if (!confirm(`นำเข้า ${candidates.length} รายการ?${skipped.length ? '\n\nข้าม: ' + skipped.join(', ') : ''}${oddMsg}`)) return;
+  // สรุปสถานะที่จะบันทึก — ของที่ขายไปแล้วเผลอเข้าเป็น "พร้อมใช้" ทำให้ยอดคงเหลือเกินความจริง
+  const byStatus = {};
+  candidates.forEach(c => { byStatus[c.status] = (byStatus[c.status] || 0) + 1; });
+  const statusMsg = '\n\nสถานะที่จะบันทึก: '
+    + Object.entries(byStatus).map(([s, n]) => `${statusText(s)} ${n}`).join(', ');
+  const unknownMsg = impMap.status < 0
+    ? '\n⚠️ ไม่ได้เลือกคอลัมน์สถานะ — ทุกแถวจะเป็น "พร้อมใช้"'
+    : (unreadable ? `\n⚠️ อ่านสถานะไม่ออก ${unreadable} แถว — จะบันทึกเป็น "พร้อมใช้"` : '');
+  if (!confirm(`นำเข้า ${candidates.length} รายการ?${skipped.length ? '\n\nข้าม: ' + skipped.join(', ') : ''}${statusMsg}${unknownMsg}${oddMsg}`)) return;
 
   try {
     const { data, error } = await supaClient.from('inventory').insert(candidates).select();
