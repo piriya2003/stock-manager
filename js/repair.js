@@ -33,6 +33,13 @@ async function doRepair() {
 
   const item = stock.find(i => String(i.sn) === sn);
   if (!item) return inlineMsg('r-msg', '❌ ไม่พบ SN ในระบบ', false);
+  // ยิงบาร์โค้ดซ้ำ / กดบันทึกสองรอบ เคยเปิดใบงานซ่อมซ้อนให้ SN เดียวกัน พอปิดใบหนึ่ง
+  // ของกลับเข้าคลัง อีกใบค้าง "รอซ่อม" ตลอดไป — มีใบเปิดอยู่แล้วต้องไม่เปิดเพิ่ม
+  const open = repairJobs.find(j => String(j.sn) === sn && j.status !== 'ซ่อมเสร็จ' && j.status !== 'เคลมเครื่อง');
+  if (open || item.status === 'Repair') {
+    document.getElementById('r-sn').value = '';
+    return inlineMsg('r-msg', `⚠️ SN: ${sn} มีใบงานซ่อมเปิดอยู่แล้ว${open ? ` (${open.status})` : ''} — ดูได้ที่รายการงานซ่อม`, false);
+  }
 
   try {
     // ต้องยังเป็นสถานะเดิมที่หน้าจอเห็นตอนกด ไม่งั้นแปลว่ามีคนอื่นย้ายของไปแล้ว
