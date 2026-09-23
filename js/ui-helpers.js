@@ -240,16 +240,37 @@ function repairStatusBadge(s) {
   if (s === 'เคลมเครื่อง') return `<span class="badge b-red">${t('🔴 เคลมเครื่อง')}</span>`;
   return `<span class="badge b-green">${t('🟢 ซ่อมเสร็จ')}</span>`;
 }
+// ชนิดของรายการในประวัติ — ใช้ร่วมกันทั้งป้ายและตัวกรองในหน้าประวัติการเคลื่อนไหว
+// เดิมตัวกรอง "รับซ่อม" ค้นด้วยคำว่า "ซ่อม" จึงได้ "ซ่อมเสร็จ" กับ "เคลม/ส่งซ่อม" ปนมา
+// และป้ายของ "ซ่อมเสร็จ" ขึ้นว่า "ซ่อม" เหมือนรับซ่อม — ลำดับการเช็คสำคัญ อย่าสลับ
+function txKind(type) {
+  const s = String(type || '');
+  if (s.includes('รับเข้า')) return 'in';
+  if (s === 'สินค้าเคลม/ส่งซ่อม') return 'out-claim';
+  if (s === 'เบิกสินค้า') return 'withdraw';
+  if (s.includes('ซ่อมเสร็จ')) return 'repair-done';
+  if (s.includes('เคลม (SN เดิม)') || s.includes('เคลมสลับ')) return 'claim';
+  if (s.includes('ซ่อม')) return 'repair-in';
+  if (s.includes('ขาย')) return 'sell';
+  if (s.includes('คืน')) return 'return';
+  if (s.includes('โอนสินค้า')) return 'transfer';
+  return 'other';
+}
+
 function typeBadge(t) {
-  if (t.includes('รับเข้า')) return `<span class="badge b-green">${window.t('📥 รับเข้า')}</span>`;
-  // 2 บรรทัดนี้เทียบแบบตรงตัว ไม่ใช่ includes — ไม่งั้นไปกินรายการ 'เคลม (SN เดิม)' / 'เคลมสลับ SN' ของงานเคลมด้วย
-  if (t === 'สินค้าเคลม/ส่งซ่อม') return `<span class="badge b-red">${window.t('🔴 เคลม/ส่งซ่อม')}</span>`;
-  if (t === 'เบิกสินค้า') return `<span class="badge b-cyan">${window.t('📦 เบิก')}</span>`;
-  if (t.includes('ซ่อม')) return `<span class="badge b-orange">${window.t('🔧 ซ่อม')}</span>`;
-  if (t.includes('ขาย')) return `<span class="badge b-blue">${window.t('💰 ขาย')}</span>`;
-  if (t.includes('คืน')) return `<span class="badge b-purple">${window.t('♻️ คืน')}</span>`;
-  // ชนิดรายการเก่าที่ไม่รู้จักยังโชว์ข้อความไทยจากฐานข้อมูลตามเดิม — เป็นข้อมูล ไม่ใช่ข้อความในโปรแกรม
-  return '<span class="badge b-gray">📤 ' + t.replace('โอนสินค้า', window.t('โอน')) + '</span>';
+  const k = txKind(t);
+  if (k === 'repair-done') return `<span class="badge b-green">${window.t('✅ ซ่อมเสร็จ')}</span>`;
+  if (k === 'claim') return `<span class="badge b-red">${window.t('🔄 เคลม')}</span>`;
+  if (k === 'repair-in') return `<span class="badge b-orange">${window.t('🔧 รับซ่อม')}</span>`;
+  if (k === 'transfer') return `<span class="badge b-gray">${window.t('📤 โอน')}</span>`;
+  if (k === 'in') return `<span class="badge b-green">${window.t('📥 รับเข้า')}</span>`;
+  if (k === 'out-claim') return `<span class="badge b-red">${window.t('🔴 เคลม/ส่งซ่อม')}</span>`;
+  if (k === 'withdraw') return `<span class="badge b-cyan">${window.t('📦 เบิก')}</span>`;
+  if (k === 'sell') return `<span class="badge b-blue">${window.t('💰 ขาย')}</span>`;
+  if (k === 'return') return `<span class="badge b-purple">${window.t('♻️ คืน')}</span>`;
+  // ชนิดอื่น (แก้ SN / แก้ลูกค้า / เปลี่ยนชื่อ / รายการเก่า) โชว์ข้อความจากฐานข้อมูลตรงๆ
+  // ต้อง escape — ใครล็อกอินก็เขียนแถวลงตารางนี้ได้ เดิมใส่ลง HTML ดิบๆ
+  return `<span class="badge b-gray">${escapeHtml(t)}</span>`;
 }
 function doTypeBadge(t) {
   if (t === 'ขายสินค้า') return `<span class="badge b-blue">${window.t('💰 ขาย')}</span>`;

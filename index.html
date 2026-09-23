@@ -652,13 +652,16 @@
           <input type="text" id="rp-q" oninput="renderReport()" placeholder="🔍 ค้นหา..." style="width:220px">
           <select id="rp-type" onchange="renderReport()" style="width:170px">
             <option value="">— ทุกประเภท —</option>
-            <option value="รับเข้า">📥 รับเข้า</option>
-            <option value="โอนสินค้า">📤 โอน</option>
-            <option value="ขายสินค้า">💰 ขาย</option>
-            <option value="เบิกสินค้า">📦 เบิก</option>
-            <option value="สินค้าเคลม/ส่งซ่อม">🔴 เคลม / ส่งซ่อม</option>
-            <option value="ซ่อม">🔧 รับซ่อม</option>
-            <option value="คืนสต็อก">♻️ คืนสต็อก</option>
+            <option value="in">📥 รับเข้า</option>
+            <option value="transfer">📤 โอน</option>
+            <option value="sell">💰 ขาย</option>
+            <option value="withdraw">📦 เบิก</option>
+            <option value="out-claim">🔴 เคลม / ส่งซ่อม</option>
+            <option value="repair-in">🔧 รับซ่อม</option>
+            <option value="repair-done">✅ ซ่อมเสร็จ</option>
+            <option value="claim">🔄 เคลม</option>
+            <option value="return">♻️ คืนสต็อก</option>
+            <option value="other">✏️ แก้ไขข้อมูล</option>
           </select>
           <button id="rp-more-btn" onclick="loadMoreTxns()" class="btn btn-ghost btn-sm">⬇ โหลดประวัติเก่าเพิ่ม</button>
           <button onclick="exportReportCSV()" class="btn btn-ghost btn-sm">⬇ CSV</button>

@@ -57,7 +57,7 @@ function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV()
 function renderReport() {
   const q  = document.getElementById('rp-q').value.trim().toLowerCase();
   const ft = document.getElementById('rp-type').value;
-  const data = txns.filter(t => (!ft || t.type.includes(ft)) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
+  const data = txns.filter(t => (!ft || txKind(t.type) === ft) && (!q || String(t.sn).toLowerCase().includes(q) || t.name.toLowerCase().includes(q)));
   updateTxMoreBtn();
   const cnt = document.getElementById('rp-count');
   if (cnt) cnt.innerHTML = `แสดง <b style="color:var(--blue)">${data.length}</b> จากที่โหลดมา ${txns.length} รายการ`
