@@ -25,11 +25,15 @@ const CAM_FIELDS = [
   { id: 'swap-new-sn', mode: 'fill',   title: 'สแกน SN เครื่องใหม่' },
 ];
 
+// โหมดทดสอบ (หน้า "ทดสอบสแกน") — ไม่มีช่องปลายทาง อ่านแล้วแค่โชว์ผล ไม่บันทึกอะไร
+const CAM_TEST = { id: null, mode: 'test', title: 'ทดสอบสแกน — ไม่บันทึกอะไรลงระบบ' };
+
 let camLibPromise = null;   // สัญญาโหลดไลบรารี (โหลดครั้งเดียว)
 let camScanner = null;      // ตัวสแกนที่กำลังเปิดอยู่ (null = ปิด)
 let camCfg = null;          // ช่องที่กำลังสแกนให้
 let camBusy = false;        // กำลังบันทึกชิ้นก่อนหน้า — ชิ้นใหม่ที่อ่านได้ระหว่างนี้ข้ามไปก่อน
 let camLast = { code: '', at: 0 };
+let camMark = 0;            // เวลาที่เปิดกล้อง/อ่านชิ้นล่าสุด — โหมดทดสอบใช้วัดว่าอ่านได้ช้าแค่ไหน
 let camCount = 0;
 let camFeed = [];
 let camAudio = null;
@@ -99,7 +103,7 @@ function setCamStatus(text, isErr) {
 
 function renderCamFeed() {
   const el = document.getElementById('cam-feed'); if (!el) return;
-  el.innerHTML = camFeed.slice(0, 4).map(f =>
+  el.innerHTML = camFeed.slice(0, 5).map(f =>
     `<div class="cam-row ${f.ok ? 'ok' : 'no'}"><span class="mono">${escapeHtml(f.code)}</span><span>${escapeHtml(f.text)}</span></div>`).join('');
   const c = document.getElementById('cam-count');
   if (c) c.textContent = camCount ? `${t('สำเร็จ')} ${camCount}` : '';
@@ -131,10 +135,10 @@ function camErrorText(err) {
   return 'เปิดกล้องไม่สำเร็จ: ' + m;
 }
 
-async function openCameraScan(fieldId) {
-  const cfg = CAM_FIELDS.find(f => f.id === fieldId);
+async function openCameraScan(fieldOrCfg) {
+  const cfg = typeof fieldOrCfg === 'string' ? CAM_FIELDS.find(f => f.id === fieldOrCfg) : fieldOrCfg;
   if (!cfg || camScanner || camCfg) return;   // เปิดซ้อนไม่ได้
-  camCfg = cfg; camCount = 0; camFeed = []; camLast = { code: '', at: 0 }; camBusy = false; camTorchOn = false;
+  camCfg = cfg; camCount = 0; camFeed = []; camLast = { code: '', at: 0 }; camBusy = false; camTorchOn = false; camMark = Date.now();
 
   const o = buildCamOverlay();
   document.getElementById('cam-title').textContent = t(cfg.title);
@@ -146,7 +150,7 @@ async function openCameraScan(fieldId) {
 
   // ฟังก์ชันบันทึกหลายตัวเรียก .focus() ที่ช่องหลังบันทึกเสร็จ — บนมือถือจะเด้งคีย์บอร์ดบังกล้อง
   // inputmode="none" ห้ามคีย์บอร์ดขึ้นระหว่างเปิดกล้อง
-  const el = document.getElementById(cfg.id);
+  const el = cfg.id ? document.getElementById(cfg.id) : null;
   cfg.prevInputmode = el ? el.getAttribute('inputmode') : null;
   if (el) el.setAttribute('inputmode', 'none');
 
@@ -175,7 +179,13 @@ async function openCameraScan(fieldId) {
       const torch = scanner.getRunningTrackCameraCapabilities().torchFeature();
       if (torch.isSupported()) document.getElementById('cam-torch').style.display = '';
     } catch (e) {}
-    setCamStatus(t('เล็งบาร์โค้ดให้อยู่ในกรอบ — ยิงต่อเนื่องได้เลย'));
+    let info = '';
+    if (cfg.mode === 'test') {   // บอกว่าเครื่องนี้ใช้ตัวอ่านแบบไหนและกล้องได้ความละเอียดเท่าไหร่ — ไว้วินิจฉัยเวลาอ่านยาก
+      let res = '';
+      try { const st = scanner.getRunningTrackSettings(); if (st && st.width) res = ' · ' + t('กล้อง') + ' ' + st.width + '×' + st.height; } catch (e) {}
+      info = ' — ' + ('BarcodeDetector' in window ? t('ตัวอ่านของเบราว์เซอร์') : t('ตัวอ่านแบบไลบรารี (ช้ากว่า)')) + res;
+    }
+    setCamStatus(t('เล็งบาร์โค้ดให้อยู่ในกรอบ — ยิงต่อเนื่องได้เลย') + info);
   } catch (err) {
     console.warn('camera scan:', err);
     try { if (camScanner) await camScanner.clear(); } catch (e) {}
@@ -200,7 +210,7 @@ async function closeCameraScan() {
   const o = document.getElementById('cam-scan');
   if (o) o.classList.remove('open');
   document.body.classList.remove('cam-open');
-  const el = document.getElementById(cfg.id);
+  const el = cfg.id ? document.getElementById(cfg.id) : null;
   if (el) { if (cfg.prevInputmode == null) el.removeAttribute('inputmode'); else el.setAttribute('inputmode', cfg.prevInputmode); }
   try { if (scanner) { await scanner.stop(); await scanner.clear(); } } catch (e) { /* หยุดไม่ได้ก็ปล่อย — กล้องปิดเองตอนออกจากหน้า */ }
   camTorchOn = false;
@@ -216,10 +226,16 @@ async function onCamDecode(raw) {
   if (code === camLast.code && now - camLast.at < 3000) return;    // ยิงซ้ำตัวเดิมค้างอยู่หน้ากล้อง
   camLast = { code, at: now };
   camBusy = true;
-  const el = document.getElementById(cfg.id);
+  const el = cfg.id ? document.getElementById(cfg.id) : null;
   let ok = true, text = '';
   try {
-    if (cfg.mode === 'append') {
+    if (cfg.mode === 'test') {
+      // ทดสอบ: ไม่แตะช่องไหนเลย แค่วิเคราะห์แล้วโชว์ (ตัวช่วยอยู่ใน js/scan-test.js)
+      const rec = recordScanTest('กล้อง', raw, { gapMs: now - camMark });
+      camMark = now;
+      ok = !rec.bad; text = scanTestSummary(rec);
+      if (ok) camCount++;
+    } else if (cfg.mode === 'append') {
       const have = (el.value || '').split(/[\s,]+/).filter(Boolean);
       if (have.includes(code)) { ok = false; text = t('ซ้ำกับที่สแกนไว้แล้ว'); }
       else {
