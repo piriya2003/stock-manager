@@ -16,6 +16,7 @@
 | [`fix-signup-privilege-escalation.sql`](fix-signup-privilege-escalation.sql) | 🔴 **ด่วน** ปิดช่องโหว่คนนอกสมัครเองเป็นแอดมินได้ — ต้องปิดรับสมัครใน Dashboard ด้วย |
 | [`add-parts.sql`](add-parts.sql) | สร้างตารางอะไหล่ (นับเป็นจำนวน ไม่ผูก SN) — ต้องรันก่อนใช้เมนู "อะไหล่" |
 | [`add-do-items-qty.sql`](add-do-items-qty.sql) | ขายอะไหล่ (ไม่มี SN) แล้วออกใบ DO ได้ + คิวรอออกใบเห็นทุกเครื่อง — ต้องรัน add-parts.sql ก่อน |
+| [`check-parts-do-setup.js`](check-parts-do-setup.js) | ตรวจว่ารัน add-do-items-qty.sql ครบไหม — วางใน Console ของเว็บ (F12) ตอนล็อกอินอยู่ ไม่แก้ข้อมูลจริง |
 
 ## วิธีใช้
 
