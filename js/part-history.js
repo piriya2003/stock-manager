@@ -26,6 +26,7 @@ function filteredPartMoves() {
     if (uid && m.performed_by !== uid) return false;
     if (typ === 'in'  && !(m.qty > 0)) return false;
     if (typ === 'out' && !(m.qty < 0)) return false;
+    if (typ === 'sale' && m.type !== 'ขาย') return false;
     // move_date เป็น yyyy-mm-dd เทียบเป็นข้อความตรงๆ ได้เลย
     if (from && (m.move_date || '') < from) return false;
     if (to   && (m.move_date || '') > to)   return false;
@@ -89,7 +90,7 @@ function partMoveRow(m) {
       <div style="color:var(--t3);font-size:10px">${m.created_at ? new Date(m.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</div></td>
     <td style="color:var(--t1)">${p ? escapeHtml(p.name) : `<span style="color:var(--t3)">${t('(ลบไปแล้ว)')}</span>`}
       ${p && p.code ? `<div class="mono" style="font-size:10px;color:var(--t3)">${escapeHtml(p.code)}</div>` : ''}</td>
-    <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? t('➕ รับเข้า') : t('➖ เบิกใช้')}</span></td>
+    <td>${partMoveBadge(m)}</td>
     <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}
       <span style="font-size:10px;color:var(--t3);font-weight:400"> ${escapeHtml(p ? p.unit : '')}</span></td>
     <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>
@@ -141,7 +142,7 @@ function exportPartMovesCSV() {
     const p = partById(m.part_id) || {};
     return {
       date: m.move_date || '', part: p.name || '(ลบไปแล้ว)', code: p.code || '', category: p.category || '',
-      type: m.qty > 0 ? 'รับเข้า' : 'เบิกใช้', qty: m.qty, unit: p.unit || '',
+      type: m.type || (m.qty > 0 ? 'รับเข้า' : 'เบิกใช้'), qty: m.qty, unit: p.unit || '',
       balance: m.balance, note: m.note || '', user: userName(m.performed_by),
     };
   });

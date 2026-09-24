@@ -79,7 +79,7 @@ async function finishLogin(session) {
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
   restoreOutSession();
-  restorePartsDOQueue();
+  try { localStorage.removeItem('shq_parts_do_queue'); } catch (e) {}   // คิวรุ่นเก่าเก็บในเครื่อง — ตอนนี้อยู่ในฐานข้อมูลแล้ว
   showSync('success', '✓ โหลดข้อมูลสำเร็จ');
 
   refreshCustomerSelects(); renderMasterProducts(); renderCustomerList(); updateDataLists();

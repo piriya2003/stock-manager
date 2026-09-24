@@ -115,7 +115,7 @@ function tab(name) {
   if (name === 'backup') renderBackupStats();
   if (name === 'inbound') { renderInSession(); renderInboundSummary(); setTimeout(() => document.getElementById('i-sn').focus(), 80); }
   if (name === 'outbound') setTimeout(() => document.getElementById('o-sn').focus(), 80);
-  if (name === 'do-create') { renderOutboundHistory(); renderPartsDOQueue(); }
+  if (name === 'do-create') { renderOutboundHistory(); renderPartsDOQueue(); loadPartSaleQueue().then(ok => { if (ok) renderPartsDOQueue(); }); }
   if (name === 'parts') { updatePartDataLists(); renderParts(); }
   if (name === 'part-history') renderPartHistory();
 }

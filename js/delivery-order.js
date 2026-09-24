@@ -97,6 +97,10 @@ function openDOFromSNList() {
 function renderPartsDOQueue() {
   const tbody = document.getElementById('parts-do-tbody');
   if (!tbody) return;
+  if (partSaleSchemaMissing) {
+    tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${t('ต้องรัน sql/add-do-items-qty.sql ใน Supabase ก่อน จึงจะขายอะไหล่และออกใบ DO ได้')}</td></tr>`;
+    return;
+  }
   const groups = {};
   partsDOQueue.forEach(q => {
     const key = q.custId || normCustName(q.custName) || '—';
@@ -109,7 +113,8 @@ function renderPartsDOQueue() {
   tbody.innerHTML = list.length ? list.map((g, gi) => `
     <tr>
       <td>${escapeHtml(g.custName || '—')}</td>
-      <td>${g.items.map(it => `${escapeHtml(it.name)} × ${it.qty} ${escapeHtml(it.unit || 'ชิ้น')}`).join(', ')}</td>
+      <td>${g.items.map(it => `<div style="display:flex;align-items:center;gap:6px"><span>${escapeHtml(it.name)} × ${it.qty} ${escapeHtml(it.unit || 'ชิ้น')}</span>`
+        + `<button onclick="cancelPartSale(${jsArg(it.id)})" class="btn btn-ghost btn-sm" style="padding:0 6px" title="${t('ยกเลิกการขาย — คืนยอดเข้าอะไหล่')}">✕</button></div>`).join('')}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;color:var(--orange)">${g.qty}</td>
       <td style="text-align:center"><button onclick="openDOFromPartsQueue(${gi})" class="btn btn-primary btn-sm">📄 สร้าง DO</button></td>
     </tr>`).join('') : `<tr><td colspan="4" class="tbl-empty">${t('ยังไม่มีอะไหล่ที่ตัดขายรอออกใบ')}</td></tr>`;
@@ -312,13 +317,41 @@ async function saveDO() {
 
   const custAddr = document.getElementById('do-cust-addr')?.innerText.trim() || '';
 
+  // ใบนี้มาจากคิวอะไหล่ที่ตัดขายไว้ — ต้อง "จอง" แถวขายเหล่านั้นก่อน (ผูกกับ id ของใบนี้)
+  // สองเครื่องกดออกใบให้รายการเดียวกันพร้อมกัน เครื่องที่ช้ากว่าจะจองไม่ได้ แล้วหยุดก่อนสร้างใบซ้ำ
+  // สร้าง id ของหัวใบเองตรงนี้ เพราะต้องใช้จองก่อนที่หัวใบจะมีอยู่จริง
+  const saleIds = pendingPartsDOBatch ? pendingPartsDOBatch.map(q => q.id) : [];
+  const headerId = saleIds.length ? crypto.randomUUID() : undefined;
+  let claimed = false;
+  const releaseClaims = async () => {
+    if (!claimed) return;
+    await supaClient.from('part_moves').update({ do_header_id: null }).eq('do_header_id', headerId).select('id');
+    claimed = false;
+  };
+
   try {
+    if (saleIds.length) {
+      const { data: took, error: cErr } = await supaClient.from('part_moves').update({ do_header_id: headerId })
+        .in('id', saleIds).is('do_header_id', null).is('cancelled_at', null).select('id');
+      if (cErr) throw cErr;
+      claimed = !!(took && took.length);
+      if (!took || took.length !== saleIds.length) {
+        await releaseClaims();
+        pendingPartsDOBatch = null;
+        closeDOModal();
+        await loadPartSaleQueue(); renderPartsDOQueue();
+        return toast('รายการอะไหล่บางชิ้นถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว ลองสร้างใบใหม่', 'warning');
+      }
+    }
+
     const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
+      ...(headerId ? { id: headerId } : {}),
       do_no: doNo, do_date: doDate, type: typ, customer_id: custId, customer_name: custVal,
       customer_address: custAddr, salesperson: salesVal, machine: machineVal,
       header_text: headerText, created_by: currentUserId,
     }).select().single();
     if (hErr) {
+      await releaseClaims();
       if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
       throw hErr;
     }
@@ -330,7 +363,7 @@ async function saveDO() {
       unit_price: priceByName[i.name]?.price ?? null, amount: priceByName[i.name]?.amount ?? null,
     }));
     const { data: insertedItems, error: iErr } = await supaClient.from('do_items').insert(itemRows).select();
-    if (iErr) throw iErr;
+    if (iErr) { await releaseClaims(); throw iErr; }   // อะไหล่กลับเข้าคิว ไม่ค้างผูกกับใบที่ไม่มีรายการ
 
     doHistory.unshift({
       id: header.id, doNo, date: header.do_date, type: typ, customer: custVal, customerAddress: custAddr,
@@ -351,15 +384,14 @@ async function saveDO() {
     toast(`บันทึกใบ DO: ${doNo} สำเร็จ`, 'success');
     setTimeout(() => { saveBtn.textContent = '💾 บันทึก DO'; saveBtn.style.background = '#22d3ee'; }, 3000);
     if (doFromLiveSession) { outSession = []; sessionDispatchTime = null; persistOutSession(); renderOutSession(); }
-    // ใบนี้มาจากคิวอะไหล่ที่ตัดขายไว้แล้ว — เอารายการที่เพิ่งออกใบออกจากคิว (ตัดยอด/ลง part_moves ไปแล้วตอนกด "ตัดขาย")
+    // ใบนี้มาจากคิวอะไหล่ — แถวขายผูกกับใบนี้แล้ว (จองไว้ข้างบน) เอาออกจากคิวบนจอ
     if (pendingPartsDOBatch) {
-      const doneIds = new Set(pendingPartsDOBatch.map(q => q.id));
-      partsDOQueue = partsDOQueue.filter(q => !doneIds.has(q.id));
-      persistPartsDOQueue();
+      const doneIds = new Set(saleIds.map(String));
+      partsDOQueue = partsDOQueue.filter(q => !doneIds.has(String(q.id)));
       pendingPartsDOBatch = null;
       renderPartsDOQueue();
     }
-  } catch (err) { toast('บันทึก DO ล้มเหลว: ' + err.message, 'error'); }
+  } catch (err) { await releaseClaims(); toast('บันทึก DO ล้มเหลว: ' + err.message, 'error'); }
 }
 
 function closeDOModal() { document.getElementById('do-modal').classList.remove('open'); }
@@ -534,6 +566,12 @@ async function mergeSelectedDOs() {
         .update({ do_header_id: keep.id }).eq('do_header_id', d.id).select('id');
       if (error) throw error;
       if (had && (!data || !data.length)) throw new Error('ไม่มีสิทธิ์ย้ายรายการสินค้า (ยังไม่ได้ตั้ง update policy ให้ do_items)');
+
+      // แถวขายอะไหล่ที่ผูกกับใบที่ถูกรวม ต้องย้ายไปผูกกับใบที่เก็บไว้ด้วย ไม่งั้นหลุดกลับเข้าคิวเหมือนยังไม่ได้ออกใบ
+      if (!partSaleSchemaMissing && (d.items || []).some(i => i.sn == null)) {
+        const { error: pErr } = await supaClient.from('part_moves').update({ do_header_id: keep.id }).eq('do_header_id', d.id).select('id');
+        if (pErr) throw pErr;
+      }
 
       const { error: dErr } = await supaClient.from('do_headers').delete().eq('id', d.id);
       if (dErr) throw dErr;
@@ -941,7 +979,7 @@ async function deleteDO(id) {
   // ของในใบยังถูกตัดสต็อกอยู่ — ต้องให้คนตัดสินใจเอง ว่าออกใบผิด (คืนของ) หรือส่งไปแล้วจริง (ไม่คืน)
   // ตัดสินใจแทนไม่ได้ทั้งสองทาง เพราะเดาผิดแล้วสต็อกเพี้ยนทันที
   // รายการจากอะไหล่ (ไม่มี SN) ไม่อยู่ใน stock อยู่แล้ว ตัดออกก่อนกันเทียบเพี้ยนเป็น "null"
-  // — ลบใบที่มีของจากอะไหล่ ยอดอะไหล่จะไม่ถูกคืนให้อัตโนมัติ ต้องคืนเองในหน้าอะไหล่ถ้าจำเป็น
+  // — อะไหล่ไม่คืนยอดตรงนี้ แต่กลับเข้าคิวรอออกใบ (ดูท้ายฟังก์ชัน) ยกเลิกขายที่คิวถ้าต้องการคืนยอด
   const sns = (d.items || []).filter(i => i.sn != null).map(i => String(i.sn));
   const stillOut = stock.filter(i => sns.includes(String(i.sn)) && i.status === 'Sold');
   let restore = false;
@@ -968,8 +1006,17 @@ async function deleteDO(id) {
       }
     }
 
+    // อะไหล่ในใบนี้ตัดยอดไปแล้วตั้งแต่ตอนขาย — ลบใบแล้วให้กลับไปรอออกใบใหม่ (หรือกดยกเลิกขายที่คิวเพื่อคืนยอด)
+    let backToQueue = 0;
+    if ((d.items || []).some(i => i.sn == null) && !partSaleSchemaMissing) {
+      const { data: rel } = await supaClient.from('part_moves').update({ do_header_id: null }).eq('do_header_id', id).select('id');
+      backToQueue = (rel || []).length;
+      if (backToQueue) { await loadPartSaleQueue(); renderPartsDOQueue(); }
+    }
+
     doHistory = doHistory.filter(x => x.id !== id);
     renderDOHistory(); updateDOBadge(); filterStock(); renderOutboundHistory(); checkAlerts();
-    toast(restore ? `ลบใบ DO และคืนของ ${stillOut.length} ชิ้นเข้าคลังแล้ว` : 'ลบใบ DO สำเร็จ', 'info');
+    toast((restore ? `ลบใบ DO และคืนของ ${stillOut.length} ชิ้นเข้าคลังแล้ว` : 'ลบใบ DO สำเร็จ')
+      + (backToQueue ? ` — อะไหล่ ${backToQueue} รายการกลับไปรอออกใบ DO ใหม่` : ''), 'info');
   } catch (err) { toast('ลบล้มเหลว: ' + err.message, 'error'); }
 }

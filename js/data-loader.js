@@ -29,6 +29,8 @@ async function loadAllData() {
   partMoves = movesRes.error ? [] : (movesRes.data || []);
   // ดึงชุดแรกพอให้เข้าระบบไว ที่เหลือกดโหลดเพิ่มได้จากหน้าประวัติอะไหล่
   partMovesAllLoaded = !!movesRes.error || partMoves.length < PART_MOVE_PAGE;
+  // คิวอะไหล่ที่ตัดขายแล้วรอออกใบ DO — ต้องหลังโหลด parts เพราะใช้ชื่อ/หน่วยจากตรงนั้น
+  await loadPartSaleQueue();
 
   // รายชื่อผู้ใช้ไว้แปลง id เป็นชื่อบนเอกสาร/ประวัติ
   // แอดมินอ่านได้ทุกแถว พนักงานทั่วไป RLS จะคืนมาแค่แถวตัวเอง — ไม่ใช่ error ปล่อยผ่านได้
@@ -52,7 +54,8 @@ async function loadAllData() {
   const itemsByHeader = {};
   doIRes.data.forEach(it => {
     if (!itemsByHeader[it.do_header_id]) itemsByHeader[it.do_header_id] = [];
-    itemsByHeader[it.do_header_id].push({ id: it.id, name: it.item_name, code: it.item_code, category: it.item_category, sn: it.sn, unitPrice: it.unit_price, amount: it.amount });
+    // qty มีค่าเฉพาะรายการจากอะไหล่ที่ไม่มี SN (sn เป็น null) — ไม่อ่านมาด้วย ใบเก่าจะนับ 30 จอเป็น "1 ชิ้น SN null"
+    itemsByHeader[it.do_header_id].push({ id: it.id, name: it.item_name, code: it.item_code, category: it.item_category, sn: it.sn, qty: it.qty ?? null, unitPrice: it.unit_price, amount: it.amount });
   });
   doHistory = doHRes.data.map(d => ({
     id: d.id, doNo: d.do_no, date: d.do_date, type: d.type,

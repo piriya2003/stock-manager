@@ -345,6 +345,7 @@ function sellPart(id) {
 
 async function confirmPartSell() {
   if (!pendingPartSell) return closeModal('part-sell-modal');
+  if (partSaleSchemaMissing) return toast('ต้องรัน sql/add-do-items-qty.sql ใน Supabase ก่อน จึงจะตัดขายได้', 'error');
   const { id, n } = pendingPartSell;
   const p = partById(id);
   if (!p) { pendingPartSell = null; return closeModal('part-sell-modal'); }
@@ -352,26 +353,36 @@ async function confirmPartSell() {
   const cust = customers.find(c => c.id === custId);
   if (!cust) return toast('กรุณาเลือกลูกค้า/ปลายทาง', 'error');
   const note = document.getElementById('part-sell-note').value.trim();
-  const newQty = p.qty - n;
+  const oldQty = p.qty, newQty = oldQty - n;
   if (newQty < 0) return toast(`ตัดขายไม่ได้ — คงเหลือแค่ ${p.qty} ${p.unit}`, 'error');
 
   try {
     // อ้างยอดเดิมด้วย — กันสองคนตัดขาย/เบิกพร้อมกันแล้วทับยอดกัน (แบบเดียวกับ doPartMove)
     const { data, error } = await supaClient.from('parts')
-      .update({ qty: newQty }).eq('id', id).eq('qty', p.qty).select();
+      .update({ qty: newQty }).eq('id', id).eq('qty', oldQty).select();
     if (error) throw error;
     if (!data || !data.length) throw new Error('ยอดเปลี่ยนไปแล้ว (อาจมีคนอื่นเพิ่งทำรายการ) — โหลดหน้าใหม่แล้วลองอีกครั้ง');
-
     Object.assign(p, data[0]);
-    const dt = partMoveDate();
-    await logPartMove(id, 'ขาย', -n, newQty, `→ ${cust.name}${note ? ' — ' + note : ''}`, dt);
 
-    partsDOQueue.push({
-      id: 'pq-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      partId: id, name: p.name, code: p.code || '', category: p.category || '', unit: p.unit || 'ชิ้น',
-      qty: n, custId: cust.id, custName: cust.name,
-    });
-    persistPartsDOQueue();
+    // แถวขายนี้คือ "คิวรอออกใบ DO" ที่ทุกเครื่องเห็น — บันทึกไม่ได้ต้องคืนยอดทันที
+    // ไม่งั้นยอดถูกตัดไปแล้วแต่ไม่มีใครเห็นว่าต้องออกใบให้ใคร (ต่างจากเบิกใช้ที่ยอมให้ประวัติหายได้)
+    const row = {
+      part_id: id, move_date: partMoveDate(), type: 'ขาย', qty: -n, balance: newQty,
+      note: `→ ${cust.name}${note ? ' — ' + note : ''}`, performed_by: currentUserId,
+      customer_id: cust.id, customer_name: cust.name,
+    };
+    const { data: move, error: mErr } = await supaClient.from('part_moves').insert(row).select().single();
+    if (mErr || !move) {
+      const { data: back } = await supaClient.from('parts').update({ qty: oldQty }).eq('id', id).eq('qty', newQty).select();
+      if (back && back.length) Object.assign(p, back[0]);
+      renderParts();
+      throw new Error((mErr?.message || 'บันทึกรายการขายไม่สำเร็จ')
+        + (back && back.length ? ' — คืนยอดให้แล้ว ไม่มีอะไรเปลี่ยน' : ' — ⚠️ คืนยอดไม่สำเร็จ ตรวจยอดอะไหล่นี้ด้วย'));
+    }
+
+    addPartTotal(id, -n);
+    partMoves.unshift(move);
+    partsDOQueue.push(saleMoveToQueue(move));
     renderPartsDOQueue();
 
     pendingPartSell = null;
@@ -381,15 +392,84 @@ async function confirmPartSell() {
   } catch (err) { toast('ตัดขายล้มเหลว: ' + err.message, 'error'); }
 }
 
-// จำคิวลง localStorage (กันหายเมื่อรีเฟรช) — แบบเดียวกับ persistOutSession ในหน้าโอน/ขาย
-function persistPartsDOQueue() {
-  try { localStorage.setItem('shq_parts_do_queue', JSON.stringify(partsDOQueue)); } catch (e) { /* localStorage เต็ม/ปิด — ข้ามได้ */ }
+// ══════════════════════════════════════════════════════════════
+//  คิว "รอออกใบ DO" — อ่านจากฐานข้อมูล ทุกเครื่องเห็นคิวเดียวกัน
+//  คิว = แถวขายใน part_moves ที่ยังไม่ผูกใบ DO (do_header_id ว่าง) และยังไม่ถูกยกเลิก
+//  เดิมเก็บไว้ใน localStorage ของเครื่องที่กดขาย เครื่องอื่นเลยมองไม่เห็นว่าต้องออกใบให้ใคร
+// ══════════════════════════════════════════════════════════════
+// แถวขายที่ทำก่อนมีคอลัมน์ลูกค้า จำชื่อไว้แค่ในหมายเหตุ ("→ ชื่อลูกค้า — หมายเหตุ")
+function custNameFromSaleNote(note) {
+  const m = String(note || '').match(/^→\s*(.+?)(?:\s+—\s+[\s\S]*)?$/);
+  return m ? m[1].trim() : '';
 }
-function restorePartsDOQueue() {
+function saleMoveToQueue(m) {
+  const p = partById(m.part_id);
+  return {
+    id: m.id, partId: m.part_id,
+    name: p ? p.name : '(อะไหล่ถูกลบ)', code: p?.code || '', category: p?.category || '', unit: p?.unit || 'ชิ้น',
+    qty: -m.qty, custId: m.customer_id || null,
+    custName: m.customer_name || custNameFromSaleNote(m.note), createdAt: m.created_at,
+  };
+}
+
+// ป้ายชนิดรายการในประวัติอะไหล่ — ขายให้ลูกค้า/ยกเลิกขาย ต้องไม่ปนกับเบิกใช้/รับเข้าธรรมดา
+function partMoveBadge(m) {
+  if (m.type === 'ขาย') return `<span class="badge b-blue">${t('🚚 ขาย')}</span>`;
+  if (m.type === 'ยกเลิกขาย') return `<span class="badge b-purple">${t('↩ ยกเลิกขาย')}</span>`;
+  return m.qty > 0 ? `<span class="badge b-green">${t('➕ รับเข้า')}</span>` : `<span class="badge b-orange">${t('➖ เบิกใช้')}</span>`;
+}
+
+// คืน true ถ้าโหลดได้ — ล้มเหลวเพราะเน็ตจะคงคิวเดิมไว้ ไม่ล้างทิ้งให้คนตกใจ
+async function loadPartSaleQueue() {
+  if (partsTableMissing) { partsDOQueue = []; return false; }
+  const { data, error } = await supaClient.from('part_moves').select('*')
+    .eq('type', 'ขาย').is('do_header_id', null).is('cancelled_at', null).order('created_at');
+  if (error) {
+    // ยังไม่ได้รัน sql/add-do-items-qty.sql — ไม่มีคอลัมน์ให้กรอง
+    if (error.code === '42703' || /do_header_id|cancelled_at|column/i.test(error.message || '')) {
+      partSaleSchemaMissing = true; partsDOQueue = [];
+    } else console.warn('โหลดคิวอะไหล่รอออกใบ DO ไม่สำเร็จ:', error.message);
+    return false;
+  }
+  partSaleSchemaMissing = false;
+  partsDOQueue = (data || []).map(saleMoveToQueue);
+  return true;
+}
+
+// ยกเลิกการขายที่ยังไม่ได้ออกใบ — คืนยอดเข้าอะไหล่ แล้วเอาออกจากคิว (ขายผิด / ลูกค้ายกเลิก)
+async function cancelPartSale(moveId) {
+  const q = partsDOQueue.find(x => String(x.id) === String(moveId)); if (!q) return;
+  if (!confirm(`ยกเลิกการขาย ${q.name} ${q.qty} ${q.unit} → ${q.custName || '—'}?\n\nยอดจะคืนเข้าอะไหล่ และเอาออกจากคิวรอออกใบ DO`)) return;
   try {
-    const raw = localStorage.getItem('shq_parts_do_queue');
-    partsDOQueue = raw ? (JSON.parse(raw) || []) : [];
-  } catch (e) { partsDOQueue = []; }
+    // จองก่อน — ถ้าอีกเครื่องเพิ่งออกใบ DO ให้รายการนี้ไป จะได้ 0 แถว แล้วไม่คืนยอดซ้ำ
+    const { data: took, error } = await supaClient.from('part_moves').update({ cancelled_at: nowISO() })
+      .eq('id', q.id).is('do_header_id', null).is('cancelled_at', null).select('id');
+    if (error) throw error;
+    if (!took || !took.length) {
+      await loadPartSaleQueue(); renderPartsDOQueue();
+      return toast('รายการนี้ถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว', 'warning');
+    }
+
+    // คืนยอด — อ่านยอดล่าสุดจากฐานข้อมูลก่อน เผื่อมีคนรับเข้า/เบิกระหว่างนี้
+    let restored = null;
+    for (let tries = 0; tries < 3 && !restored; tries++) {
+      const { data: cur } = await supaClient.from('parts').select('*').eq('id', q.partId).single();
+      if (!cur) break;
+      const { data: upd } = await supaClient.from('parts').update({ qty: cur.qty + q.qty })
+        .eq('id', q.partId).eq('qty', cur.qty).select();
+      if (upd && upd.length) restored = upd[0];
+    }
+    if (!restored) {
+      await supaClient.from('part_moves').update({ cancelled_at: null }).eq('id', q.id).select('id');
+      throw new Error('คืนยอดไม่สำเร็จ — รายการยังอยู่ในคิวตามเดิม ลองอีกครั้ง');
+    }
+
+    const p = partById(q.partId); if (p) Object.assign(p, restored);
+    await logPartMove(q.partId, 'ยกเลิกขาย', q.qty, restored.qty, `คืนจากการยกเลิกขาย → ${q.custName || '—'}`, today());
+    partsDOQueue = partsDOQueue.filter(x => String(x.id) !== String(q.id));
+    renderPartsDOQueue(); renderParts();
+    toast(`ยกเลิกการขายแล้ว — คืน ${q.name} ${q.qty} ${q.unit} เข้าอะไหล่`, 'info');
+  } catch (err) { toast('ยกเลิกไม่สำเร็จ: ' + err.message, 'error'); }
 }
 
 // บันทึกประวัติ — ล้มเหลวไม่ควรทำให้ยอดที่ตัดไปแล้วพัง แต่ต้องบอกให้รู้ว่าประวัติหาย
@@ -421,7 +501,7 @@ function openPartHistory(id) {
     ? rows.map(m => `<tr>
         <td class="mono" style="font-size:11px;white-space:nowrap">${escapeHtml(fmtDate(m.move_date))}
           <div style="color:var(--t3);font-size:10px">${m.created_at ? new Date(m.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : ''}</div></td>
-        <td><span class="badge ${m.qty > 0 ? 'b-green' : 'b-orange'}">${m.qty > 0 ? t('➕ รับเข้า') : t('➖ เบิกใช้')}</span></td>
+        <td>${partMoveBadge(m)}</td>
         <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${m.qty > 0 ? 'var(--green)' : 'var(--orange)'}">${m.qty > 0 ? '+' : ''}${m.qty}</td>
         <td style="text-align:center;font-family:var(--mono)">${m.balance}</td>
         <td style="font-size:11px;color:var(--t2);white-space:pre-wrap;word-break:break-word;max-width:260px">${escapeHtml(m.note) || '—'}</td>

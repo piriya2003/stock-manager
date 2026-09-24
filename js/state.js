@@ -36,9 +36,10 @@ let doFromLiveSession  = true;    // true = มาจากเซสชั่น
 let doCustId           = null;    // id ลูกค้าของใบ DO ที่กำลังกรอก (ชุดเก่าอาจไม่ใช่คนที่เลือกค้างไว้หน้าสแกน)
 let grnModalMode       = 'create';
 
-// อะไหล่ที่ตัดขายให้ลูกค้าแล้ว (ตัดยอด+ลง part_moves ทันที) แต่ยังไม่ได้ออกใบ DO
-// เก็บแยกจาก outSession เพราะเป็นคนละที่มา (อะไหล่ไม่มี SN) — มารวมกันตอนออกใบ DO เท่านั้น
+// อะไหล่ที่ตัดขายให้ลูกค้าแล้ว แต่ยังไม่ได้ออกใบ DO — โหลดจากฐานข้อมูล (แถว 'ขาย' ใน part_moves
+// ที่ยังไม่ผูกใบ DO) ทุกเครื่องจึงเห็นคิวเดียวกัน ดู loadPartSaleQueue ใน js/parts.js
 let partsDOQueue       = [];
+let partSaleSchemaMissing = false;   // true = ยังไม่ได้รัน sql/add-do-items-qty.sql
 let pendingPartsDOBatch = null;   // กลุ่มที่กำลังจะกลายเป็นใบ DO นี้ — ใช้ล้างคิวหลังบันทึกสำเร็จ
 
 let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว

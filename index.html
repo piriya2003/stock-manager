@@ -429,7 +429,7 @@
       <div class="page-header mb-3">
         <div class="page-title" style="font-size:15px">อะไหล่ที่ตัดขายแล้ว (ไม่มี SN) — รอออกใบ DO</div>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin:-8px 0 12px">💡 ตัดขายอะไหล่จากแท็บ "อะไหล่" ก่อน ยอดจะถูกตัดทันที แล้วมารวมออกเป็นใบ DO ที่นี่ได้ทีหลัง — ลูกค้าคนเดียวกันรวมเป็นใบเดียว</div>
+      <div style="font-size:11px;color:var(--t3);margin:-8px 0 12px">💡 ตัดขายอะไหล่จากแท็บ "อะไหล่" ก่อน ยอดจะถูกตัดทันที แล้วมารวมออกเป็นใบ DO ที่นี่ — ทุกเครื่องเห็นคิวเดียวกัน · ลูกค้าคนเดียวกันรวมเป็นใบเดียว · กด ✕ เพื่อยกเลิกการขายและคืนยอด</div>
       <div class="card">
         <div class="tbl-wrap" style="max-height:260px;overflow-y:auto">
           <table>
@@ -721,7 +721,8 @@
         <select id="pm-type" onchange="renderPartHistory()" style="width:150px">
           <option value="">— ทุกประเภท —</option>
           <option value="in">➕ รับเข้า</option>
-          <option value="out">➖ เบิกใช้</option>
+          <option value="out">➖ ออกทั้งหมด (เบิก + ขาย)</option>
+          <option value="sale">🚚 ขายให้ลูกค้า</option>
         </select>
         <select id="pm-part" onchange="renderPartHistory()" style="width:200px"><option value="">— ทุกอะไหล่ —</option></select>
         <select id="pm-user" onchange="renderPartHistory()" style="width:160px"><option value="">— ทุกคน —</option></select>

@@ -288,6 +288,16 @@ create table if not exists public.part_moves (
 create index if not exists idx_part_moves_part on public.part_moves (part_id, created_at desc);
 create index if not exists idx_part_moves_date on public.part_moves (move_date desc);
 
+-- ขายอะไหล่ให้ลูกค้า (type = 'ขาย') — เก็บลูกค้าและใบ DO ไว้ที่แถวนี้เลย
+-- do_header_id ว่าง = ตัดขายแล้วแต่ยังไม่ออกใบ DO → ทุกเครื่องเห็นคิว "รอออกใบ DO" เดียวกัน
+-- ไม่ผูก foreign key กับ do_headers โดยตั้งใจ: แอปจองแถวก่อนแล้วค่อยสร้างหัวใบด้วย id เดียวกัน
+-- (กันสองเครื่องออกใบให้รายการเดียวกันพร้อมกัน) ตอนลบใบ แอปคืนแถวกลับเข้าคิวเอง
+alter table public.part_moves add column if not exists customer_id   uuid references public.customers(id);
+alter table public.part_moves add column if not exists customer_name text;
+alter table public.part_moves add column if not exists do_header_id  uuid;
+alter table public.part_moves add column if not exists cancelled_at  timestamptz;   -- ยกเลิกการขาย (คืนยอดแล้ว) — ไม่อยู่ในคิวอีก
+create index if not exists idx_part_moves_sale_queue on public.part_moves (created_at) where type = 'ขาย' and do_header_id is null and cancelled_at is null;
+
 
 -- ════════════════════════════════════════════════════════════════════════
 --  10. DO — ใบส่งสินค้า
@@ -530,6 +540,8 @@ create policy "Authenticated users can read part_moves"
   on public.part_moves for select to authenticated using (true);
 create policy "Authenticated users can insert part_moves"
   on public.part_moves for insert to authenticated with check (true);
+create policy "Authenticated users can update part_moves"
+  on public.part_moves for update to authenticated using (true) with check (true);   -- จอง/คืนแถวขายเข้าใบ DO
 create policy "Only admin can delete part_moves"
   on public.part_moves for delete to authenticated using ( public.is_admin() );
 

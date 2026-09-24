@@ -50,6 +50,17 @@ async function syncChanges() {
     if (error) throw error;
     lastSyncAt = mark;
     if (data && data.length) applySyncedRows(data);
+
+    // คิวอะไหล่ที่ตัดขายรอออกใบ DO — อีกเครื่องอาจเพิ่งขาย/ออกใบ/ยกเลิก (คิวเล็ก ดึงใหม่ทั้งก้อนได้)
+    if (!partsTableMissing && !partSaleSchemaMissing) {
+      const before = partsDOQueue.map(q => q.id).join();
+      if (await loadPartSaleQueue() && partsDOQueue.map(q => q.id).join() !== before
+          && !document.querySelector('.modal-bg.open')) {
+        const active = document.querySelector('.nav-item.active')?.id?.replace(/^nav-/, '');
+        if (active === 'do-create') renderPartsDOQueue();
+        if (active === 'overview') renderDashboard();
+      }
+    }
   } catch (err) {
     // ล้มเหลวเงียบๆ ไม่กวนผู้ใช้ระหว่างทำงาน รอบหน้าค่อยลองใหม่
     console.warn('sync ไม่สำเร็จ:', err.message);
