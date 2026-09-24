@@ -103,6 +103,7 @@ async function doLogout() {
   currentUser = null; currentRole = null; currentUserId = null;
   stopSessionTimer();
   stopLiveSync();
+  closeCameraScan();   // ออกจากระบบแล้วกล้องต้องดับ ไม่ค้างเปิดอยู่หลังหน้าล็อกอิน
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('f-user').value = '';

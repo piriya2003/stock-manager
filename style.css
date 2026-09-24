@@ -672,3 +672,28 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
     font-size: 28px !important;
   }
 }
+
+/* ── สแกนบาร์โค้ดด้วยกล้อง (js/camera-scan.js) ── หน้ากล้องมืดเสมอทั้งสองธีม เพราะดูภาพจากกล้องได้ชัดกว่า */
+.cam-btn{margin-top:8px;align-self:flex-start;padding:11px 16px;font-size:13px}   /* ปุ่มหลักของคนใช้มือถือ — ต้องใหญ่พอให้นิ้วกดง่าย */
+#cam-scan{display:none;position:fixed;inset:0;z-index:5000;background:#0a0b0d;color:#e8eaed;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#cam-scan.open{display:flex}
+body.cam-open{overflow:hidden}
+.cam-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px}
+.cam-title{font-size:15px;font-weight:700;min-width:0}
+.cam-x{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid #3a3f45;background:#1a1d20;color:#e8eaed;font-size:18px;cursor:pointer}
+#cam-reader{flex:none;width:100%;max-width:640px;margin:0 auto;background:#000;min-height:220px}
+#cam-reader video{width:100%!important;display:block}
+.cam-status{padding:10px 16px;font-size:13px;color:#a3a9b0;text-align:center;line-height:1.5}
+.cam-status.err{color:#ff8a8a;font-weight:600}
+.cam-feed{flex:1;min-height:0;overflow-y:auto;padding:0 16px;display:flex;flex-direction:column;gap:6px}
+.cam-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 12px;border-radius:8px;font-size:13px;border:1px solid #2c3035;background:#141618}
+.cam-row .mono{font-family:var(--mono);font-weight:600;word-break:break-all}
+.cam-row span:last-child{flex:none;max-width:55%;text-align:right;font-size:12px}
+.cam-row.ok{border-color:#1f6f4d;color:#7fdcae}
+.cam-row.no{border-color:#7a3a3a;color:#ff9c9c}
+.cam-bottom{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.cam-count{flex:1;font-family:var(--mono);font-size:14px;font-weight:700;color:#7fdcae;text-align:center}
+.cam-done{flex:none;padding:13px 22px;border-radius:10px;border:none;background:#3d7ae8;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+.cam-torch{flex:none;padding:12px 14px;border-radius:10px;border:1px solid #3a3f45;background:#1a1d20;color:#e8eaed;font-size:13px;cursor:pointer}
+.cam-torch.on{background:#d99a2b;color:#111;border-color:#d99a2b}
