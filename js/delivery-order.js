@@ -336,10 +336,16 @@ async function saveDO() {
       if (cErr) throw cErr;
       claimed = !!(took && took.length);
       if (!took || took.length !== saleIds.length) {
+        const nothingTaken = !took || !took.length;
         await releaseClaims();
         pendingPartsDOBatch = null;
         closeDOModal();
         await loadPartSaleQueue(); renderPartsDOQueue();
+        // จองไม่ได้สักแถว แต่รายการยังอยู่ในคิวครบ = ไม่ได้ถูกใครแย่ง แต่แก้แถวไม่ได้เลย (RLS ไม่มี update policy
+        // คืน 0 แถวโดยไม่แจ้ง error) — ต้องบอกให้ชัด ไม่งั้นจะเข้าใจผิดว่าอีกเครื่องออกใบไปแล้วตลอด
+        if (nothingTaken && saleIds.every(id => partsDOQueue.some(q => String(q.id) === String(id)))) {
+          return toast('จองรายการอะไหล่ไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน sql/add-do-items-qty.sql ให้ครบทั้งไฟล์', 'error');
+        }
         return toast('รายการอะไหล่บางชิ้นถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว ลองสร้างใบใหม่', 'warning');
       }
     }

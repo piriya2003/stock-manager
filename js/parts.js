@@ -447,6 +447,10 @@ async function cancelPartSale(moveId) {
     if (error) throw error;
     if (!took || !took.length) {
       await loadPartSaleQueue(); renderPartsDOQueue();
+      // ยังอยู่ในคิวทั้งที่แก้ไม่ได้ = ไม่ได้ถูกใครแย่ง แต่ไม่มีสิทธิ์แก้แถว (ไม่มี update policy ให้ part_moves)
+      if (partsDOQueue.some(x => String(x.id) === String(q.id))) {
+        return toast('ยกเลิกไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน sql/add-do-items-qty.sql ให้ครบทั้งไฟล์', 'error');
+      }
       return toast('รายการนี้ถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว', 'warning');
     }
 
