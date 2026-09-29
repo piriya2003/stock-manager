@@ -1,7 +1,28 @@
 // ══════════════════════════════════════════════════════════════
 //  INBOUND
 // ══════════════════════════════════════════════════════════════
-function getBalance(code) { return stock.filter(i => i.code === code && i.status === 'Available').length; }
+// คงเหลือนับตามชื่อสินค้า — นับตามรหัสไม่ได้ เพราะของส่วนใหญ่ไม่มีรหัส (เก็บเป็น "-" ปนกันหลายสินค้า)
+// และสินค้าชื่อเดียวกันมีได้หลายรหัส
+function getBalance(name) {
+  const n = String(name ?? '').trim();
+  return stock.filter(i => String(i.name ?? '').trim() === n && i.status === 'Available').length;
+}
+
+// รายการที่สแกนรับเข้ารอออกใบ GRN — ใบ GRN สร้างได้จากรายการนี้ทางเดียว ถ้าหายตอนรีเฟรช ของที่รับไปแล้วจะไม่มีใบตลอดไป
+// จำแค่ id แยกตามผู้ใช้ ออกจากระบบแล้วเข้าใหม่ก็ยังอยู่ แต่คนอื่นที่ใช้เครื่องเดียวกันไม่เห็น
+function inSessionKey() { return 'shq_in_session:' + (currentUserId || ''); }
+function persistInSession() {
+  if (!currentUserId) return;
+  try { localStorage.setItem(inSessionKey(), JSON.stringify(inSession.map(i => i.id))); } catch (e) { /* localStorage ปิด — ข้ามได้ */ }
+}
+function restoreInSession() {
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem(inSessionKey()) || '[]') || []; } catch (e) { ids = []; }
+  // ผูกกลับกับของในคลังที่เพิ่งโหลด — ชิ้นที่ถูกลบไปแล้วหรือมีใบ GRN แล้วตัดทิ้ง
+  inSession = ids.map(id => stock.find(i => i.id === id)).filter(i => i && !i.grn_header_id);
+  persistInSession();
+  renderInSession();
+}
 
 // ── "ชื่อสินค้า" เป็นตัวหลักของฟอร์มรับเข้า ─────────────────────────
 // เดิมยึดรหัสเป็นตัวตั้ง แล้วเติมชื่อให้เฉพาะตอนช่องชื่อว่าง พอผู้ใช้เปลี่ยน
@@ -57,7 +78,7 @@ function resolveInboundName(nm) {
 }
 
 function updateBalance() {
-  document.getElementById('i-balance').textContent = getBalance(document.getElementById('i-code').value);
+  document.getElementById('i-balance').textContent = getBalance(document.getElementById('i-name').value);
   renderInboundSummary();
 }
 
@@ -160,11 +181,11 @@ async function doInbound() {
       if (error.code === '23505') { inlineMsg('i-msg', `❌ SN: ${sn} มีในระบบแล้ว!`, false); document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus(); return; }
       throw error;
     }
-    stock.unshift(data); inSession.push(data);
-    await logTransaction(dt, '📥 รับเข้า', nm, cd, sn, getBalance(cd), 'รับเข้าคลัง HQ');
+    stock.unshift(data); inSession.push(data); persistInSession();
+    await logTransaction(dt, '📥 รับเข้า', nm, cd, sn, getBalance(nm), 'รับเข้าคลัง HQ');
     document.getElementById('i-sn').value = ''; document.getElementById('i-sn').focus();
     updateBalance();
-    inlineMsg('i-msg', `✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(cd)} ชิ้น)`, true);
+    inlineMsg('i-msg', `✅ รับเข้า: ${sn} (คงเหลือ: ${getBalance(nm)} ชิ้น)`, true);
     renderInSession(); checkAlerts();
   } catch (err) { inlineMsg('i-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
 }
@@ -185,6 +206,9 @@ async function doInboundBulk() {
   if (!toAdd.length) return inlineMsg('i-bulk-msg', `❌ ทุก SN มีในระบบแล้ว (${dup.length} รายการ)`, false);
   if (!confirmOddSNs(toAdd, nm)) return inlineMsg('i-bulk-msg', '⏸ ยังไม่บันทึก — ตรวจ SN กับฉลากแล้วลองใหม่', false);
 
+  const btn = document.getElementById('i-bulk-btn');
+  if (btn) btn.disabled = true;
+  document.getElementById('i-bulk-msg').textContent = `⏳ กำลังบันทึก ${toAdd.length} รายการ...`;
   try {
     const mkRows = withSub => toAdd.map(sn => {
       const r = { category: cat, name: nm, code: cd, sn, status: 'Available',
@@ -203,19 +227,19 @@ async function doInboundBulk() {
     }
 
     stock.unshift(...data);
-    inSession.push(...data);
-    for (const item of data) {
-      await logTransaction(dt, '📥 รับเข้า', nm, cd, item.sn, getBalance(cd), 'รับเข้าคลัง HQ');
-    }
+    inSession.push(...data); persistInSession();
+    const bal = getBalance(nm);
+    await logTransactions(data.map(item => ({ date: dt, type: '📥 รับเข้า', name: nm, code: cd, sn: item.sn, balance: bal, note: 'รับเข้าคลัง HQ' })));
     document.getElementById('i-bulk').value = '';
     updateBalance(); renderInSession(); checkAlerts(); filterStock();
 
-    let msg = `✅ รับเข้า ${data.length} รายการ (คงเหลือ: ${getBalance(cd)} ชิ้น)`;
+    let msg = `✅ รับเข้า ${data.length} รายการ (คงเหลือ: ${bal} ชิ้น)`;
     if (dup.length) msg += `  (ข้าม: มีในระบบแล้ว ${dup.length})`;
     inlineMsg('i-bulk-msg', msg, true);
     toast(`รับเข้า ${data.length} รายการสำเร็จ`, 'success');
     if (dup.length) console.warn('SN ที่มีในระบบแล้ว:', dup.join(', '));
   } catch (err) { inlineMsg('i-bulk-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
+  finally { if (btn) btn.disabled = false; }
 }
 
 function renderInSession() {
@@ -246,7 +270,7 @@ async function removeInboundItem(id) {
     if (error) throw error;
     if (!data || !data.length) throw new Error('ไม่มีสิทธิ์ลบ (เฉพาะแอดมิน)');
 
-    inSession = inSession.filter(i => i.id !== id);
+    inSession = inSession.filter(i => i.id !== id); persistInSession();
     stock = stock.filter(i => i.id !== id);
     renderInSession(); updateBalance(); filterStock(); checkAlerts();
     toast(`ลบ SN: ${item.sn} ออกจากเซสชั่นแล้ว`, 'success');

@@ -290,6 +290,74 @@ function recalcDOTotals() {
 }
 
 
+// SN ที่อยู่ในใบ DO อื่นแล้ว — ถามฐานข้อมูลตรงๆ เพราะใบที่เครื่องอื่นเพิ่งออกไม่อยู่ใน doHistory ของเรา
+// แบ่งทีละ 150 ตัว รายการ SN ยาวๆ จะได้ไม่ทำให้ URL ของคำขอยาวเกิน
+async function findSNsOnOtherDOs(sns) {
+  const rows = [];
+  for (let k = 0; k < sns.length; k += 150) {
+    const { data, error } = await supaClient.from('do_items').select('sn, do_header_id').in('sn', sns.slice(k, k + 150));
+    if (error) throw error;
+    rows.push(...(data || []));
+  }
+  const noById = new Map(doHistory.map(d => [d.id, d.doNo]));
+  const unknown = [...new Set(rows.map(r => r.do_header_id))].filter(id => !noById.has(id));
+  if (unknown.length) {
+    const { data, error } = await supaClient.from('do_headers').select('id, do_no').in('id', unknown);
+    if (error) throw error;
+    (data || []).forEach(h => noById.set(h.id, h.do_no));
+  }
+  return rows.map(r => ({ sn: String(r.sn), doNo: noById.get(r.do_header_id) || '(ใบที่ไม่พบเลขที่)' }));
+}
+
+// วาดรายการในใบ DO ที่เปิดอยู่ใหม่ โดยไม่ทิ้งราคาที่พิมพ์ไว้แล้ว
+function redrawDOItemsKeepingPrices() {
+  const typed = {};
+  document.querySelectorAll('#do-items tr[data-name]').forEach(tr => {
+    typed[tr.dataset.name] = {
+      price: tr.querySelector('input[data-role="price"]')?.value ?? '',
+      amount: tr.querySelector('input[data-role="amount"]')?.value ?? '',
+    };
+  });
+  const items = document.getElementById('do-items');
+  const grp = groupDOItems(doItems);
+  items.innerHTML = Object.entries(grp).map(([name, v], i) => doItemRow(name, v, i)).join('')
+    || '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888">ไม่มีรายการ</td></tr>';
+  items.querySelectorAll('tr[data-name]').forEach(tr => {
+    const t0 = typed[tr.dataset.name]; if (!t0) return;
+    const price = tr.querySelector('input[data-role="price"]');
+    price.value = t0.price;
+    if (t0.price !== '') calcDOAmount(price);   // จำนวนชิ้นเปลี่ยน ยอดเงินต้องคิดใหม่
+    else tr.querySelector('input[data-role="amount"]').value = t0.amount;
+  });
+  recalcDOTotals();
+}
+
+// คืน true = บันทึกต่อได้ (อาจตัด SN ที่ซ้ำออกจาก doItems แล้ว), false = หยุดไว้ก่อน
+async function resolveSNsOnOtherDOs() {
+  const sns = [...new Set(doItems.filter(i => i.qty == null && i.sn != null).map(i => String(i.sn)))];
+  if (!sns.length) return true;
+  let hits;
+  try { hits = await findSNsOnOtherDOs(sns); }
+  catch (err) { toast('ตรวจ SN กับใบ DO อื่นไม่สำเร็จ ยังไม่ได้บันทึก: ' + err.message, 'error'); return false; }
+  if (!hits.length) return true;
+
+  const dupSet = new Set(hits.map(h => h.sn));
+  const lines = hits.slice(0, 15).map(h => `• ${h.sn} → ${h.doNo}`).join('\n')
+    + (hits.length > 15 ? `\n… และอีก ${hits.length - 15} รายการ` : '');
+  if (confirm(`SN ${dupSet.size} ตัว อยู่ในใบ DO อื่นแล้ว:\n${lines}\n\n`
+      + `กด "ตกลง" = ตัด SN เหล่านี้ออกจากใบนี้ แล้วบันทึกต่อ (แนะนำ)\n`
+      + `กด "ยกเลิก" = ไม่ตัด (จะถามอีกครั้ง)`)) {
+    doItems = doItems.filter(i => i.qty != null || !dupSet.has(String(i.sn)));
+    redrawDOItemsKeepingPrices();
+    if (!doItems.length) { toast('ทุกรายการอยู่ในใบ DO อื่นแล้ว — ไม่มีอะไรให้บันทึก', 'warning'); return false; }
+    toast(`ตัด ${dupSet.size} SN ที่อยู่ในใบอื่นออกแล้ว`, 'info');
+    return true;
+  }
+  return confirm(`ออกใบนี้โดยมี SN ซ้ำกับใบอื่นทั้ง ${dupSet.size} ตัว?\n\n`
+    + `กด "ตกลง" = บันทึกทั้งที่ซ้ำ (เช่น ออกใบใหม่แทนใบเก่า)\n`
+    + `กด "ยกเลิก" = ยังไม่บันทึก กลับไปแก้ใบ`);
+}
+
 async function saveDO() {
   const doNo       = document.getElementById('do-no').value.trim();
   const custVal    = document.getElementById('do-cust').value.trim();
@@ -304,6 +372,7 @@ async function saveDO() {
   if (!doItems.length) return toast('ไม่มีรายการสินค้าในใบ DO', 'error');
   const doDate = parseDODate(document.getElementById('do-date').value);
   if (!doDate) return toast('อ่านวันที่บนใบไม่ออก — ใช้แบบ 24/07/2569 หรือ 24-Jul-2026', 'error');
+  if (!await resolveSNsOnOtherDOs()) return;
 
   // อ่านราคาต่อหน่วย/จำนวนเงินจากแต่ละแถวสินค้า (ต่อกลุ่ม) เพื่อแนบไปกับทุก SN ในกลุ่มนั้น
   const priceByName = {};
@@ -775,7 +844,7 @@ async function removeItemFromDO(sn) {
       const won = await updateInventoryIf(item.id, back, [['status', 'eq', 'Sold']]);
       if (!won.size) toast('ถอดออกจากใบแล้ว แต่ของไม่ได้คืนเข้าคลัง — มีคนอื่นย้ายไปก่อน', 'warning');
       else Object.assign(item, back);
-      await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, sn, getBalance(item.code), `ถอดออกจากใบ ${d.doNo}`);
+      await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, sn, getBalance(item.name), `ถอดออกจากใบ ${d.doNo}`);
     }
 
     d.items = d.items.filter(i => String(i.sn) !== String(sn));
@@ -861,7 +930,7 @@ async function addItemsToDO() {
     }
 
     for (const i of toAdd) {
-      await logTransaction(today(), d.type || 'โอนสินค้า', i.name, i.code, i.sn, getBalance(i.code),
+      await logTransaction(today(), d.type || 'โอนสินค้า', i.name, i.code, i.sn, getBalance(i.name),
                            `→ ${d.customer} (เพิ่มเข้าใบ ${d.doNo})`);
     }
 
@@ -1008,7 +1077,7 @@ async function deleteDO(id) {
       if (lostBack.length) toast(`⚠️ คืนของไม่ได้ ${lostBack.length} ชิ้น — มีคนอื่นย้ายไปก่อน: ${lostBack.map(i => i.sn).join(', ')}`, 'warning');
       for (const item of stillOut.filter(i => wonBack.has(i.id))) {
         Object.assign(item, back);
-        await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `ลบใบ ${d.doNo} แล้วคืนของเข้าคลัง`);
+        await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.name), `ลบใบ ${d.doNo} แล้วคืนของเข้าคลัง`);
       }
     }
 

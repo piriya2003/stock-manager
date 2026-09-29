@@ -82,7 +82,7 @@ async function saveGRN() {
     saveBtn.style.background = '#2dd4a0';
     toast(`บันทึกใบ GRN: ${grnNo} สำเร็จ`, 'success');
     setTimeout(() => { saveBtn.textContent = '💾 บันทึก GRN'; saveBtn.style.background = '#22d3ee'; }, 3000);
-    inSession = []; renderInSession(); filterStock();
+    inSession = []; persistInSession(); renderInSession(); filterStock();
   } catch (err) { toast('บันทึก GRN ล้มเหลว: ' + err.message, 'error'); }
 }
 

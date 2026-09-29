@@ -61,7 +61,7 @@ async function doRepair() {
       createdAt: job.created_at, startedAt: null, finishedAt: null,
     });
 
-    await logTransaction(today(), '🔧 รับซ่อม', item.name, item.code, sn, getBalance(item.code), `[${custObj ? custObj.name : '-'}] ${sym}`);
+    await logTransaction(today(), '🔧 รับซ่อม', item.name, item.code, sn, getBalance(item.name), `[${custObj ? custObj.name : '-'}] ${sym}`);
     updateRepairBadges(); checkAlerts();
 
     document.getElementById('r-sn').value = ''; document.getElementById('r-sym').value = ''; document.getElementById('r-tech').value = '';
@@ -239,6 +239,7 @@ async function saveRepairNotes() {
 
 async function advanceRepairStatus(newStatus) {
   const job = repairJobs.find(j => j.id === currentRepairJobId); if (!job) return;
+  const prevJobStatus = job.status;
   const notes = document.getElementById('rd-notes').value;
   const payload = { notes, status: newStatus };
   if (newStatus === 'กำลังซ่อม' && !job.startedAt) payload.started_at = nowISO();
@@ -249,14 +250,29 @@ async function advanceRepairStatus(newStatus) {
     if (error) throw error;
     Object.assign(job, { notes, status: newStatus, startedAt: payload.started_at || job.startedAt, finishedAt: payload.finished_at || job.finishedAt });
 
+    const item = stock.find(i => String(i.sn) === String(job.sn));
     if (newStatus === 'ซ่อมเสร็จ') {
-      const back = { status: 'Available', dispatched_at: null, dispatched_to: null };
-      const item = stock.find(i => String(i.sn) === job.sn);
+      // เครื่องที่เคยจ่ายออกไปแล้วคือเครื่องของลูกค้า — รับซ่อมไม่ได้ล้างชื่อลูกค้ากับวันที่จ่ายออก
+      // ซ่อมเสร็จต้องกลับไปเป็นของลูกค้าเจ้าเดิม ถ้าเข้าคลังเป็นพร้อมใช้ เครื่องลูกค้าจะถูกขายต่อให้คนอื่นได้
+      // (ใช้ลูกค้าในใบงานซ่อมตัดสินไม่ได้ ช่องนั้นเลือกลูกค้าคนแรกไว้ให้เสมอ แม้เป็นของในคลัง)
+      const owned = !!(item && (item.dispatched_to || item.dispatched_at));
+      const back = owned ? { status: 'Sold' } : { status: 'Available', dispatched_at: null, dispatched_to: null };
       // ใบซ่อมอัปเดตไปแล้ว ถ้าของถูกคนอื่นย้ายไปก่อนก็ไม่ล้มทั้งรายการ แค่บอกให้รู้
       const won = item ? await updateInventoryIf(item.id, back, [['status', 'eq', 'Repair']]) : new Set();
       if (won.size) Object.assign(item, back);
       else toast('ปิดงานซ่อมแล้ว แต่สถานะสินค้าไม่ได้เปลี่ยน — มีคนอื่นย้ายของไปก่อน', 'warning');
-      await logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.code), 'ซ่อมเสร็จเรียบร้อย');
+      const owner = owned ? (item.dispatched_to || 'ลูกค้า (ไม่ระบุชื่อ)') : '';
+      await logTransaction(today(), '✅ ซ่อมเสร็จ', job.name, job.code, job.sn, getBalance(job.name),
+                           owned ? `ซ่อมเสร็จ — คืนเครื่องให้ ${owner}` : 'ซ่อมเสร็จ — กลับเข้าคลัง');
+      if (won.size) toast(owned ? `ซ่อมเสร็จ — SN: ${job.sn} กลับเป็นของ ${owner}` : `ซ่อมเสร็จ — SN: ${job.sn} กลับเข้าคลังแล้ว`, 'success');
+    } else if (newStatus === 'กำลังซ่อม' && prevJobStatus === 'ซ่อมเสร็จ' && item && item.status !== 'Repair') {
+      // ย้อนงานที่ปิดไปแล้ว — ตัวเครื่องต้องกลับมาเป็นรับซ่อมด้วย ไม่งั้นขายออกได้ทั้งที่ใบงานบอกว่ายังซ่อมอยู่
+      const was = item.status;
+      const won = await updateInventoryIf(item.id, { status: 'Repair' }, [['status', 'eq', was]]);
+      if (won.size) {
+        item.status = 'Repair';
+        await logTransaction(today(), '🔧 ย้อนกลับไปซ่อม', job.name, job.code, job.sn, getBalance(job.name), `ย้อนงานซ่อมที่ปิดแล้ว (เดิม: ${statusText(was)})`);
+      } else toast('ย้อนงานซ่อมแล้ว แต่สถานะเครื่องไม่ได้เปลี่ยน — มีคนอื่นย้ายของไปก่อน', 'warning');
     }
     closeModal('repair-detail-modal'); renderRepairList(); checkAlerts();
   } catch (err) { toast('อัปเดตล้มเหลว: ' + err.message, 'error'); }
@@ -319,7 +335,7 @@ async function confirmSwapSN() {
       if (jobErr) throw jobErr;
       Object.assign(job, { status: 'เคลมเครื่อง', finishedAt: nowISO(), replacedSN: '', claimReason: reason });
 
-      await logTransaction(today(), '📍 เคลม (SN เดิม)', job.name, job.code, oldSN, getBalance(job.code), `เคลมโดยใช้ SN เดิม — เหตุผล: ${reason}`);
+      await logTransaction(today(), '📍 เคลม (SN เดิม)', job.name, job.code, oldSN, getBalance(job.name), `เคลมโดยใช้ SN เดิม — เหตุผล: ${reason}`);
       closeModal('swap-sn-modal'); closeModal('repair-detail-modal');
       renderRepairList(); renderClaimList(); checkAlerts();
       toast('บันทึกเคลม (ใช้ SN เดิม) สำเร็จ', 'success');
@@ -359,7 +375,7 @@ async function confirmSwapSN() {
     if (jobErr) throw jobErr;
     Object.assign(job, { status: 'เคลมเครื่อง', finishedAt: nowISO(), replacedSN: newSN, claimReason: reason });
 
-    await logTransaction(today(), '🔄 เคลมสลับ SN', job.name, job.code, oldSN, getBalance(job.code), `เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`);
+    await logTransaction(today(), '🔄 เคลมสลับ SN', job.name, job.code, oldSN, getBalance(job.name), `เปลี่ยนเป็น ${newSN} เหตุผล: ${reason}`);
 
     closeModal('swap-sn-modal'); closeModal('repair-detail-modal');
     renderRepairList(); renderClaimList(); checkAlerts();

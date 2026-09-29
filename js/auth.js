@@ -79,6 +79,7 @@ async function finishLogin(session) {
   showSync('syncing', 'กำลังโหลดข้อมูล...');
   await loadAllData();
   restoreOutSession();
+  restoreInSession();
   try { localStorage.removeItem('shq_parts_do_queue'); } catch (e) {}   // คิวรุ่นเก่าเก็บในเครื่อง — ตอนนี้อยู่ในฐานข้อมูลแล้ว
   showSync('success', '✓ โหลดข้อมูลสำเร็จ');
 
@@ -108,6 +109,7 @@ async function doLogout() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('f-user').value = '';
   document.getElementById('f-pass').value = '';
+  // รายการรับเข้าที่ยังไม่ออกใบ GRN ล้างแค่บนจอ ที่จำไว้ในเครื่อง (แยกตามผู้ใช้) เก็บไว้ให้ล็อกอินกลับมาทำต่อได้
   inSession = []; outSession = []; sessionDispatchTime = null;
   try { localStorage.removeItem('shq_out_session'); } catch (e) {}
 }

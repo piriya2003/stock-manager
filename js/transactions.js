@@ -50,3 +50,21 @@ async function logTransaction(date, type, name, code, sn, balance, note) {
     txns.unshift(local);
   } catch (err) { console.error('logTransaction failed:', err); showSync('error', '✗ บันทึก log ล้มเหลว'); }
 }
+
+// หลายรายการในคำสั่งเดียว — วาง SN ร้อยตัวแล้วบันทึกทีละแถว ต้องรอฐานข้อมูลร้อยรอบ (~18 วินาที)
+// entries: [{ date, type, name, code, sn, balance, note }] เรียงตามลำดับที่เกิด ตัวท้ายสุดคือล่าสุด
+async function logTransactions(entries) {
+  const CHUNK = 500;
+  for (let from = 0; from < entries.length; from += CHUNK) {
+    const part = entries.slice(from, from + CHUNK);
+    const rows = part.map(e => ({ tx_date: e.date, type: e.type, item_name: e.name, item_code: e.code,
+                                  sn: e.sn, balance: e.balance, note: e.note, performed_by: currentUserId }));
+    try {
+      const { data, error } = await supaClient.from('transactions').insert(rows).select();
+      if (error) throw error;
+      const locals = part.map((e, k) => ({ id: data?.[k]?.id, date: e.date, type: e.type, name: e.name, code: e.code, sn: e.sn,
+                                           balance: e.balance, note: e.note, user: currentUserId, createdAt: data?.[k]?.created_at || nowISO() }));
+      txns.unshift(...locals.reverse());
+    } catch (err) { console.error('logTransactions failed:', err); showSync('error', '✗ บันทึก log ล้มเหลว'); }
+  }
+}

@@ -192,7 +192,7 @@ async function returnToStock(id) {
     const won = await updateInventoryIf(id, back, [['status', 'eq', old]]);
     if (!won.size) return toast(raceMsg(`SN: ${item.sn} ถูกย้ายสถานะไปแล้ว`), 'error');
     Object.assign(item, back);
-    await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.code), `คืนจากสถานะ: ${old}`);
+    await logTransaction(today(), '♻️ คืนสต็อก', item.name, item.code, item.sn, getBalance(item.name), `คืนจากสถานะ: ${old}`);
     filterStock(); checkAlerts();
     toast(`คืนสต็อก SN: ${item.sn} สำเร็จ`, 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
@@ -226,6 +226,7 @@ async function saveEdit() {
   const id = document.getElementById('edit-idx').value;
   const item = stock.find(x => x.id === id); if (!item) return;
   const oldSN = item.sn;
+  const oldStatus = item.status;
   const newSN = document.getElementById('edit-sn').value.trim();
   const newStatus = document.getElementById('edit-status').value;
   const oldCust = item.dispatched_to || '';
@@ -251,16 +252,21 @@ async function saveEdit() {
   const newCust = payload.dispatched_to || '';
 
   try {
-    // เช็คว่าแก้โดนจริง — RLS ที่ไม่มี update policy จะคืน 200 พร้อม 0 แถว ไม่ใช่ error
-    const { data, error } = await supaClient.from('inventory').update(payload).eq('id', id).select('id');
+    // แก้ได้เฉพาะตอนสถานะยังเป็นแบบที่หน้าจอเห็น — ไม่งั้นจะเขียนทับสิ่งที่อีกเครื่องเพิ่งทำ (เช่นเพิ่งตัดขายไป)
+    // 0 แถวแยกไม่ออกว่าแพ้หรือไม่มีสิทธิ์ (RLS คืน 200 เฉยๆ) จึงใช้ข้อความที่ครอบคลุมทั้งสองแบบ
+    const { data, error } = await supaClient.from('inventory').update(payload).eq('id', id).eq('status', oldStatus).select('id');
     if (error) throw error;
-    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขรายการนี้');
+    if (!data || !data.length) return toast(raceMsg(`แก้ SN: ${oldSN} ไม่สำเร็จ`), 'error');
     Object.assign(item, payload);
     if (newSN !== oldSN) {
-      await logTransaction(today(), '✏️ เปลี่ยน SN', item.name, item.code, newSN, getBalance(item.code), `เปลี่ยน SN: ${oldSN} → ${newSN}`);
+      await logTransaction(today(), '✏️ เปลี่ยน SN', item.name, item.code, newSN, getBalance(item.name), `เปลี่ยน SN: ${oldSN} → ${newSN}`);
+    }
+    if (newStatus !== oldStatus) {
+      await logTransaction(today(), '✏️ แก้สถานะ', item.name, item.code, item.sn, getBalance(item.name),
+                           `${statusText(oldStatus)} → ${statusText(newStatus)} (แก้ในหน้าสินค้าคงคลัง)`);
     }
     if (newCust !== oldCust) {
-      await logTransaction(today(), '✏️ แก้ลูกค้าปลายทาง', item.name, item.code, item.sn, getBalance(item.code),
+      await logTransaction(today(), '✏️ แก้ลูกค้าปลายทาง', item.name, item.code, item.sn, getBalance(item.name),
                            `${oldCust || '(ไม่ระบุ)'} → ${newCust || '(ไม่ระบุ)'}`);
     }
     closeModal('edit-modal');
@@ -334,7 +340,7 @@ async function applyBulkRename() {
     targets.forEach(i => { i.name = newName; });
     await renameMasterProduct(oldName, newName);
     await logTransaction(today(), '🏷️ เปลี่ยนชื่อสินค้า', newName, targets[0].code, `${targets.length} รายการ`,
-                         getBalance(targets[0].code), `เปลี่ยนชื่อ: ${oldName} → ${newName}`);
+                         getBalance(newName), `เปลี่ยนชื่อ: ${oldName} → ${newName}`);
     closeModal('rename-modal');
     populateCatFilter(); filterStock(); updateDataLists(); renderMasterProducts();
     showSync('success', '✓ เปลี่ยนชื่อสำเร็จ');

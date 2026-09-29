@@ -339,7 +339,7 @@
               <label class="field-label" style="color:var(--blue)">รายการ SN หลายตัว — คั่นด้วยขึ้นบรรทัด / เว้นวรรค / คอมมา</label>
               <textarea id="i-bulk" rows="5" placeholder="เช่น&#10;SK46025110001&#10;SK46025110002&#10;SK46025110003" style="resize:vertical;font-family:var(--mono);font-size:13px"></textarea>
             </div>
-            <button onclick="doInboundBulk()" class="btn btn-primary btn-full">📥 รับเข้าทั้งหมด (ไม่ต้องสแกน)</button>
+            <button id="i-bulk-btn" onclick="doInboundBulk()" class="btn btn-primary btn-full">📥 รับเข้าทั้งหมด (ไม่ต้องสแกน)</button>
             <div class="inline-msg" id="i-bulk-msg"></div>
           </div>
         </div>
@@ -397,7 +397,7 @@
               <label class="field-label" style="color:var(--blue)">รายการ SN หลายตัว — คั่นด้วยขึ้นบรรทัด / เว้นวรรค / คอมมา</label>
               <textarea id="o-bulk" rows="5" placeholder="เช่น&#10;SK46025110001&#10;SK46025110002&#10;SK46025110003" style="resize:vertical;font-family:var(--mono);font-size:13px"></textarea>
             </div>
-            <button onclick="doOutboundBulk()" class="btn btn-primary btn-full">📤 ตัดสต็อกทั้งหมด (ไม่ต้องสแกน)</button>
+            <button id="o-bulk-btn" onclick="doOutboundBulk()" class="btn btn-primary btn-full">📤 ตัดสต็อกทั้งหมด (ไม่ต้องสแกน)</button>
             <div class="inline-msg" id="o-bulk-msg"></div>
           </div>
         </div>

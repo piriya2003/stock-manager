@@ -27,9 +27,9 @@ async function doOutbound() {
     item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
     recordDispatchTo([item.id], custName);
     outSession.push(item); persistOutSession();
-    await logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.code), `→ ${custName}`);
+    await logTransaction(dt, typ, item.name, item.code, sn, getBalance(item.name), `→ ${custName}`);
     document.getElementById('o-sn').value = ''; document.getElementById('o-sn').focus();
-    inlineMsg('o-msg', `✅ ตัด: ${sn} → ${custName} (คงเหลือ: ${getBalance(item.code)} ชิ้น)`, true);
+    inlineMsg('o-msg', `✅ ตัด: ${sn} → ${custName} (คงเหลือ: ${getBalance(item.name)} ชิ้น)`, true);
     renderOutSession(); renderOutboundHistory(); checkAlerts();
   } catch (err) { inlineMsg('o-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
 }
@@ -56,6 +56,9 @@ async function doOutboundBulk() {
 
   if (!toSell.length) return inlineMsg('o-bulk-msg', `❌ ไม่มี SN ที่ตัดได้ (ไม่พบ ${notFound.length}, ไม่พร้อม ${notAvail.length})`, false);
 
+  const btn = document.getElementById('o-bulk-btn');
+  if (btn) btn.disabled = true;
+  document.getElementById('o-bulk-msg').textContent = `⏳ กำลังบันทึก ${toSell.length} รายการ...`;
   try {
     // เริ่มชุดใหม่เมื่อยังไม่มีของในเซสชั่น หรือเปลี่ยนวันที่กลางคัน — คนละวันต้องคนละชุด
     if (!outSession.length || dispatchDay(sessionDispatchTime) !== dt) sessionDispatchTime = dispatchISOFor(dt);
@@ -67,11 +70,13 @@ async function doOutboundBulk() {
     const lost = toSell.filter(i => !won.has(i.id));
     if (!done.length) return inlineMsg('o-bulk-msg', raceMsg(`ตัดสต็อกไม่สำเร็จทั้ง ${lost.length} รายการ`), false);
 
+    const entries = [];
     for (const item of done) {
       item.status = 'Sold'; item.dispatched_at = dispatchedAt; item.dispatched_to = custName;
       outSession.push(item);
-      await logTransaction(dt, typ, item.name, item.code, item.sn, getBalance(item.code), `→ ${custName}`);
+      entries.push({ date: dt, type: typ, name: item.name, code: item.code, sn: item.sn, balance: getBalance(item.name), note: `→ ${custName}` });
     }
+    await logTransactions(entries);
     recordDispatchTo(done.map(i => i.id), custName);
     persistOutSession();
     renderOutSession(); renderOutboundHistory(); checkAlerts();
@@ -89,6 +94,7 @@ async function doOutboundBulk() {
     if (notFound.length) console.warn('SN ไม่พบในระบบ:', notFound.join(', '));
     if (notAvail.length) console.warn('SN ไม่พร้อมตัด (ขาย/ซ่อม/เคลมไปแล้ว):', notAvail.join(', '));
   } catch (err) { inlineMsg('o-bulk-msg', '❌ บันทึกล้มเหลว: ' + err.message, false); }
+  finally { if (btn) btn.disabled = false; }
 }
 
 function renderOutSession() {
