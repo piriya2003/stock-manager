@@ -10,6 +10,17 @@ function genDONo() {
   return nextDocNo(`DO-${yy}${mm}-`, doHistory.map(d => d.doNo));
 }
 
+// เลขที่ระบบตั้งให้ใบที่เปิดอยู่ — ถ้าช่องเลขที่ยังเป็นค่านี้ แปลว่าผู้ใช้ไม่ได้พิมพ์เลขเอง จึงขยับให้ได้
+let doAutoNo = null;
+async function refreshDONoFromDB() {
+  const shown = doAutoNo;
+  try {
+    const fresh = await nextDocNoFromDB('do_headers', 'do_no', docPrefix(shown), doHistory.map(d => d.doNo));
+    const el = document.getElementById('do-no');
+    if (fresh !== shown && doAutoNo === shown && doModalMode === 'create' && el.value === shown) { el.value = fresh; doAutoNo = fresh; }
+  } catch (e) { /* ถามไม่ได้ก็ใช้เลขจากประวัติบนจอไปก่อน ตอนบันทึกยังกันชนอีกชั้น */ }
+}
+
 function openDOModal() {
   doFromLiveSession = true;
   doItems = outSession.slice();
@@ -146,7 +157,9 @@ function prepDOModal(custOverride) {
   document.getElementById('do-edit-btn').style.display = 'none';
   document.getElementById('do-update-btn').style.display = 'none';
   document.getElementById('do-manage-btn').style.display = 'none';
-  document.getElementById('do-no').value = genDONo();
+  doAutoNo = genDONo();
+  document.getElementById('do-no').value = doAutoNo;
+  refreshDONoFromDB();
   document.getElementById('do-date').value = fmtDODate(nowISO());
   // custOverride: ลูกค้าในทะเบียน / null = รู้เจ้าของแต่ไม่อยู่ในทะเบียน / undefined = ใช้ที่เลือกค้างในหน้าสแกน
   // ห้ามถอยไปใช้หน้าสแกนเมื่อได้ null — ไม่งั้นใบจะได้ที่อยู่ของลูกค้าคนละเจ้า
@@ -359,7 +372,7 @@ async function resolveSNsOnOtherDOs() {
 }
 
 async function saveDO() {
-  const doNo       = document.getElementById('do-no').value.trim();
+  let doNo         = document.getElementById('do-no').value.trim();
   const custVal    = document.getElementById('do-cust').value.trim();
   const salesVal   = document.getElementById('do-salesperson').value.trim();
   const machineVal = document.getElementById('do-machine').value.trim();
@@ -419,12 +432,23 @@ async function saveDO() {
       }
     }
 
-    const { data: header, error: hErr } = await supaClient.from('do_headers').insert({
+    const insertHeader = no => supaClient.from('do_headers').insert({
       ...(headerId ? { id: headerId } : {}),
-      do_no: doNo, do_date: doDate, type: typ, customer_id: custId, customer_name: custVal,
+      do_no: no, do_date: doDate, type: typ, customer_id: custId, customer_name: custVal,
       customer_address: custAddr, salesperson: salesVal, machine: machineVal,
       header_text: headerText, created_by: currentUserId,
     }).select().single();
+    let { data: header, error: hErr } = await insertHeader(doNo);
+    // เลขที่ระบบตั้งให้ถูกเครื่องอื่นใช้ไปก่อน — ขยับเป็นเลขถัดไปจากฐานข้อมูลเอง
+    // เลขที่ผู้ใช้พิมพ์เองไม่ขยับให้ อาจตั้งใจใช้เลขนั้นจริง
+    for (let tries = 0; hErr?.code === '23505' && doNo === doAutoNo && tries < 3; tries++) {
+      const next = await nextDocNoFromDB('do_headers', 'do_no', docPrefix(doNo), doHistory.map(d => d.doNo)).catch(() => null);
+      if (!next || next === doNo) break;
+      toast(`เลขที่ ${doNo} มีเครื่องอื่นใช้ไปแล้ว — บันทึกเป็น ${next} แทน`, 'warning');
+      doNo = doAutoNo = next;
+      document.getElementById('do-no').value = next;
+      ({ data: header, error: hErr } = await insertHeader(doNo));
+    }
     if (hErr) {
       await releaseClaims();
       if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');

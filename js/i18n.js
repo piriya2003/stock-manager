@@ -501,6 +501,18 @@ const EN = {
   'ยังไม่มีรายการโอน/ขายออก': 'Nothing transferred or sold yet',
   'ยังไม่มีรายการเคลม': 'No claims yet',
   'ไม่พบสินค้า': 'No items found',
+
+  // ── ออกใบ GRN ย้อนหลัง / หน้าสินค้าคงคลังแบ่งหน้า ──
+  '📄 ออกใบ GRN ย้อนหลัง': '📄 Backdated GRN',
+  'ของที่รับเข้าแล้วแต่ยังไม่มีใบ GRN': 'Received items that have no GRN yet',
+  'ของที่รับเข้าแล้วแต่ยังไม่มีใบ GRN เลือกวันที่รับ แล้วติ๊กรายการที่จะรวมเป็นใบเดียว ใบจะลงวันที่และเลขที่ของวันที่รับ':
+    'Items received without a GRN. Pick the receiving date, then tick what goes on one GRN. The GRN takes that date and its number sequence.',
+  'วันที่รับเข้า': 'Received on',
+  'ออกใบ GRN': 'Create GRN',
+  'ล็อต': 'Lot',
+  'แสดงอยู่': 'Showing',
+  'แสดงเพิ่ม': 'Show more',
+  'แสดงทั้งหมด': 'Show all',
 };
 
 // ── แปลข้อความหนึ่งก้อน — ไม่มีคำแปลก็คืนภาษาไทยเดิม ──

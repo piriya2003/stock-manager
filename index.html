@@ -171,7 +171,7 @@
       <div class="page-header">
         <div class="page-title">สินค้าคงคลัง</div>
         <div class="flex gap-2 flex-wrap">
-          <input type="text" id="s-q" oninput="filterStock()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
+          <input type="text" id="s-q" oninput="onStockSearch()" placeholder="🔍 ค้นหา ชื่อ / SN / รหัส..." style="width:200px">
           <div class="cat-dd" id="s-cat-dd">
             <input type="hidden" id="s-cat" value="">
             <button type="button" class="cat-dd-btn" onclick="toggleCatMenu(event)">
@@ -179,7 +179,7 @@
             </button>
             <div class="cat-dd-menu" id="s-cat-menu"></div>
           </div>
-          <select id="s-status" onchange="filterStock()" style="width:150px">
+          <select id="s-status" onchange="applyStockFilter()" style="width:150px">
             <option value="">— ทุกสถานะ —</option>
             <option value="Available">พร้อมใช้งาน</option>
             <option value="Sold">โอน/ขายแล้ว</option>
@@ -651,6 +651,7 @@
         <div class="page-title">ประวัติใบรับเข้า (GRN)</div>
         <div class="flex gap-2 flex-wrap items-center">
           <input type="text" id="grnh-q" oninput="renderGRNHistory()" placeholder="🔍 ค้นหา เลขที่ / ผู้จำหน่าย / ล็อต / สินค้า..." style="width:260px">
+          <button onclick="openGRNBackfill()" class="btn btn-primary btn-sm" style="white-space:nowrap" title="ของที่รับเข้าแล้วแต่ยังไม่มีใบ GRN">📄 ออกใบ GRN ย้อนหลัง <span id="grn-backfill-count"></span></button>
           <button onclick="exportGRNHistoryCSV()" class="btn btn-ghost btn-sm">⬇ Export CSV</button>
         </div>
       </div>
@@ -1038,6 +1039,26 @@
     <div style="display:flex;gap:8px;margin-top:16px">
       <button onclick="confirmPartSell()" class="btn btn-primary" style="flex:1">✅ ยืนยันตัดขาย</button>
       <button onclick="closeModal('part-sell-modal')" class="btn btn-ghost">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="grn-backfill-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📄 ออกใบ GRN ย้อนหลัง</span>
+      <button class="modal-close" onclick="closeModal('grn-backfill-modal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:12px;color:var(--t2);line-height:1.6">ของที่รับเข้าแล้วแต่ยังไม่มีใบ GRN เลือกวันที่รับ แล้วติ๊กรายการที่จะรวมเป็นใบเดียว ใบจะลงวันที่และเลขที่ของวันที่รับ</div>
+      <div class="form-row"><label class="field-label">วันที่รับเข้า</label>
+        <select id="gbf-day" onchange="renderGRNBackfill()"></select>
+      </div>
+      <div id="gbf-list" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button onclick="closeModal('grn-backfill-modal')" class="btn btn-ghost">ยกเลิก</button>
+      <button id="gbf-go" onclick="confirmGRNBackfill()" class="btn btn-primary">ออกใบ GRN</button>
     </div>
   </div>
 </div>

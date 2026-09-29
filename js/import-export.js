@@ -14,13 +14,15 @@ function dlCSV(csv, fname) {
   const b = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname; a.click();
 }
-function exportStockCSV() {
-  const data = typeof getFilteredStock === 'function' ? getFilteredStock() : stock;
-  if (!data.length) return toast('ไม่มีรายการให้ export (ตามที่กรองอยู่)', 'info');
+// all = ทั้งคลังไม่สนตัวกรอง (ปุ่มในหน้า Backup) / ไม่ส่ง = ตามที่กรองอยู่ในหน้าสินค้าคงคลัง
+function exportStockCSV(all = false) {
+  const data = all || typeof getFilteredStock !== 'function' ? stock : getFilteredStock();
+  if (!data.length) return toast(all ? 'ยังไม่มีสินค้าให้ export' : 'ไม่มีรายการให้ export (ตามที่กรองอยู่)', 'info');
   dlCSV(toCSV(data, ['category','subcategory','name','code','sn','lot_no','supplier','status','received_at','dispatched_at','dispatched_to']), 'stock_export.csv');
-  toast(`Export ${data.length} รายการ (ตามที่กรองอยู่)`, 'success');
+  toast(all ? `Export สินค้าทั้งหมด ${data.length} รายการ` : `Export ${data.length} รายการ (ตามที่กรองอยู่)`, 'success');
 }
-function exportReportCSV() { dlCSV(toCSV(txns, ['date','type','name','code','sn','balance','note','user']), 'report_export.csv'); }
+const REPORT_CSV_COLS = ['date','type','name','code','sn','balance','note','user'];
+function exportReportCSV() { dlCSV(toCSV(txns, REPORT_CSV_COLS), 'report_export.csv'); }
 function exportRepairCSV() {
   const rows = repairJobs.map(j => ({ id: j.id, sn: j.sn, name: j.name, code: j.code, category: j.category, customer: j.customer, status: j.status, createdAt: fmtISO(j.createdAt), finishedAt: fmtISO(j.finishedAt), symptom: j.symptom, notes: j.notes||'' }));
   dlCSV(toCSV(rows, ['id','sn','name','code','category','customer','status','symptom','notes','createdAt','finishedAt']), 'repair_export.csv');
@@ -53,7 +55,16 @@ function exportClaimCSV() {
   dlCSV(toCSV(rows, ['oldSN','newSN','name','code','category','customer','reason','claimedAt']), 'claim_export.csv');
   toast(`Export ${rows.length} รายการเคลม`, 'success');
 }
-function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); if (parts.length) exportPartsCSV(); }
+// ปุ่มในหน้า Backup ต้องได้ครบ — ไม่ใช่ตามตัวกรองในหน้าสต็อก หรือแค่ประวัติชุดแรกที่โหลดมาแสดง (500 รายการ)
+async function exportAllCSV() {
+  exportStockCSV(true);
+  try {
+    const all = (await fetchAllRows('transactions')).map(mapTxRow).reverse();   // ใหม่สุดขึ้นก่อน เหมือนหน้ารายงาน
+    dlCSV(toCSV(all, REPORT_CSV_COLS), 'report_export.csv');
+  } catch (err) { toast('ดึงประวัติการเคลื่อนไหวไม่สำเร็จ — ไฟล์ report ยังไม่ได้ Export: ' + err.message, 'error'); }
+  exportRepairCSV();
+  if (parts.length) exportPartsCSV();
+}
 
 function renderReport() {
   const q  = document.getElementById('rp-q').value.trim().toLowerCase();
@@ -258,6 +269,8 @@ async function confirmImport() {
     const { data, error } = await supaClient.from('inventory').insert(candidates).select();
     if (error) throw error;
     stock.unshift(...data);
+    await logTransactions(data.map(r => ({ date: today(), type: '📥 รับเข้า (Import)', name: r.name, code: r.code, sn: r.sn,
+                                           balance: getBalance(r.name), note: `นำเข้าจากไฟล์ — สถานะ ${statusText(r.status)}` })));
     clearImport();
     filterStock(); updateDataLists(); checkAlerts();
     toast(`นำเข้าสำเร็จ ${data.length} รายการ${skipped.length ? ' (ข้าม: ' + skipped.join(', ') + ')' : ''}`, 'success');

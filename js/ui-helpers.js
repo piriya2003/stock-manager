@@ -199,6 +199,14 @@ function nextDocNo(prefix, existingNos) {
   }, 0);
   return prefix + String(maxSeq + 1).padStart(4, '0');
 }
+function docPrefix(no) { return String(no || '').replace(/\d+$/, ''); }
+
+// เลขถัดไปโดยถามฐานข้อมูลด้วย — ประวัติบนจอโหลดตอนล็อกอิน ใบที่เครื่องอื่นเพิ่งออกจึงไม่อยู่ในนั้น
+async function nextDocNoFromDB(table, col, prefix, localNos) {
+  const { data, error } = await supaClient.from(table).select(col).like(col, prefix + '%');
+  if (error) throw error;
+  return nextDocNo(prefix, [...(localNos || []), ...(data || []).map(r => r[col])]);
+}
 
 // "วันนี้" ต้องเป็นวันตามเวลาเครื่อง ไม่ใช่ UTC — ไทยเร็วกว่า UTC 7 ชม.
 // เดิมใช้ toISOString() ก่อน 7 โมงเช้าเลยได้วันของเมื่อวาน ประวัติกับตัวกรองวันที่จึงไม่ตรงกัน

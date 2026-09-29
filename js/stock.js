@@ -108,7 +108,7 @@ function pickCat(v) {
   document.getElementById('s-cat').value = v;
   closeCatMenu();
   populateCatFilter();   // อัปเดตแถบไฮไลต์ + ป้ายบนปุ่ม
-  filterStock();
+  applyStockFilter();
 }
 
 function sortStock(col) {
@@ -121,7 +121,7 @@ function sortStock(col) {
   const colMap = { category: 'cat', name: 'name', sn: 'sn', status: 'status' };
   const thEl = document.getElementById('th-' + colMap[col]);
   if (thEl) thEl.classList.add(stockSortDir);
-  filterStock();
+  applyStockFilter();
 }
 
 function snCellHTML(item) {
@@ -157,12 +157,27 @@ function getFilteredStock() {
   return data;
 }
 
+// วาดทีละ 200 แถว — วาดทั้งคลังทีเดียว 5,000 ชิ้นใช้ 3 วินาที และค้างทุกครั้งที่พิมพ์ค้นหา
+// ตัวเลขรวม / Export / เปลี่ยนชื่อ ยังใช้ผลกรองครบทุกชิ้นจาก getFilteredStock()
+const STOCK_PAGE = 200;
+let stockShown = STOCK_PAGE;
+// เปลี่ยนตัวกรอง/ค้นหา/การเรียง = เริ่มจากหน้าแรกใหม่ ส่วนการวาดซ้ำหลังแก้ของ (filterStock เฉยๆ) คงจำนวนที่เปิดดูไว้
+function applyStockFilter() { stockShown = STOCK_PAGE; filterStock(); }
+let stockSearchTimer = null;
+function onStockSearch() { clearTimeout(stockSearchTimer); stockSearchTimer = setTimeout(applyStockFilter, 250); }
+function showMoreStock(all) { stockShown = all ? Infinity : stockShown + STOCK_PAGE; filterStock(); }
+
 function filterStock() {
   const data = getFilteredStock();
   const sm = subcatMap();
   const tbody = document.getElementById('stock-tbody');
   if (!data.length) { tbody.innerHTML = `<tr><td colspan="8" class="tbl-empty">${t('ไม่พบสินค้า')}</td></tr>`; document.getElementById('rec-count').textContent = 0; return; }
-  tbody.innerHTML = data.map((item, idx) => `<tr>
+  const shown = data.slice(0, stockShown);
+  const rest = data.length - shown.length;
+  const more = rest > 0 ? `<tr><td colspan="8"><div class="stock-more">${t('แสดงอยู่')} ${shown.length.toLocaleString()} / ${data.length.toLocaleString()}
+      <button onclick="showMoreStock()" class="btn btn-ghost btn-sm">${t('แสดงเพิ่ม')} (+${Math.min(STOCK_PAGE, rest)})</button>
+      <button onclick="showMoreStock(true)" class="btn btn-ghost btn-sm">${t('แสดงทั้งหมด')}</button></div></td></tr>` : '';
+  tbody.innerHTML = shown.map((item, idx) => `<tr>
       <td style="text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px">${idx + 1}</td>
       <td style="color:var(--blue);font-weight:500">${escapeHtml(item.category)}${subcatOf(item, sm) ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">→ ${escapeHtml(subcatOf(item, sm))}</div>` : ''}</td>
       <td style="color:var(--t1)">${escapeHtml(item.name)}</td>
@@ -178,7 +193,7 @@ function filterStock() {
           ${currentRole === 'admin' ? `<button onclick="delItem('${item.id}')" class="btn btn-red btn-icon btn-sm" title="ลบ">${icon('trash')}</button>` : ''}
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`).join('') + more;
   document.getElementById('rec-count').textContent = data.length;
 }
 
