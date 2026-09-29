@@ -53,7 +53,7 @@ function exportClaimCSV() {
   dlCSV(toCSV(rows, ['oldSN','newSN','name','code','category','customer','reason','claimedAt']), 'claim_export.csv');
   toast(`Export ${rows.length} รายการเคลม`, 'success');
 }
-function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); }
+function exportAllCSV() { exportStockCSV(); exportReportCSV(); exportRepairCSV(); if (parts.length) exportPartsCSV(); }
 
 function renderReport() {
   const q  = document.getElementById('rp-q').value.trim().toLowerCase();

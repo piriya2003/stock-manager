@@ -358,6 +358,7 @@ const EN = {
   '✅ ประวัติซ่อมทั้งหมด': '✅ All repair jobs',
   '✅ ประวัติใบ DO ทั้งหมด': '✅ All DOs',
   '✅ เลขที่ DO ปัจจุบัน': '✅ Current DO number',
+  '✅ อะไหล่และประวัติอะไหล่': '✅ Parts and parts history',
   '📊 Export ทั้งหมดเป็น CSV': '📊 Export everything as CSV',
   '💡 เก็บไฟล์ที่ได้ไว้ที่ปลอดภัย — การกู้คืนข้อมูลกลับเข้าระบบต้องทำผ่าน Supabase SQL Editor โดยผู้ดูแลระบบ':
     '💡 Keep the file somewhere safe — restoring data goes through the Supabase SQL editor and needs an admin',

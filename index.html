@@ -791,9 +791,10 @@
               <b style="color:var(--t1)">ข้อมูลที่จะ Export:</b><br>
               ✅ สินค้าคงคลังทั้งหมด<br>✅ ประวัติการเคลื่อนไหว<br>
               ✅ ต้นแบบสินค้า<br>✅ รายชื่อลูกค้า<br>
-              ✅ ประวัติซ่อมทั้งหมด<br>✅ ประวัติใบ DO ทั้งหมด<br>✅ เลขที่ DO ปัจจุบัน
+              ✅ ประวัติซ่อมทั้งหมด<br>✅ ประวัติใบ DO ทั้งหมด<br>✅ เลขที่ DO ปัจจุบัน<br>
+              ✅ อะไหล่และประวัติอะไหล่
             </div>
-            <button onclick="exportBackup()" class="btn btn-primary btn-full">📤 Export JSON Backup</button>
+            <button id="backup-btn" onclick="exportBackup()" class="btn btn-primary btn-full">📤 Export JSON Backup</button>
             <button onclick="exportAllCSV()" class="btn btn-ghost btn-full">📊 Export ทั้งหมดเป็น CSV</button>
             <div style="font-size:11px;color:var(--t3);line-height:1.6">
               💡 เก็บไฟล์ที่ได้ไว้ที่ปลอดภัย — การกู้คืนข้อมูลกลับเข้าระบบต้องทำผ่าน Supabase SQL Editor โดยผู้ดูแลระบบ

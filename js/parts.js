@@ -525,7 +525,7 @@ function exportPartsCSV() {
     const tot = partTotal(p.id);
     return {
       category: p.category || '', name: p.name || '', code: p.code || '',
-      total_in: t.in, total_out: t.out,
+      total_in: tot.in, total_out: tot.out,
       qty: p.qty, unit: p.unit || '', min_qty: p.min_qty,
       low: (p.min_qty > 0 && p.qty <= p.min_qty) ? 'ใกล้หมด' : '', note: p.note || '',
     };
