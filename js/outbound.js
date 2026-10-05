@@ -225,11 +225,9 @@ function openDOFromSelectedBatches() {
     if (!confirm(`ชุดที่เลือกเป็นของลูกค้าคนละเจ้า:\n• ${names}\n\nใบ DO ใบเดียวระบุลูกค้าได้คนเดียว จะรวมต่อไหม?`)) return;
   }
 
-  doFromLiveSession = false;
-  doItems = picked.flatMap(b => b.items).map(i => ({ name: i.name, code: i.code, category: i.category, sn: String(i.sn) }));
-  const custName = picked[0].cust;
-  prepDOModal(custName ? customers.find(c => normCustName(c.name) === normCustName(custName)) : null);
-  if (custName) document.getElementById('do-cust').value = custName;
+  // ทางเดียวกับปุ่ม "สร้าง DO ชุดนี้" — เดิมหาลูกค้าเอง พอเจ้าของชุดถูกเปลี่ยนชื่อ/ลบจากทะเบียนไปแล้ว
+  // หาไม่เจอ ใบเลยได้ที่อยู่ของลูกค้าที่ค้างเลือกอยู่ในหน้าโอน/ขายแทน
+  openDOForSold(picked.flatMap(b => b.items), picked.find(b => b.cust)?.cust || '');
   toast(`รวม ${picked.length} ชุด (${doItems.length} ชิ้น) เป็นใบเดียว`, 'info');
 }
 

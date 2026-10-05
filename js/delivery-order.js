@@ -1,6 +1,4 @@
-  // วันที่จ่ายออก = วันที่กดเพิ่มจริง ไม่ใช่วันของใบเดิม
-  // เดิมยัดให้เป็นชุดเดียวกับของเดิมในใบ ของที่เพิ่มวันนี้เลยไปโผล่ใต้วันเก่า หาไม่เจอตอนกรองตามวันที่
-  const batchAt = nowISO();// ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  DO — CREATE / SAVE / PRINT
 // ══════════════════════════════════════════════════════════════
 // เลขที่ใบ DO: DO-ปีเดือน-ลำดับ เช่น DO-2608-0001 — ขึ้นเดือนใหม่เริ่มนับ 0001 ใหม่
@@ -109,7 +107,7 @@ function renderPartsDOQueue() {
   const tbody = document.getElementById('parts-do-tbody');
   if (!tbody) return;
   if (partSaleSchemaMissing) {
-    tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${t('ต้องรัน sql/add-do-items-qty.sql ใน Supabase ก่อน จึงจะขายอะไหล่และออกใบ DO ได้')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${t('ต้องรัน stockhq_schema.sql ใน Supabase ก่อน จึงจะขายอะไหล่และออกใบ DO ได้')}</td></tr>`;
     return;
   }
   const groups = {};
@@ -137,6 +135,7 @@ function openDOFromPartsQueue(gi) {
   if (!g || !g.items.length) return toast('ไม่พบรายการ', 'error');
   openDOForSold(g.items, g.custName);
   pendingPartsDOBatch = g.items.slice();   // ตั้งหลัง prepDOModal (ที่ openDOForSold เรียก) เพราะมันล้างค่านี้ทิ้งก่อนเสมอ
+  document.getElementById('do-type').value = 'ขายสินค้า';   // คิวนี้คือของที่ตัดขายให้ลูกค้า
 }
 
 function prepDOModal(custOverride) {
@@ -160,6 +159,11 @@ function prepDOModal(custOverride) {
   doAutoNo = genDONo();
   document.getElementById('do-no').value = doAutoNo;
   refreshDONoFromDB();
+  // ประเภทใบเลือกได้ในหน้าต่างนี้ — เดิมหยิบจากช่องประเภทในหน้าโอน/ขายเงียบๆ ใบขายอะไหล่เลยกลายเป็น "โอนสินค้า"
+  // เริ่มจากค่าที่เลือกในหน้าโอน/ขาย (ใบจากการสแกนรอบนี้ตรงกับที่จ่ายออกไป) แล้วเปลี่ยนได้ก่อนบันทึก
+  const typeSel = document.getElementById('do-type');
+  typeSel.value = document.getElementById('o-type')?.value || 'โอนสินค้า';
+  document.getElementById('do-type-wrap').style.display = '';
   document.getElementById('do-date').value = fmtDODate(nowISO());
   // custOverride: ลูกค้าในทะเบียน / null = รู้เจ้าของแต่ไม่อยู่ในทะเบียน / undefined = ใช้ที่เลือกค้างในหน้าสแกน
   // ห้ามถอยไปใช้หน้าสแกนเมื่อได้ null — ไม่งั้นใบจะได้ที่อยู่ของลูกค้าคนละเจ้า
@@ -253,6 +257,11 @@ function groupDOItems(items) {
   return grp;
 }
 
+// จำนวนชิ้นในใบ — แถวอะไหล่ 1 แถวแทนหลายชิ้น (.qty) นับแถวเฉยๆ อะไหล่ 5 ชิ้นจะขึ้นว่า "1 ชิ้น"
+function doPieceCount(d) {
+  return (d.items || []).reduce((s, i) => s + (i.qty ?? 1), 0);
+}
+
 // แถวสินค้าในใบ DO (คอลัมน์: Product No. / Description / Qty / Unit Price / Amount)
 function doItemRow(name, v, i) {
   // ใต้ชื่อสินค้าไม่โชว์อะไรเลย — รหัสสินค้ากับหมวดหมู่เป็นข้อมูลไว้จัดการภายใน
@@ -289,10 +298,10 @@ function fmtMoney(n) { return '฿' + (Number(n) || 0).toLocaleString('en-US', {
 
 // รวมยอด → VAT → ยอดสุทธิ → จำนวนเงินตัวอักษร
 function recalcDOTotals() {
-  let total = 0, any = false;
+  let total = 0;
   document.querySelectorAll('#do-items input[data-role="amount"]').forEach(el => {
     const v = parseFloat(String(el.value).replace(/,/g, ''));
-    if (isFinite(v)) { total += v; any = true; }
+    if (isFinite(v)) total += v;
   });
   const vat = Math.round(total * DO_VAT_RATE) / 100;
   const grand = Math.round((total + vat) * 100) / 100;
@@ -377,7 +386,7 @@ async function saveDO() {
   const salesVal   = document.getElementById('do-salesperson').value.trim();
   const machineVal = document.getElementById('do-machine').value.trim();
   const headerText = document.getElementById('do-header-text').innerText;
-  const typ        = document.getElementById('o-type')?.value || 'โอนสินค้า';
+  const typ        = document.getElementById('do-type').value || 'โอนสินค้า';
   const custId     = customers.some(c => c.id === doCustId) ? doCustId : null;
 
   if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
@@ -426,7 +435,7 @@ async function saveDO() {
         // จองไม่ได้สักแถว แต่รายการยังอยู่ในคิวครบ = ไม่ได้ถูกใครแย่ง แต่แก้แถวไม่ได้เลย (RLS ไม่มี update policy
         // คืน 0 แถวโดยไม่แจ้ง error) — ต้องบอกให้ชัด ไม่งั้นจะเข้าใจผิดว่าอีกเครื่องออกใบไปแล้วตลอด
         if (nothingTaken && saleIds.every(id => partsDOQueue.some(q => String(q.id) === String(id)))) {
-          return toast('จองรายการอะไหล่ไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน sql/add-do-items-qty.sql ให้ครบทั้งไฟล์', 'error');
+          return toast('จองรายการอะไหล่ไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน stockhq_schema.sql ให้ครบทั้งไฟล์', 'error');
         }
         return toast('รายการอะไหล่บางชิ้นถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว ลองสร้างใบใหม่', 'warning');
       }
@@ -594,7 +603,7 @@ function renderDOHistory() {
     (d.items||[]).some(i => i.name.toLowerCase().includes(q) || String(i.sn).toLowerCase().includes(q))
   );
 
-  const totalItems = doHistory.reduce((s, d) => s + (d.items||[]).length, 0);
+  const totalItems = doHistory.reduce((s, d) => s + doPieceCount(d), 0);
   const uniqueCusts = new Set(doHistory.map(d => d.customer)).size;
   document.getElementById('doh-total').textContent = doHistory.length;
   document.getElementById('doh-items').textContent = totalItems;
@@ -615,7 +624,7 @@ function renderDOHistory() {
       <td class="mono" style="font-size:11px">${fmtDate(doDateOf(d))}</td>
       <td>${doTypeBadge(d.type)}</td>
       <td style="color:var(--t1);font-weight:500">${escapeHtml(d.customer)}</td>
-      <td style="text-align:center"><span class="do-summary-chip">${(d.items||[]).length} ชิ้น</span></td>
+      <td style="text-align:center"><span class="do-summary-chip">${doPieceCount(d)} ชิ้น</span></td>
       <td style="font-size:11px;color:var(--t3)">${escapeHtml(userName(d.createdBy))}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
@@ -651,7 +660,7 @@ async function mergeSelectedDOs() {
   const custs = [...new Set(picked.map(d => normCustName(d.customer)))];
 
   let msg = `รวม ${picked.length} ใบเข้าเป็นใบ ${keep.doNo}\n\n`
-          + picked.map(d => `${d.id === keep.id ? '📌 เก็บไว้' : '🗑 ลบ'}  ${d.doNo} (${(d.items || []).length} ชิ้น)`).join('\n')
+          + picked.map(d => `${d.id === keep.id ? '📌 เก็บไว้' : '🗑 ลบ'}  ${d.doNo} (${doPieceCount(d)} ชิ้น)`).join('\n')
           + `\n\nรายการสินค้าทั้งหมดจะย้ายมาอยู่ในใบ ${keep.doNo}`;
   if (custs.length > 1) msg += `\n\n⚠️ ใบที่เลือกเป็นของลูกค้าคนละเจ้า — ใบที่รวมแล้วจะใช้ชื่อ "${keep.customer}"`;
   if (!confirm(msg + '\n\nยืนยัน? (กู้คืนไม่ได้)')) return;
@@ -701,33 +710,31 @@ async function mergeSelectedDOs() {
 
     selectedDOIds.clear();
     renderDOHistory(); updateDOBadge();
-    toast(`รวม ${picked.length} ใบเข้าเป็นใบ ${keep.doNo} แล้ว (${keep.items.length} ชิ้น)`, 'success');
+    toast(`รวม ${picked.length} ใบเข้าเป็นใบ ${keep.doNo} แล้ว (${doPieceCount(keep)} ชิ้น)`, 'success');
   } catch (err) {
     toast('รวมใบล้มเหลว: ' + err.message, 'error');
     renderDOHistory();
   } finally { btn.disabled = false; }
 }
 
-// หน้าสรุป — เหลือไว้สำหรับ 2 อย่างที่ไม่ได้พิมพ์บนใบ: ประเภทใบ และ เพิ่ม/ถอดรายการสินค้า
-// (ข้อมูลบนหัวใบกับราคา แก้บนหน้ากระดาษได้ตรงๆ แล้ว)
+// หน้าสรุป — สำหรับ 2 อย่างที่ไม่ได้พิมพ์บนใบ: ประเภทใบ และ เพิ่ม/ถอดรายการสินค้า
+// หัวใบ ที่อยู่ หมายเหตุ ราคา แก้บนหน้ากระดาษ (saveDODocEdits) ที่เดียว — เดิมหน้านี้ก็แก้ได้ด้วย
+// สองที่แก้ข้อมูลชุดเดียวกัน จึงตัดออก เหลือแค่แสดงให้ดู
 function openDOView(id) {
   const d = doHistory.find(x => x.id === id); if (!d) return;
   currentViewDOId = id;
   closeModal('do-modal');
-  document.getElementById('dov-no').textContent = 'เลขที่: ' + d.doNo;
-  document.getElementById('dov-no2').value = d.doNo;
-  document.getElementById('dov-date').textContent = fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('dov-date-edit').value = doDateOf(d);
+  const set = (elId, v) => { document.getElementById(elId).textContent = v; };
+  set('dov-no', 'เลขที่: ' + d.doNo);
+  set('dov-no2', d.doNo);
+  set('dov-date', fmtDate(d.createdAt) + ' ' + new Date(d.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }));
+  set('dov-date-issued', fmtDate(doDateOf(d)));
+  set('dov-cust', d.customer || '—');
+  set('dov-user', userName(d.createdBy));
   document.getElementById('dov-type').value = d.type || 'โอนสินค้า';
-  document.getElementById('dov-cust').value = d.customer || '';
-  document.getElementById('dov-addr').value = d.customerAddress || '';
-  document.getElementById('dov-user').textContent = userName(d.createdBy);
-  document.getElementById('dov-sales').value = d.salesperson || '';
-  document.getElementById('dov-po').value = d.machine || '';
-  document.getElementById('dov-note').value = d.headerText || '';
 
-  // จัดกลุ่มตามสินค้า (เหมือนในใบพิมพ์) — แก้ราคาต่อกลุ่ม ไม่ใช่ต่อ SN
-  dovGroups = Object.values(groupDOItems(d.items));
+  // จัดกลุ่มตามสินค้า (เหมือนในใบพิมพ์)
+  const dovGroups = Object.values(groupDOItems(d.items));
   dovGroups.forEach(g => g.sns.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true })));
 
   document.getElementById('dov-summary').innerHTML = dovGroups.map(g => `
@@ -736,109 +743,41 @@ function openDOView(id) {
       <span style="font-family:var(--mono);font-weight:700;color:var(--blue)">${g.qty} ชิ้น</span>
     </div>`).join('');
 
+  const money = v => v != null ? Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
   document.getElementById('dov-item-count').textContent = dovGroups.reduce((s, g) => s + g.qty, 0);
   document.getElementById('dov-items-tbody').innerHTML = dovGroups.map((g, gi) => {
-    const priceVal = g.unitPrice != null ? Number(g.unitPrice).toFixed(2) : '';
-    const amtVal = g.amount != null ? Number(g.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
     const modelLine = (g.code && g.code !== '-') ? `<div class="code-cell" style="margin-top:2px">${escapeHtml(g.code)}</div>` : '';
     // ส่วนที่ไม่มี SN (มาจากอะไหล่) ถอดออกทีละชิ้นไม่ได้ — มีแค่ป้ายบอกจำนวน ไม่มีปุ่ม ✕
     const noSn = g.noSnQty ? `<span class="dov-sn" style="opacity:.7">(${t('ไม่มี SN')} — ${g.noSnQty} ${t('ชิ้น')})</span>` : '';
-    return `<tr data-gi="${gi}">
+    return `<tr>
       <td style="text-align:center;font-size:11px;color:var(--t3)">${gi+1}</td>
       <td style="color:var(--t1)"><b>${escapeHtml(g.name)}</b>${modelLine}<div class="dov-sn-wrap">${g.sns.map(sn => `<span class="dov-sn">${escapeHtml(sn)}${currentRole === 'admin' ? `<button onclick="removeItemFromDO(${jsArg(sn)})" title="ถอด SN นี้ออกจากใบ">✕</button>` : ''}</span>`).join('')}${noSn}</div></td>
       <td style="text-align:center;font-family:var(--mono);color:var(--orange);font-weight:700">${g.qty}</td>
-      <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="price" inputmode="decimal" value="${priceVal}" oninput="calcDOViewAmount(${gi},this)"></td>
-      <td><input type="text" style="text-align:right;font-family:var(--mono);font-size:12px" data-role="amount" inputmode="decimal" value="${amtVal}" oninput="recalcDOViewTotals()"></td>
+      <td class="mono" style="text-align:right;font-size:12px">${money(g.unitPrice)}</td>
+      <td class="mono" style="text-align:right;font-size:12px">${money(g.amount)}</td>
     </tr>`;
   }).join('');
-  recalcDOViewTotals();
+
+  const total = dovGroups.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+  const vat = Math.round(total * DO_VAT_RATE) / 100;
+  set('dov-total', fmtMoney(total));
+  set('dov-vat', fmtMoney(vat));
+  set('dov-grand', fmtMoney(Math.round((total + vat) * 100) / 100));
   document.getElementById('do-view-modal').classList.add('open');
 }
 
-// ใส่ราคาต่อหน่วยในหน้าประวัติ → คำนวณจำนวนเงินให้ (แก้ทับเองได้)
-function calcDOViewAmount(gi, inp) {
-  const tr = inp.closest('tr'); if (!tr) return;
-  const amt = tr.querySelector('input[data-role="amount"]'); if (!amt) return;
-  const g = dovGroups[gi]; if (!g) return;
-  const price = parseFloat(String(inp.value).replace(/,/g, ''));
-  if (!isFinite(price)) amt.value = '';
-  else amt.value = (g.qty * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  recalcDOViewTotals();
-}
-
-function recalcDOViewTotals() {
-  let total = 0;
-  document.querySelectorAll('#dov-items-tbody input[data-role="amount"]').forEach(el => {
-    const v = parseFloat(String(el.value).replace(/,/g, ''));
-    if (isFinite(v)) total += v;
-  });
-  const vat = Math.round(total * DO_VAT_RATE) / 100;
-  const grand = Math.round((total + vat) * 100) / 100;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('dov-total', fmtMoney(total));
-  set('dov-vat', fmtMoney(vat));
-  set('dov-grand', fmtMoney(grand));
-}
-
-// บันทึกการแก้ไขใบ DO ย้อนหลัง: ข้อมูลหัวใบ + ราคาต่อหน่วย/จำนวนเงินของแต่ละกลุ่มสินค้า
-async function saveDOViewPrices() {
-  if (!currentViewDOId) return;
-  const doNo = document.getElementById('dov-no2').value.trim();
-  const cust = document.getElementById('dov-cust').value.trim();
-  if (!doNo) return toast('กรุณาระบุเลขที่ DO', 'error');
-  if (!cust) return toast('กรุณาระบุชื่อลูกค้า', 'error');
-  const headerPayload = {
-    do_no: doNo,
-    do_date: document.getElementById('dov-date-edit').value || doDateOf(doHistory.find(x => x.id === currentViewDOId) || {}),
-    type: document.getElementById('dov-type').value,
-    customer_name: cust,
-    customer_address: document.getElementById('dov-addr').value.trim(),
-    salesperson: document.getElementById('dov-sales').value.trim(),
-    machine: document.getElementById('dov-po').value.trim(),
-    header_text: document.getElementById('dov-note').value,
-  };
-
-  const rows = [...document.querySelectorAll('#dov-items-tbody tr[data-gi]')];
+// ประเภทใบไม่ได้พิมพ์บนใบ จึงแก้ได้ที่หน้านี้ที่เดียว
+async function saveDOViewType() {
+  const d = doHistory.find(x => x.id === currentViewDOId); if (!d) return;
+  const type = document.getElementById('dov-type').value;
   try {
-    // ── หัวใบ ──
-    const { data: hData, error: hErr } = await supaClient.from('do_headers')
-      .update(headerPayload).eq('id', currentViewDOId).select('id');
-    if (hErr) {
-      if (hErr.code === '23505') return toast(`เลขที่ DO: ${doNo} มีในระบบแล้ว`, 'error');
-      throw hErr;
-    }
-    if (!hData || !hData.length) throw new Error('ไม่มีสิทธิ์แก้ไขหัวใบ DO (ยังไม่ได้ตั้ง update policy ให้ do_headers ใน Supabase)');
-
-    // ── ราคาแต่ละกลุ่มสินค้า ──
-    for (const tr of rows) {
-      const gi = Number(tr.dataset.gi);
-      const g = dovGroups[gi]; if (!g || !g.ids.length) continue;
-      const priceInp = tr.querySelector('input[data-role="price"]');
-      const amtInp = tr.querySelector('input[data-role="amount"]');
-      const price = priceInp.value !== '' ? parseFloat(String(priceInp.value).replace(/,/g, '')) : null;
-      const amount = amtInp.value !== '' ? parseFloat(String(amtInp.value).replace(/,/g, '')) : null;
-      g.unitPrice = isFinite(price) ? price : null;
-      g.amount = isFinite(amount) ? amount : null;
-      const { data, error } = await supaClient.from('do_items')
-        .update({ unit_price: g.unitPrice, amount: g.amount }).in('id', g.ids).select('id');
-      if (error) throw error;
-      // RLS ที่ไม่มี policy สำหรับ update จะคืน 200 พร้อม 0 แถว โดยไม่แจ้ง error — ต้องเช็คเอง
-      if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขราคา (ยังไม่ได้ตั้ง update policy ให้ do_items ใน Supabase)');
-    }
-    // อัปเดตแคชในเครื่องให้ตรงกับที่บันทึกไป
-    const d = doHistory.find(x => x.id === currentViewDOId);
-    if (d) {
-      d.doNo = doNo; d.type = headerPayload.type; d.customer = cust; d.date = headerPayload.do_date;
-      d.customerAddress = headerPayload.customer_address;
-      d.salesperson = headerPayload.salesperson; d.machine = headerPayload.machine;
-      d.headerText = headerPayload.header_text;
-      dovGroups.forEach(g => {
-        (d.items || []).forEach(item => { if (item.name === g.name) { item.unitPrice = g.unitPrice; item.amount = g.amount; } });
-      });
-    }
-    document.getElementById('dov-no').textContent = 'เลขที่: ' + doNo;
+    const { data, error } = await supaClient.from('do_headers').update({ type }).eq('id', d.id).select('id');
+    if (error) throw error;
+    // RLS ที่ไม่มี policy สำหรับ update จะคืน 200 พร้อม 0 แถว โดยไม่แจ้ง error — ต้องเช็คเอง
+    if (!data || !data.length) throw new Error('ไม่มีสิทธิ์แก้ไขใบ DO');
+    d.type = type;
     renderDOHistory();
-    toast('บันทึกการแก้ไขสำเร็จ', 'success');
+    toast('บันทึกประเภทใบแล้ว', 'success');
   } catch (err) { toast('บันทึกล้มเหลว: ' + err.message, 'error'); }
 }
 
@@ -997,6 +936,7 @@ function reopenDOForPrint(id) {
   closeModal('do-view-modal'); doModalMode = 'view';
   document.getElementById('do-modal-badge').style.display = 'inline';
   document.getElementById('do-save-btn').style.display = 'none';
+  document.getElementById('do-type-wrap').style.display = 'none';   // ใบที่ออกแล้ว เปลี่ยนประเภทที่ปุ่ม "📋 ประเภท / รายการ"
   document.getElementById('do-header-text').innerText = d.headerText || '';
   document.getElementById('do-no').value = d.doNo;
   document.getElementById('do-cust').value = d.customer;

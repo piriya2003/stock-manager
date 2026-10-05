@@ -57,7 +57,6 @@ body{
 .login-title{font-size:23px;font-weight:700;letter-spacing:-.3px;color:var(--t1)}
 .login-sub{font-size:11px;color:var(--t3);margin-top:6px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
 .login-card{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:28px;transition:background-color .3s, border-color .3s}
-.hint-box{background:rgba(84,155,255,.06);border:1px solid rgba(84,155,255,.15);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--t3);text-align:center;margin-top:16px}
 
 /* ── Sync indicator ────────────────────────────────────── */
 #sync-indicator{position:fixed;bottom:60px;right:20px;z-index:9998;display:none;background:var(--s2);border:1px solid var(--b2);border-radius:99px;padding:8px 14px;font-size:11px;color:var(--t2);align-items:center;gap:7px;box-shadow:var(--shadow-card);backdrop-filter:blur(8px)}
@@ -113,7 +112,6 @@ body{
 .sub-tab.active{background:var(--s1);color:var(--t1);box-shadow:inset 0 0 0 1px var(--b2)}
 
 /* ── Stat cards ────────────────────────────────────────── */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
 .stat-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .15s}
 .stat-card:hover{border-color:var(--b2)}
 .stat-label{font-size:11px;font-weight:500;letter-spacing:.02em;color:var(--t3);margin-bottom:10px}
@@ -241,7 +239,6 @@ input[type=file]{display:none}
 /* ── Layout utils ──────────────────────────────────────── */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:14px}
 .col-span-2{grid-column:1/-1}
 .form-row{display:flex;flex-direction:column;gap:5px}
 .mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
@@ -287,17 +284,12 @@ input[type=file]{display:none}
 .drop-zone-icon{font-size:32px;margin-bottom:8px}
 .drop-zone-label{font-size:13px;font-weight:600;color:var(--t2)}
 .drop-zone-sub{font-size:11px;color:var(--t3);margin-top:4px}
-.mapping-row{display:grid;grid-template-columns:1fr 1fr}
 .field-tag{display:inline-block;background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:2px 7px;font-size:11px;font-family:var(--mono);color:var(--t2)}
 .repair-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:14px 16px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow-card)}
 .repair-card:hover{border-color:var(--b3);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
 .repair-card.status-wait{border-left:3px solid var(--orange)}
 .repair-card.status-wip{border-left:3px solid var(--cyan)}
 .repair-card.status-done{border-left:3px solid var(--green);opacity:.7}
-.repair-icon{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.repair-icon.wait{background:var(--orange-dim)}
-.repair-icon.wip{background:var(--cyan-dim)}
-.repair-icon.done{background:var(--green-dim)}
 .repair-info{flex:1;min-width:0}
 .repair-sn{font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:600}
 .repair-name{font-size:13px;font-weight:600;color:var(--t1);margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -332,8 +324,6 @@ input[type=file]{display:none}
 /* ── Print ─────────────────────────────────────────────── */
 #printArea,.print-area{background:#fff;color:#000;padding:20px}
 #printArea *,.print-area *{color:#000!important;font-family:'Sarabun',sans-serif}
-.do-header-edit{padding:10px;border-radius:6px;text-align:center;cursor:text;transition:.15s;font-weight:600;font-size:13px;line-height:1.5;outline:none;border:1px dashed transparent}
-.do-header-edit:hover,.do-header-edit:focus{border-color:#aaa;background:#f9f9f9}
 .do-input{border:none;border-bottom:1px solid #999;background:transparent;padding:2px 4px;font-size:13px;color:#000;outline:none;width:auto}
 .do-number-input{font-weight:700;border:2px solid #f59e0b;background:#fffbeb;padding:3px 8px;border-radius:4px;font-size:14px}
 /* ช่องกรอกในเอกสาร DO/GRN เป็นกระดาษสีขาวเสมอ — ไม่ให้ธีมมืดทำให้ช่อง/โฟกัสกลายเป็นกล่องดำจนตัวอักษรจม */
@@ -452,7 +442,6 @@ input[type=file]{display:none}
   #printArea,#printArea *,.print-area,.print-area *{visibility:visible}
   #printArea,.print-area{position:absolute!important;left:0;top:0;width:100%;background:#fff;color:#000;overflow:visible!important;max-height:none!important;padding:0!important}
   .no-print{display:none!important}
-  .do-header-edit{border:none!important;background:transparent!important}
   /* ── ทำให้ช่องกรอกดูเป็นเอกสารทางการ: ไม่มีกรอบสี ไม่มีกล่องพื้นสี ── */
   #printArea,.print-area{font-family:'Sarabun',sans-serif!important}
   .print-area{padding:10mm 9mm!important}
@@ -644,13 +633,7 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
     padding: 16px !important;
   }
 
-  /* ปรับแถว Grid และกล่องสถิติ */
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
-
-  .grid-2, .grid-3, .grid-2-1,
+  .grid-2, .grid-3,
   div[style*="grid-template-columns:1fr 1fr"],
   div[style*="grid-template-columns: 2fr 1fr"] {
     grid-template-columns: 1fr !important;
@@ -669,9 +652,6 @@ hr.divider{border:none;border-top:1px solid var(--b1);margin:16px 0}
 }
 
 @media screen and (max-width: 480px) {
-  .stats-row {
-    grid-template-columns: 1fr !important;
-  }
   .stat-value {
     font-size: 28px !important;
   }

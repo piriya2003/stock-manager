@@ -1,22 +1,40 @@
 // ══════════════════════════════════════════════════════════════
 //  DATA LOADING — ดึงข้อมูลทั้งหมดจาก Supabase ตอน login
 // ══════════════════════════════════════════════════════════════
+// Supabase ส่งให้ได้ไม่เกิน 1000 แถวต่อคำขอ — ขอรวดเดียวแล้วแถวที่เกินหายเงียบๆ ไม่มี error
+// (เดิมคลัง/รายการในใบ DO/ใบ GRN โหลดแบบนั้น พอเกินพันชิ้นของหายจากจอ และใบ DO ที่ถอด/เพิ่ม SN
+//  จะคิดยอดเงินจากรายการที่โหลดมาไม่ครบ แล้วเขียนยอดผิดกลับลงฐานข้อมูล)
+// วนทีละหน้าจนครบ — orders ต้องปิดท้ายด้วยคอลัมน์ที่ไม่ซ้ำ ไม่งั้นแถวอาจข้าม/ซ้ำระหว่างหน้า
+// คืน { data, error } รูปเดียวกับคำขอปกติ
+async function selectAllRows(table, select = '*', orders = [['id', true]]) {
+  const CHUNK = 1000, rows = [];
+  for (let from = 0; ; from += CHUNK) {
+    let q = supaClient.from(table).select(select);
+    orders.forEach(([col, asc]) => { q = q.order(col, { ascending: asc }); });
+    const { data, error } = await q.range(from, from + CHUNK - 1);
+    if (error) return { data: null, error };
+    rows.push(...(data || []));
+    if (!data || data.length < CHUNK) return { data: rows, error: null };
+  }
+}
+
 async function loadAllData() {
+  const newestFirst = [['created_at', false], ['id', true]];
   const [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes] = await Promise.all([
-    supaClient.from('inventory').select('*').order('sn', { ascending: false }),
+    selectAllRows('inventory', '*', [['sn', false]]),
     supaClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(TX_PAGE),
-    supaClient.from('repair_jobs').select('*, customers(name)').order('created_at', { ascending: false }),
-    supaClient.from('do_headers').select('*').order('created_at', { ascending: false }),
-    supaClient.from('do_items').select('*'),
-    supaClient.from('master_products').select('*').order('name'),
-    supaClient.from('customers').select('*').order('name'),
-    supaClient.from('grn_headers').select('*').order('created_at', { ascending: false }),
-    supaClient.from('grn_items').select('*'),
+    selectAllRows('repair_jobs', '*, customers(name)', newestFirst),
+    selectAllRows('do_headers', '*', newestFirst),
+    selectAllRows('do_items'),
+    selectAllRows('master_products', '*', [['name', true], ['id', true]]),
+    selectAllRows('customers', '*', [['name', true]]),
+    selectAllRows('grn_headers', '*', newestFirst),
+    selectAllRows('grn_items'),
   ]);
 
   [invRes, txRes, repRes, doHRes, doIRes, mpRes, custRes, grnHRes, grnIRes].forEach(r => { if (r.error) throw r.error; });
 
-  // อะไหล่เพิ่มมาทีหลัง — ดึงแยกและยอมให้ล้มเหลวได้ ถ้ายังไม่ได้รัน sql/add-parts.sql
+  // อะไหล่เพิ่มมาทีหลัง — ดึงแยกและยอมให้ล้มเหลวได้ ถ้ายังไม่ได้รัน stockhq_schema.sql
   // ยัดรวมใน Promise.all ข้างบนไม่ได้ เพราะ error จะทำให้ล็อกอินไม่เข้าทั้งระบบ
   const [partsRes, movesRes] = await Promise.all([
     supaClient.from('parts').select('*').order('name'),

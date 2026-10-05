@@ -24,9 +24,10 @@ function filteredPartMoves() {
   return partMoves.filter(m => {
     if (pid && m.part_id !== pid) return false;
     if (uid && m.performed_by !== uid) return false;
-    if (typ === 'in'  && !(m.qty > 0)) return false;
+    // ยกเลิกขายไม่ใช่ของรับเข้า (ดู partMoveInOut) — อยู่กลุ่มเดียวกับการขาย
+    if (typ === 'in'  && !(partMoveInOut(m.type, m.qty).in > 0)) return false;
     if (typ === 'out' && !(m.qty < 0)) return false;
-    if (typ === 'sale' && m.type !== 'ขาย') return false;
+    if (typ === 'sale' && m.type !== 'ขาย' && m.type !== 'ยกเลิกขาย') return false;
     // move_date เป็น yyyy-mm-dd เทียบเป็นข้อความตรงๆ ได้เลย
     if (from && (m.move_date || '') < from) return false;
     if (to   && (m.move_date || '') > to)   return false;
@@ -58,8 +59,8 @@ function renderPartHistory() {
 
   const data = filteredPartMoves();
   setPartText('pm-count', data.length);
-  setPartText('pm-in',  data.filter(m => m.qty > 0).reduce((s, m) => s + m.qty, 0));
-  setPartText('pm-out', data.filter(m => m.qty < 0).reduce((s, m) => s - m.qty, 0));
+  setPartText('pm-in',  data.reduce((s, m) => s + partMoveInOut(m.type, m.qty).in, 0));
+  setPartText('pm-out', data.reduce((s, m) => s + partMoveInOut(m.type, m.qty).out, 0));
   updatePartMoveMoreBtn();
 
   document.getElementById('pm-note').textContent = partMovesAllLoaded

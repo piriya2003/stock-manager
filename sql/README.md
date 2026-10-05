@@ -10,14 +10,17 @@
 |---|---|
 | [`../stockhq_schema.sql`](../stockhq_schema.sql) | โครงสร้างฐานข้อมูลทั้งหมด — รันซ้ำได้ปลอดภัย ใช้ตอนสร้างใหม่หรือเพิ่มคอลัมน์ |
 | [`check-item-by-sn.sql`](check-item-by-sn.sql) | อยากรู้ว่าสินค้าชิ้นหนึ่งมีข้อมูลอะไรอยู่จริง ๆ |
-| [`fix-dispatched-at.sql`](fix-dispatched-at.sql) | ของโผล่ผิดวันในหน้า "รายการที่โอน/ขายออก" |
-| [`audit-dispatch-dates.sql`](audit-dispatch-dates.sql) | หาว่ามีของกี่ชิ้นที่วันที่จ่ายออกเพี้ยน |
+| [`fix-ulc-item-names.sql`](fix-ulc-item-names.sql) | แบบอย่างการแก้ชื่อสินค้าที่รับเข้าผิดเป็นราย SN (รันไปแล้ว 3 ก.ย. 2569 — เก็บไว้ดูวิธี) |
 | [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ (เก็บต้นแบบสินค้าไว้) — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |
 | [`wipe-all-except-users-customers.sql`](wipe-all-except-users-customers.sql) | ⚠️ ล้างทุกอย่างรวมถึงต้นแบบสินค้า/อะไหล่ เหลือแค่บัญชีผู้ใช้กับลูกค้า — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |
-| [`fix-signup-privilege-escalation.sql`](fix-signup-privilege-escalation.sql) | 🔴 **ด่วน** ปิดช่องโหว่คนนอกสมัครเองเป็นแอดมินได้ — ต้องปิดรับสมัครใน Dashboard ด้วย |
-| [`add-parts.sql`](add-parts.sql) | สร้างตารางอะไหล่ (นับเป็นจำนวน ไม่ผูก SN) — ต้องรันก่อนใช้เมนู "อะไหล่" |
-| [`add-do-items-qty.sql`](add-do-items-qty.sql) | ขายอะไหล่ (ไม่มี SN) แล้วออกใบ DO ได้ + คิวรอออกใบเห็นทุกเครื่อง — ต้องรัน add-parts.sql ก่อน |
-| [`check-parts-do-setup.js`](check-parts-do-setup.js) | ตรวจว่ารัน add-do-items-qty.sql ครบไหม — วางใน Console ของเว็บ (F12) ตอนล็อกอินอยู่ ไม่แก้ข้อมูลจริง |
+
+### `archive/` — รันไปแล้ว ไม่ต้องใช้อีก
+
+เก็บไว้ดูย้อนหลังเฉย ๆ ว่าเคยแก้อะไรไป **ไม่ต้องรันซ้ำ**
+
+- `add-parts.sql`, `add-do-items-qty.sql`, `fix-signup-privilege-escalation.sql` — รันแล้ว และรวมอยู่ใน `stockhq_schema.sql` แล้วทั้งหมด (ตั้งระบบใหม่ใช้ไฟล์นั้นไฟล์เดียว)
+- `check-parts-do-setup.js` — ตัวตรวจว่ารัน `add-do-items-qty.sql` ครบไหม ตรวจผ่านไปแล้ว
+- `fix-dispatched-at.sql`, `audit-dispatch-dates.sql` — แก้วันที่จ่ายออกของข้อมูลชุดเก่า ซึ่งถูกล้างไปแล้ว (24 ส.ค. และ 29 ก.ย. 2569) ถ้าวันหนึ่งวันที่จ่ายออกเพี้ยนอีก ใช้เป็นแบบได้
 
 ## วิธีใช้
 

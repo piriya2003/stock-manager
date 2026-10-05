@@ -41,7 +41,8 @@ function exportGRNHistoryCSV() {
   const rows = [];
   grnHistory.forEach(g => {
     (g.items||[]).forEach(item => {
-      rows.push({ grnNo: g.grnNo, date: fmtDate(g.createdAt), supplier: g.supplier||'', poNo: g.poNo||'', lotNo: g.lotNo||'', createdBy: userName(g.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
+      // วันที่บนใบ (วันที่รับของ) — ใบย้อนหลังกดออกคนละวันกับวันที่รับ ถ้าใช้ createdAt จะได้วันที่กดออกใบ
+      rows.push({ grnNo: g.grnNo, date: fmtDate(g.date || g.createdAt), supplier: g.supplier||'', poNo: g.poNo||'', lotNo: g.lotNo||'', createdBy: userName(g.createdBy), itemName: item.name, itemCode: item.code, itemCategory: item.category, itemSN: item.sn });
     });
   });
   dlCSV(toCSV(rows, ['grnNo','date','supplier','poNo','lotNo','createdBy','itemName','itemCode','itemCategory','itemSN']), 'grn_history_export.csv');

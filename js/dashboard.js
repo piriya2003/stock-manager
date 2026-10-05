@@ -36,7 +36,7 @@ function renderDashboard() {
   set('d-asof', 'ข้อมูล ณ ' + nowStr());
 
   // อะไหล่ (ไม่มี SN) — คนละตารางกับสินค้าคงคลังด้านบน แต่รวมยอดไว้ในแดชบอร์ดเดียวกัน
-  // ซ่อนบล็อกนี้ถ้ายังไม่ได้รัน sql/add-parts.sql (partsTableMissing) จะได้ไม่โชว์เลข 0 หลอกๆ
+  // ซ่อนบล็อกนี้ถ้ายังไม่ได้รัน stockhq_schema.sql (partsTableMissing) จะได้ไม่โชว์เลข 0 หลอกๆ
   const partsStrip = document.getElementById('d-parts-strip');
   if (partsStrip) {
     partsStrip.style.display = partsTableMissing ? 'none' : 'flex';
@@ -98,7 +98,7 @@ function renderDashboard() {
       <div class="do-card" onclick="reopenDOForPrint('${d.id}')">
         <div><div class="do-card-num">${escapeHtml(d.doNo)}</div><div class="do-card-meta">${fmtDate(doDateOf(d))}</div></div>
         <div style="flex:1;min-width:0"><div class="do-card-cust" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.customer)}</div><div style="font-size:11px;color:var(--t3)">${escapeHtml(d.type || 'โอนสินค้า')}</div></div>
-        <div class="do-summary-chip">${(d.items || []).length} ชิ้น</div>
+        <div class="do-summary-chip">${doPieceCount(d)} ชิ้น</div>
       </div>`).join('');
 
   checkAlerts(); updateDOBadge(); updateGRNBadge(); updateClaimBadge();

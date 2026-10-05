@@ -889,7 +889,15 @@
     </div>
     <div class="no-print" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
       <div id="do-modal-hint" style="font-size:11px;color:#888"></div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label id="do-type-wrap" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555" title="ประเภทใบ (ไม่ได้พิมพ์บนใบ ใช้กรองในประวัติใบ DO)">ประเภท
+          <select id="do-type" style="background:#fff;color:#111;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--sans);width:auto">
+            <option value="โอนสินค้า">📤 โอนสินค้า (Transfer)</option>
+            <option value="ขายสินค้า">💰 ขายสินค้า (Sell)</option>
+            <option value="เบิกสินค้า">📦 เบิกสินค้า (Withdraw)</option>
+            <option value="สินค้าเคลม/ส่งซ่อม">🔴 สินค้าเคลม / ส่งซ่อม (Claim/Repair)</option>
+          </select>
+        </label>
         <button onclick="closeDOModal()" style="background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)">ปิด</button>
         <button id="do-save-btn" onclick="saveDO()" style="background:#22d3ee;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600">💾 บันทึก DO</button>
         <button id="do-manage-btn" onclick="openDOView(currentViewDOId)" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--sans)" title="ประเภทใบ และเพิ่ม/ถอดรายการสินค้า (2 อย่างนี้ไม่ได้พิมพ์บนใบ)">📋 ประเภท / รายการ</button>
@@ -1193,22 +1201,18 @@
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div class="detail-section" style="margin-bottom:0">
-        <div class="detail-section-title">📋 ข้อมูลใบ DO (แก้ไขได้)</div>
-        <div class="detail-row"><span class="lbl">เลขที่ (No.)</span><input type="text" id="dov-no2" class="mono" style="max-width:60%;text-align:right;color:var(--blue);font-weight:700"></div>
+        <div class="detail-section-title">📋 ข้อมูลใบ DO</div>
+        <div class="detail-row"><span class="lbl">เลขที่ (No.)</span><span class="val mono" id="dov-no2" style="color:var(--blue);font-weight:700"></span></div>
         <div class="detail-row"><span class="lbl">ประเภท</span><select id="dov-type" style="max-width:60%"><option value="โอนสินค้า">📤 โอนสินค้า</option><option value="ขายสินค้า">💰 ขายสินค้า</option><option value="เบิกสินค้า">📦 เบิกสินค้า</option><option value="สินค้าเคลม/ส่งซ่อม">🔴 สินค้าเคลม / ส่งซ่อม</option></select></div>
-        <div class="detail-row"><span class="lbl">ลูกค้า (TO)</span><input type="text" id="dov-cust" style="max-width:60%;text-align:right"></div>
-        <div style="margin:6px 0"><span class="lbl" style="display:block;margin-bottom:4px">ที่อยู่ / เลขผู้เสียภาษี</span><textarea id="dov-addr" rows="2" placeholder="ที่อยู่ลูกค้าที่พิมพ์บนใบ DO" style="resize:vertical;font-size:12px"></textarea></div>
-        <div class="detail-row"><span class="lbl">พนักงานขาย (Staff)</span><input type="text" id="dov-sales" style="max-width:60%;text-align:right"></div>
-        <div class="detail-row"><span class="lbl">PO Number</span><input type="text" id="dov-po" style="max-width:60%;text-align:right"></div>
-        <div class="detail-row"><span class="lbl">วันที่บนใบ (Date Issued)</span><input type="date" id="dov-date-edit" style="max-width:60%;text-align:right"></div>
+        <div class="detail-row"><span class="lbl">ลูกค้า (TO)</span><span class="val" id="dov-cust"></span></div>
+        <div class="detail-row"><span class="lbl">วันที่บนใบ (Date Issued)</span><span class="val" id="dov-date-issued"></span></div>
         <div class="detail-row"><span class="lbl">สร้างเมื่อ</span><span class="val" id="dov-date">—</span></div>
         <div class="detail-row"><span class="lbl">ผู้สร้าง</span><span class="val" id="dov-user">—</span></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.6">หัวใบ ที่อยู่ หมายเหตุ และราคา แก้บนหน้าใบ DO — กด "🖨️ เปิด &amp; พิมพ์ใบ DO" แล้วกด "✏️ แก้ไขใบนี้"</div>
       </div>
       <div class="detail-section" style="margin-bottom:0">
         <div class="detail-section-title">📦 สรุปรายการ</div>
-        <div id="dov-summary" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-        <div class="detail-section-title" style="margin-top:4px">📝 หมายเหตุ (แก้ไขได้)</div>
-        <textarea id="dov-note" rows="3" placeholder="หมายเหตุที่จะแสดงบนใบ DO" style="resize:vertical;font-size:12px"></textarea>
+        <div id="dov-summary" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
     <div class="detail-section" style="margin-bottom:12px;border-color:rgba(45,212,160,.25)">
@@ -1219,7 +1223,7 @@
       </div>
       <div id="dov-add-msg" style="font-size:11px;margin-top:6px;min-height:15px"></div>
     </div>
-    <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น) — แก้ไขแล้วกด "บันทึกการแก้ไข"</div>
+    <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">รายการสินค้าทั้งหมด (<span id="dov-item-count">0</span> ชิ้น)</div>
     <div class="tbl-wrap" style="max-height:280px;overflow-y:auto;margin-bottom:12px">
       <table>
         <thead><tr><th>#</th><th>สินค้า (SN)</th><th style="text-align:center">จำนวน</th><th>ราคาต่อหน่วย</th><th>จำนวนเงิน</th></tr></thead>
@@ -1233,7 +1237,7 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeModal('do-view-modal')" class="btn btn-ghost">ปิด</button>
-      <button onclick="saveDOViewPrices()" class="btn btn-success">💾 บันทึกการแก้ไข</button>
+      <button onclick="saveDOViewType()" class="btn btn-success">💾 บันทึกประเภท</button>
       <button onclick="reopenDOForPrint(currentViewDOId)" class="btn btn-primary">🖨️ เปิด & พิมพ์ใบ DO</button>
     </div>
   </div>

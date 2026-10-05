@@ -1,17 +1,12 @@
 // ══════════════════════════════════════════════════════════════
 //  BACKUP / RESTORE
 // ══════════════════════════════════════════════════════════════
-// PostgREST คืนได้ไม่เกินราว 1000 แถวต่อครั้ง — ต้องวนทีละหน้า ไม่งั้นไฟล์ backup ขาดแบบเงียบๆ
+// ดึงครบทุกแถว (วนทีละหน้า ดู selectAllRows ใน js/data-loader.js) ดึงไม่ได้ให้ล้มไปเลย
 // เรียงจากเก่าไปใหม่ แถวที่เพิ่มเข้ามาระหว่างดึงจะไปต่อท้าย หน้าก่อนหน้าจึงไม่เลื่อน
 async function fetchAllRows(table) {
-  const CHUNK = 1000, rows = [];
-  for (let from = 0; ; from += CHUNK) {
-    const { data, error } = await supaClient.from(table).select('*')
-      .order('created_at').order('id').range(from, from + CHUNK - 1);
-    if (error) throw error;
-    rows.push(...(data || []));
-    if (!data || data.length < CHUNK) return rows;
-  }
+  const { data, error } = await selectAllRows(table, '*', [['created_at', true], ['id', true]]);
+  if (error) throw error;
+  return data;
 }
 
 // ประวัติเคลื่อนไหวกับประวัติอะไหล่บนจอโหลดมาแค่ชุดแรก และอะไหล่เคยไม่ได้อยู่ในไฟล์เลย

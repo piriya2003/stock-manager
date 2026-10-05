@@ -26,7 +26,6 @@ let selectedBatchKeys   = new Set();  // ชุดที่ติ๊กไว้
 let selectedDOIds       = new Set();  // ใบ DO ที่ติ๊กไว้เพื่อรวมเป็นใบเดียว
 let currentRepairJobId = null;
 let currentViewDOId    = null;
-let dovGroups          = [];    // กลุ่มสินค้า (ตามชื่อ) ที่กำลังดู/แก้ราคาอยู่ในหน้าประวัติ DO
 let currentViewGRNId   = null;
 let currentSwapJobId   = null;
 let swapMode           = 'new';  // 'new' = เปลี่ยน SN ใหม่ | 'same' = ใช้ SN เดิม
@@ -39,7 +38,7 @@ let grnModalMode       = 'create';
 // อะไหล่ที่ตัดขายให้ลูกค้าแล้ว แต่ยังไม่ได้ออกใบ DO — โหลดจากฐานข้อมูล (แถว 'ขาย' ใน part_moves
 // ที่ยังไม่ผูกใบ DO) ทุกเครื่องจึงเห็นคิวเดียวกัน ดู loadPartSaleQueue ใน js/parts.js
 let partsDOQueue       = [];
-let partSaleSchemaMissing = false;   // true = ยังไม่ได้รัน sql/add-do-items-qty.sql
+let partSaleSchemaMissing = false;   // true = ยังไม่ได้รัน stockhq_schema.sql
 let pendingPartsDOBatch = null;   // กลุ่มที่กำลังจะกลายเป็นใบ DO นี้ — ใช้ล้างคิวหลังบันทึกสำเร็จ
 
 let txnsAllLoaded = false;   // true = ดึงประวัติการเคลื่อนไหวมาครบทุกรายการแล้ว
@@ -47,7 +46,7 @@ let txnsAllLoaded = false;   // true = ดึงประวัติการ�
 // ── อะไหล่ (นับเป็นจำนวน ไม่ผูก SN) ──
 let parts            = [];     // อะไหล่แต่ละชนิด พร้อมยอดคงเหลือ
 let partMoves        = [];     // ประวัติรับเข้า/เบิกใช้
-let partsTableMissing = false; // true = ยังไม่ได้รัน sql/add-parts.sql — เมนูอะไหล่จะบอกให้ไปรันก่อน
+let partsTableMissing = false; // true = ยังไม่ได้รัน stockhq_schema.sql — เมนูอะไหล่จะบอกให้ไปรันก่อน
 let editingPartId    = null;   // ไม่ null = ฟอร์มอะไหล่กำลังอยู่ในโหมดแก้ไข
 let partMovesAllLoaded = false; // true = ดึงประวัติอะไหล่มาครบทุกรายการแล้ว
 let partTotals       = {};     // part_id → { in, out } ยอดรับเข้า/เบิกสะสมทั้งชีวิตของอะไหล่ตัวนั้น

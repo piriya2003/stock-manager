@@ -179,10 +179,15 @@ function openRepairDetail(id) {
     btns += `<button onclick="openSwapSNModal('${job.id}')" class="btn btn-orange btn-sm">🔄 เคลม/สลับ SN</button>
              <button onclick="saveRepairNotes()" class="btn btn-ghost">💾 บันทึก</button>
              <button onclick="advanceRepairStatus('ซ่อมเสร็จ')" class="btn btn-success">✅ ซ่อมเสร็จแล้ว</button>`;
-  } else {
+  } else if (job.status === 'ซ่อมเสร็จ') {
     btns += `<button onclick="advanceRepairStatus('กำลังซ่อม')" class="btn btn-ghost btn-sm" style="margin-right:auto" title="ย้อนกลับไปสถานะกำลังซ่อม">⏪ แก้ไขสถานะ</button>
              <button onclick="saveRepairNotes()" class="btn btn-primary">💾 บันทึกหมายเหตุ</button>
              <span class="badge b-green" style="padding:8px 14px; font-size:12px">✅ เสร็จสิ้น</span>`;
+  } else {
+    // งานที่เคลมแล้วย้อนไม่ได้ — เครื่องเก่าเป็นเคลม เครื่องใหม่ส่งให้ลูกค้าไปแล้ว ย้อนแค่ใบงานทำให้สองฝั่งไม่ตรงกัน
+    btns += `<span style="margin-right:auto;font-size:11px;color:var(--t3)">เคลมผิด: แอดมินลบใบงานนี้ แล้วแก้สถานะเครื่องที่หน้าคลังสินค้า</span>
+             <button onclick="saveRepairNotes()" class="btn btn-primary">💾 บันทึกหมายเหตุ</button>
+             <span class="badge b-red" style="padding:8px 14px; font-size:12px">🔄 เคลมแล้ว</span>`;
   }
   // ลบงานซ่อม — เฉพาะแอดมิน (ตรงกับสิทธิ์ฝั่งฐานข้อมูล) วางชิดซ้ายให้ห่างจากปุ่มที่ใช้บ่อย
   if (currentRole === 'admin') {
@@ -240,6 +245,7 @@ async function saveRepairNotes() {
 async function advanceRepairStatus(newStatus) {
   const job = repairJobs.find(j => j.id === currentRepairJobId); if (!job) return;
   const prevJobStatus = job.status;
+  if (prevJobStatus === 'เคลมเครื่อง') return toast('งานที่เคลมแล้วเปลี่ยนสถานะไม่ได้', 'error');
   const notes = document.getElementById('rd-notes').value;
   const payload = { notes, status: newStatus };
   if (newStatus === 'กำลังซ่อม' && !job.startedAt) payload.started_at = nowISO();

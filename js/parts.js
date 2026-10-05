@@ -9,24 +9,26 @@ function partById(id) { return parts.find(p => p.id === id); }
 
 // ยอดสะสมของอะไหล่แต่ละตัว — "รับเข้าทั้งหมดกี่ชิ้น เบิกไปแล้วกี่ชิ้น"
 // เก็บแยกจาก partMoves เพราะ partMoves โหลดมาแค่ 300 รายการล่าสุด ถ้านับจากตรงนั้นยอดจะขาด
-function addPartTotal(partId, qty) {
+// แถวหนึ่งในประวัติอะไหล่นับเป็น "รับเข้า" หรือ "ออก" เท่าไร
+// ยกเลิกขายเป็นยอดบวกก็จริง แต่ไม่ใช่ของเข้ามาใหม่ — คือการขายที่ไม่ได้เกิด จึงไปหักฝั่งออก
+// (เดิมนับเป็นรับเข้า รับจริง 10 ขาย 3 แล้วยกเลิก ตารางขึ้น "รับเข้าทั้งหมด 13")
+function partMoveInOut(type, qty) {
+  if (type === 'ยกเลิกขาย') return { in: 0, out: -qty };
+  return qty > 0 ? { in: qty, out: 0 } : { in: 0, out: -qty };
+}
+function addPartTotal(partId, qty, type) {
   const t = partTotals[partId] || (partTotals[partId] = { in: 0, out: 0 });
-  if (qty > 0) t.in += qty; else t.out -= qty;
+  const d = partMoveInOut(type, qty);
+  t.in += d.in; t.out += d.out;
 }
 function partTotal(partId) { return partTotals[partId] || { in: 0, out: 0 }; }
 
-// ดึงยอดสะสมตอนล็อกอิน — เอาแค่ 2 คอลัมน์ ต่อให้ประวัติเป็นหมื่นแถวก็ยังเบา
-// วนทีละ 1000 แถวเพราะ PostgREST จำกัดจำนวนแถวต่อครั้งได้ ถ้าขอรวดเดียวยอดอาจขาดแบบเงียบๆ
+// ดึงยอดสะสมตอนล็อกอิน — เอาแค่ 3 คอลัมน์ ต่อให้ประวัติเป็นหมื่นแถวก็ยังเบา
 async function loadPartTotals() {
   partTotals = {};
-  const CHUNK = 1000;
-  for (let from = 0; ; from += CHUNK) {
-    const { data, error } = await supaClient.from('part_moves')
-      .select('part_id, qty').range(from, from + CHUNK - 1);
-    if (error) return;   // ยอดสะสมไม่ขึ้นดีกว่าล็อกอินไม่เข้า — คงเหลือยังถูกอยู่
-    (data || []).forEach(m => addPartTotal(m.part_id, m.qty));
-    if (!data || data.length < CHUNK) return;
-  }
+  const { data, error } = await selectAllRows('part_moves', 'id, part_id, qty, type');
+  if (error) return;   // ยอดสะสมไม่ขึ้นดีกว่าล็อกอินไม่เข้า — คงเหลือยังถูกอยู่
+  data.forEach(m => addPartTotal(m.part_id, m.qty, m.type));
 }
 
 // วันที่ที่จะบันทึกลงประวัติตอนกดรับเข้า/เบิก — ว่างไว้ก็ถือว่าวันนี้
@@ -47,7 +49,7 @@ function partsSetupNotice() {
     <div style="font-size:32px;margin-bottom:8px">🔧</div>
     <div style="font-weight:600;color:var(--t1);margin-bottom:6px">ยังใช้เมนูอะไหล่ไม่ได้</div>
     <div style="font-size:12px;color:var(--t2)">
-      ต้องสร้างตารางในฐานข้อมูลก่อน — เปิดไฟล์ <b class="mono">sql/add-parts.sql</b> ในโปรเจกต์<br>
+      ต้องสร้างตารางในฐานข้อมูลก่อน — เปิดไฟล์ <b class="mono">stockhq_schema.sql</b> ในโปรเจกต์<br>
       ก๊อปไปวางใน Supabase → SQL Editor แล้วกด Run<br>
       เสร็จแล้วกลับมา <b>ออกจากระบบ แล้วล็อกอินใหม่</b>
     </div></div></div>`;
@@ -345,7 +347,7 @@ function sellPart(id) {
 
 async function confirmPartSell() {
   if (!pendingPartSell) return closeModal('part-sell-modal');
-  if (partSaleSchemaMissing) return toast('ต้องรัน sql/add-do-items-qty.sql ใน Supabase ก่อน จึงจะตัดขายได้', 'error');
+  if (partSaleSchemaMissing) return toast('ต้องรัน stockhq_schema.sql ใน Supabase ก่อน จึงจะตัดขายได้', 'error');
   const { id, n } = pendingPartSell;
   const p = partById(id);
   if (!p) { pendingPartSell = null; return closeModal('part-sell-modal'); }
@@ -380,7 +382,7 @@ async function confirmPartSell() {
         + (back && back.length ? ' — คืนยอดให้แล้ว ไม่มีอะไรเปลี่ยน' : ' — ⚠️ คืนยอดไม่สำเร็จ ตรวจยอดอะไหล่นี้ด้วย'));
     }
 
-    addPartTotal(id, -n);
+    addPartTotal(id, -n, 'ขาย');
     partMoves.unshift(move);
     partsDOQueue.push(saleMoveToQueue(move));
     renderPartsDOQueue();
@@ -425,7 +427,7 @@ async function loadPartSaleQueue() {
   const { data, error } = await supaClient.from('part_moves').select('*')
     .eq('type', 'ขาย').is('do_header_id', null).is('cancelled_at', null).order('created_at');
   if (error) {
-    // ยังไม่ได้รัน sql/add-do-items-qty.sql — ไม่มีคอลัมน์ให้กรอง
+    // ยังไม่ได้รัน stockhq_schema.sql — ไม่มีคอลัมน์ให้กรอง
     if (error.code === '42703' || /do_header_id|cancelled_at|column/i.test(error.message || '')) {
       partSaleSchemaMissing = true; partsDOQueue = [];
     } else console.warn('โหลดคิวอะไหล่รอออกใบ DO ไม่สำเร็จ:', error.message);
@@ -449,7 +451,7 @@ async function cancelPartSale(moveId) {
       await loadPartSaleQueue(); renderPartsDOQueue();
       // ยังอยู่ในคิวทั้งที่แก้ไม่ได้ = ไม่ได้ถูกใครแย่ง แต่ไม่มีสิทธิ์แก้แถว (ไม่มี update policy ให้ part_moves)
       if (partsDOQueue.some(x => String(x.id) === String(q.id))) {
-        return toast('ยกเลิกไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน sql/add-do-items-qty.sql ให้ครบทั้งไฟล์', 'error');
+        return toast('ยกเลิกไม่ได้ทั้งที่ไม่มีใครแย่ง — น่าจะยังไม่ได้ตั้งสิทธิ์แก้ part_moves: รัน stockhq_schema.sql ให้ครบทั้งไฟล์', 'error');
       }
       return toast('รายการนี้ถูกออกใบ DO หรือยกเลิกไปแล้วจากอีกเครื่อง — อัปเดตคิวให้แล้ว', 'warning');
     }
@@ -479,7 +481,7 @@ async function cancelPartSale(moveId) {
 // บันทึกประวัติ — ล้มเหลวไม่ควรทำให้ยอดที่ตัดไปแล้วพัง แต่ต้องบอกให้รู้ว่าประวัติหาย
 async function logPartMove(partId, type, qty, balance, note, moveDate) {
   const row = { part_id: partId, move_date: moveDate || today(), type, qty, balance, note: note || null, performed_by: currentUserId };
-  addPartTotal(partId, qty);   // ยอดสะสมบนตารางต้องขยับทันที ไม่ต้องรอโหลดหน้าใหม่
+  addPartTotal(partId, qty, type);   // ยอดสะสมบนตารางต้องขยับทันที ไม่ต้องรอโหลดหน้าใหม่
   try {
     const { data, error } = await supaClient.from('part_moves').insert(row).select().single();
     if (error) throw error;

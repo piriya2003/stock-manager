@@ -245,6 +245,10 @@ async function saveEdit() {
   const newSN = document.getElementById('edit-sn').value.trim();
   const newStatus = document.getElementById('edit-status').value;
   const oldCust = item.dispatched_to || '';
+  // ลบ SN จนว่างแล้วกดบันทึก เคยผ่านไปได้ — ของชิ้นนั้นจะไม่มีเลขให้ค้น/สแกนหาอีกเลย
+  if (!newSN) return toast('SN ว่างไม่ได้', 'error');
+  // กันภาษาไทยแบบเดียวกับตอนสแกน (filterBarcode) — เช็คเฉพาะตอนเปลี่ยน SN ไม่ขวางการแก้ช่องอื่นของชิ้นเก่า
+  if (newSN !== String(oldSN) && /[฀-๿]/.test(newSN)) return toast('SN มีตัวอักษรไทย — เปลี่ยนภาษาคีย์บอร์ดเป็นอังกฤษแล้วพิมพ์ใหม่', 'error');
   const payload = {
     category: document.getElementById('edit-cat').value,
     name: document.getElementById('edit-name').value,
@@ -366,19 +370,23 @@ async function applyBulkRename() {
   } finally { btn.disabled = false; }
 }
 
-// ต้นแบบสินค้าไม่มีสิทธิ์ UPDATE บน Supabase (มีแค่ insert/delete) — เลยใช้ลบตัวเก่าแล้วเพิ่มตัวใหม่แทน
+// แก้ชื่อในต้นแบบตรงๆ — เดิมลบตัวเก่าแล้วสร้างใหม่ (สมัยต้นแบบยังไม่มีสิทธิ์ UPDATE)
+// ตัวใหม่ได้แค่หมวด/ชื่อ/รหัส หมวดย่อยหายไป ของเก่าที่อิงหมวดย่อยจากต้นแบบก็หายจากตัวกรองหมวดย่อยตาม
 async function renameMasterProduct(oldName, newName) {
   const olds = masterProds.filter(p => p.name === oldName);
   if (!olds.length) return;
   const ids = olds.map(p => p.id);
-  const { error: dErr } = await supaClient.from('master_products').delete().in('id', ids);
-  if (dErr) throw dErr;
-  masterProds = masterProds.filter(p => !ids.includes(p.id));
-  if (masterProds.some(p => p.name === newName)) return;   // มีต้นแบบชื่อใหม่อยู่แล้ว ไม่ต้องเพิ่มซ้ำ
-  const { data, error } = await supaClient.from('master_products')
-    .insert({ category: olds[0].category || 'ไม่ระบุ', name: newName, code: olds[0].code }).select().single();
+  // มีต้นแบบชื่อใหม่อยู่แล้ว — ตัวนั้นเป็นตัวจริง ตัวเก่าลบทิ้ง ไม่ให้มีสองตัวชื่อซ้ำ
+  if (masterProds.some(p => p.name === newName)) {
+    const { error } = await supaClient.from('master_products').delete().in('id', ids);
+    if (error) throw error;
+    masterProds = masterProds.filter(p => !ids.includes(p.id));
+    return;
+  }
+  const { data, error } = await supaClient.from('master_products').update({ name: newName }).in('id', ids).select();
   if (error) throw error;
-  masterProds.push(data);
+  if (!data || !data.length) throw new Error('สินค้าเปลี่ยนชื่อแล้ว แต่แก้ชื่อในต้นแบบไม่ได้ (ไม่มีสิทธิ์แก้ master_products)');
+  data.forEach(r => { const p = masterProds.find(x => x.id === r.id); if (p) Object.assign(p, r); });
 }
 
 async function delItem(id) {

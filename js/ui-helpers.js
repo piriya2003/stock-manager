@@ -302,8 +302,11 @@ function checkAlerts() {
 function updateRepairBadges() {
   const wait = repairJobs.filter(j => j.status === 'รอซ่อม').length;
   const wip  = repairJobs.filter(j => j.status === 'กำลังซ่อม').length;
-  const t = today();
-  const doneToday = repairJobs.filter(j => j.status === 'ซ่อมเสร็จ' && j.finished_at && j.finished_at.startsWith(t)).length;
+  // งานซ่อมในเครื่องใช้ชื่อแบบ finishedAt (ดู loadAllData) — เดิมอ่าน finished_at ป้ายนี้เลยขึ้น 0 ตลอด
+  // และเวลาเก็บเป็น UTC ต้องแปลงเป็นวันตามเวลาเครื่องก่อนเทียบ ไม่งั้นงานที่เสร็จก่อน 7 โมงตกไปเป็นเมื่อวาน
+  const td = today();
+  const doneToday = repairJobs.filter(j => j.status === 'ซ่อมเสร็จ' && j.finishedAt
+    && new Date(j.finishedAt).toLocaleDateString('en-CA') === td).length;
   document.getElementById('badge-wait').textContent = wait + ' รอ';
   document.getElementById('badge-wip').textContent  = wip + ' กำลังซ่อม';
   document.getElementById('badge-done-today').textContent = doneToday + ' เสร็จวันนี้';
