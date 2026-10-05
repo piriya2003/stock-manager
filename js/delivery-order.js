@@ -138,6 +138,10 @@ function openDOFromPartsQueue(gi) {
   document.getElementById('do-type').value = 'ขายสินค้า';   // คิวนี้คือของที่ตัดขายให้ลูกค้า
 }
 
+// Staff ของใบ DO ใบล่าสุดที่ออกจากเครื่องนี้ — จำไว้ในเครื่อง ไม่ใช่ข้อมูลธุรกิจ หายก็แค่ช่องว่าง
+function lastDOStaff() { try { return localStorage.getItem('shq_do_staff') || ''; } catch (e) { return ''; } }
+function rememberDOStaff(name) { try { localStorage.setItem('shq_do_staff', name); } catch (e) { /* localStorage ปิด — ข้ามได้ */ } }
+
 function prepDOModal(custOverride) {
   // ล้างค้างจากครั้งก่อนเสมอ — เปิดใบ DO ใบใหม่ที่ไม่ได้มาจากคิวอะไหล่ ต้องไม่พาลบรายการในคิวของครั้งก่อน
   // (openDOFromPartsQueue ตั้งค่านี้เอง "หลัง" เรียก prepDOModal อีกที)
@@ -165,6 +169,11 @@ function prepDOModal(custOverride) {
   typeSel.value = document.getElementById('o-type')?.value || 'โอนสินค้า';
   document.getElementById('do-type-wrap').style.display = '';
   document.getElementById('do-date').value = fmtDODate(nowISO());
+  // ช่องพวกนี้ใช้ร่วมกับตอนเปิดดูใบเก่า — เดิมไม่ล้าง เปิดดูใบเก่าแล้วสร้างใบใหม่ PO/หมายเหตุของใบเก่าเลยติดมา
+  // PO กับหมายเหตุเป็นของใบใดใบหนึ่งเสมอ จึงเริ่มว่าง ส่วน Staff ใช้ชื่อที่กรอกในใบใหม่ใบก่อนบนเครื่องนี้ (คนเดิมออกใบต่อกัน)
+  document.getElementById('do-salesperson').value = lastDOStaff();
+  document.getElementById('do-machine').value = '';
+  document.getElementById('do-header-text').innerText = '';
   // custOverride: ลูกค้าในทะเบียน / null = รู้เจ้าของแต่ไม่อยู่ในทะเบียน / undefined = ใช้ที่เลือกค้างในหน้าสแกน
   // ห้ามถอยไปใช้หน้าสแกนเมื่อได้ null — ไม่งั้นใบจะได้ที่อยู่ของลูกค้าคนละเจ้า
   const custSel = document.getElementById('o-cust');
@@ -485,6 +494,7 @@ async function saveDO() {
       createdAt: header.created_at, createdBy: currentUserId,
     });
     updateDOBadge();
+    rememberDOStaff(salesVal);
 
     const saveBtn = document.getElementById('do-save-btn');
     saveBtn.textContent = '✅ บันทึกแล้ว';
