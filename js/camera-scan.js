@@ -168,13 +168,23 @@ async function openCameraScan(fieldOrCfg) {
       verbose: false,
     });
     camScanner = scanner;
-    await scanner.start(
-      { facingMode: 'environment' },
-      // กรอบกว้างเตี้ย เพราะบาร์โค้ดของ SN เป็นแบบเส้น (ไม่ใช่ QR)
-      { fps: 12, qrbox: (w, h) => ({ width: Math.floor(w * 0.92), height: Math.floor(Math.max(90, Math.min(h * 0.45, 180))) }) },
-      onCamDecode, () => {});
-    // ค่าเริ่มต้นของกล้องเว็บความละเอียดต่ำและไม่โฟกัสต่อเนื่อง บาร์โค้ดเส้นเล็กเลยอ่านยาก — ขอเพิ่ม (ไม่รองรับก็ข้ามได้)
-    try { await scanner.applyVideoConstraints({ width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+    // กรอบกว้างเตี้ย เพราะบาร์โค้ดของ SN เป็นแบบเส้น (ไม่ใช่ QR)
+    const scanCfg = { fps: 12, qrbox: (w, h) => ({ width: Math.floor(w * 0.92), height: Math.floor(Math.max(90, Math.min(h * 0.45, 180))) }) };
+    // ค่าเริ่มต้นของเบราว์เซอร์คือ 640×480 บาร์โค้ดเส้นเล็กเลยอ่านยาก — ต้องขอความละเอียดตั้งแต่ตอนเปิดกล้อง
+    // เดิมขอทีหลังด้วย applyVideoConstraints แต่ POCO X8 Pro (Chrome Android) ไม่ยอมเปลี่ยน ยังได้ 480×640
+    // ขอแบบ 4:3 (สัดส่วนเดียวกับเซนเซอร์มือถือส่วนใหญ่ และกับที่ได้อยู่เดิม) — หน้าจอสแกนบนมือถือจัดที่ไว้ให้ภาพ 3:4 (ดู #cam-reader ใน style.css)
+    const hiRes = { facingMode: 'environment', width: { ideal: 1440 }, height: { ideal: 1080 } };
+    try {
+      await scanner.start({ facingMode: 'environment' }, { ...scanCfg, videoConstraints: hiRes }, onCamDecode, () => {});
+    } catch (e) {
+      // กล้องบางตัวไม่รับค่าที่ขอ — เปิดแบบปกติแทน ช้ากว่าแต่ยังสแกนได้
+      if (!camCfg || camScanner !== scanner) throw e;   // ระหว่างนี้ผู้ใช้กดปิดไปแล้ว
+      console.warn('camera hi-res start failed, retrying plain:', e);
+      try { await scanner.clear(); } catch (e2) { /* ไม่มีอะไรค้างให้ล้าง */ }
+      await scanner.start({ facingMode: 'environment' }, scanCfg, onCamDecode, () => {});
+    }
+    // โฟกัสต่อเนื่อง — ไม่รองรับก็ข้ามได้
+    try { await scanner.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
     try {
       const torch = scanner.getRunningTrackCameraCapabilities().torchFeature();
       if (torch.isSupported()) document.getElementById('cam-torch').style.display = '';
