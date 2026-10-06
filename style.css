@@ -261,6 +261,8 @@ input[type=file]{display:none}
 /* ── Modals ────────────────────────────────────────────── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
+/* เปิดจากในหน้าต่างรายละเอียดซ่อม แต่อยู่ก่อนมันใน HTML — z-index เท่ากันเลยโผล่ไปอยู่ข้างหลัง กดแล้วเหมือนไม่มีอะไรเกิดขึ้น */
+#swap-sn-modal{z-index:510}
 .modal{background:var(--s1);border:1px solid var(--b2);border-radius:12px;width:100%;max-width:480px;padding:24px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-pop);transition:background-color .3s, border-color .3s}
 .modal-bg.open .modal{animation:modalIn .3s cubic-bezier(.16,1,.3,1) both}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
