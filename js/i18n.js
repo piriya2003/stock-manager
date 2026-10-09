@@ -43,6 +43,12 @@ const EN = {
   'ประวัติอะไหล่': 'Parts history',
   '⏱ เซสชัน: --:--': '⏱ Session: --:--',
   '🚪 ออกจากระบบ': '🚪 Sign out',
+  '🔑 เปลี่ยนรหัสผ่าน': '🔑 Change password',
+  'รหัสผ่านเดิม': 'Current password',
+  'รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)': 'New password (at least 6 characters)',
+  'พิมพ์รหัสผ่านใหม่อีกครั้ง': 'Type the new password again',
+  'แสดงรหัสผ่าน': 'Show passwords',
+  'บันทึกรหัสใหม่': 'Save new password',
 
   // ── แถบบน ──
   'รับเข้า': 'Receive',

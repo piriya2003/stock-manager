@@ -127,6 +127,65 @@ function showLoginForm() {
 // ตอนนี้หน้าลืมรหัสผ่านบอกให้ติดต่อแอดมินแทน อย่าใส่ปุ่มส่งลิงก์กลับมา ถ้ายังไม่มีอีเมลจริงและ flow PASSWORD_RECOVERY
 
 // ══════════════════════════════════════════════════════════════
+//  เปลี่ยนรหัสผ่านเอง (ต้องล็อกอินอยู่ และต้องรู้รหัสเดิม)
+// ══════════════════════════════════════════════════════════════
+function openChangePassword() {
+  ['pw-old', 'pw-new', 'pw-confirm'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('pw-show').checked = false;
+  togglePasswordFields(false);
+  document.getElementById('pw-msg').textContent = '';
+  document.getElementById('pw-modal').classList.add('open');
+  setTimeout(() => document.getElementById('pw-old').focus(), 50);
+}
+
+function togglePasswordFields(show) {
+  ['pw-old', 'pw-new', 'pw-confirm'].forEach(id => { document.getElementById(id).type = show ? 'text' : 'password'; });
+}
+
+async function doChangePassword() {
+  const oldPw = document.getElementById('pw-old').value;
+  const newPw = document.getElementById('pw-new').value;
+  const confirmPw = document.getElementById('pw-confirm').value;
+  const fail = msg => inlineMsg('pw-msg', msg, false);
+
+  if (!oldPw || !newPw || !confirmPw) return fail('กรุณากรอกให้ครบทั้ง 3 ช่อง');
+  if (newPw.length < 6) return fail('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว');
+  if (newPw !== confirmPw) return fail('รหัสผ่านใหม่ 2 ช่องไม่ตรงกัน');
+  if (newPw === oldPw) return fail('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม');
+
+  const btn = document.getElementById('pw-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    // ตรวจรหัสเดิมก่อน — กันคนอื่นมาเปลี่ยนรหัสจากเครื่องที่ล็อกอินค้างไว้
+    // ล็อกอินซ้ำได้ session ใหม่ด้วย เลยไม่ติดเงื่อนไข "ต้องล็อกอินไม่เกิน 24 ชม." ของ Supabase
+    const { data: s } = await supaClient.auth.getSession();
+    const email = s.session ? s.session.user.email : usernameToEmail(currentUser || '');
+    const { error: signErr } = await supaClient.auth.signInWithPassword({ email, password: oldPw });
+    if (signErr) {
+      if (signErr.message === 'Invalid login credentials') return fail('รหัสผ่านเดิมไม่ถูกต้อง');
+      throw signErr;
+    }
+
+    const { error } = await supaClient.auth.updateUser({ password: newPw });
+    if (error) {
+      if (error.code === 'same_password') return fail('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม');
+      if (error.code === 'weak_password') return fail('รหัสผ่านใหม่ง่ายเกินไป ลองให้ยาวขึ้นหรือผสมตัวเลข');
+      throw error;
+    }
+
+    closeModal('pw-modal');
+    toast('เปลี่ยนรหัสผ่านเรียบร้อย ครั้งหน้าใช้รหัสใหม่เข้าสู่ระบบ', 'success');
+  } catch (err) {
+    console.error(err);
+    fail('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('บันทึกรหัสใหม่');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 //  SESSION TIMER (UI เฉยๆ — Supabase ต่ออายุ token ให้อัตโนมัติ)
 // ══════════════════════════════════════════════════════════════
 function startSessionTimer() {

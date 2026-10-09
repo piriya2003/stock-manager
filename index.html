@@ -86,6 +86,7 @@
       <div><div class="user-name" id="user-name-display">admin</div><div class="user-role" id="user-role-display">Administrator</div></div>
     </div>
     <div class="session-timer" id="session-timer">⏱ เซสชัน: --:--</div>
+    <button onclick="openChangePassword()" class="btn btn-ghost w-full mt-2" style="font-size:12px">🔑 เปลี่ยนรหัสผ่าน</button>
     <button onclick="doLogout()" class="btn btn-ghost w-full mt-2" style="font-size:12px">🚪 ออกจากระบบ</button>
   </div>
 </div>
@@ -1067,6 +1068,34 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
       <button onclick="closeModal('grn-backfill-modal')" class="btn btn-ghost">ยกเลิก</button>
       <button id="gbf-go" onclick="confirmGRNBackfill()" class="btn btn-primary">ออกใบ GRN</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="pw-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">🔑 เปลี่ยนรหัสผ่าน</span>
+      <button class="modal-close" onclick="closeModal('pw-modal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-row"><label class="field-label">รหัสผ่านเดิม</label>
+        <input type="password" id="pw-old" autocomplete="current-password" onkeypress="if(event.key==='Enter')document.getElementById('pw-new').focus()">
+      </div>
+      <div class="form-row"><label class="field-label">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
+        <input type="password" id="pw-new" autocomplete="new-password" onkeypress="if(event.key==='Enter')document.getElementById('pw-confirm').focus()">
+      </div>
+      <div class="form-row"><label class="field-label">พิมพ์รหัสผ่านใหม่อีกครั้ง</label>
+        <input type="password" id="pw-confirm" autocomplete="new-password" onkeypress="if(event.key==='Enter')doChangePassword()">
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer">
+        <input type="checkbox" id="pw-show" onchange="togglePasswordFields(this.checked)"> แสดงรหัสผ่าน
+      </label>
+      <div id="pw-msg" style="font-size:12px;min-height:16px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeModal('pw-modal')" class="btn btn-ghost">ยกเลิก</button>
+      <button id="pw-save" onclick="doChangePassword()" class="btn btn-primary">บันทึกรหัสใหม่</button>
     </div>
   </div>
 </div>
