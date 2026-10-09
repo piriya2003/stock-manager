@@ -9,7 +9,7 @@
 | ไฟล์ | ใช้ตอนไหน |
 |---|---|
 | [`../stockhq_schema.sql`](../stockhq_schema.sql) | โครงสร้างฐานข้อมูลทั้งหมด — รันซ้ำได้ปลอดภัย ใช้ตอนสร้างใหม่หรือเพิ่มคอลัมน์ |
-| [`add-admin-reset-password.sql`](add-admin-reset-password.sql) | ให้ piriya (คนเดียว) ตั้งรหัสใหม่ให้พนักงานที่ลืมรหัส จากหน้า "จัดการผู้ใช้" ในเว็บ — รันแล้ว 9 ต.ค. 2569 (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
+| [`add-user-management.sql`](add-user-management.sql) | หน้า "จัดการผู้ใช้" (piriya คนเดียว): ตั้งรหัสใหม่ / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้ — รันครั้งเดียว รันซ้ำได้ (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
 | [`check-item-by-sn.sql`](check-item-by-sn.sql) | อยากรู้ว่าสินค้าชิ้นหนึ่งมีข้อมูลอะไรอยู่จริง ๆ |
 | [`fix-ulc-item-names.sql`](fix-ulc-item-names.sql) | แบบอย่างการแก้ชื่อสินค้าที่รับเข้าผิดเป็นราย SN (รันไปแล้ว 3 ก.ย. 2569 — เก็บไว้ดูวิธี) |
 | [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ (เก็บต้นแบบสินค้าไว้) — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |
@@ -21,6 +21,7 @@
 
 - `add-parts.sql`, `add-do-items-qty.sql`, `fix-signup-privilege-escalation.sql` — รันแล้ว และรวมอยู่ใน `stockhq_schema.sql` แล้วทั้งหมด (ตั้งระบบใหม่ใช้ไฟล์นั้นไฟล์เดียว)
 - `check-parts-do-setup.js` — ตัวตรวจว่ารัน `add-do-items-qty.sql` ครบไหม ตรวจผ่านไปแล้ว
+- `add-admin-reset-password.sql` — รันแล้ว 9 ต.ค. 2569 ถูกแทนด้วย `add-user-management.sql` (ซึ่งมีฟังก์ชันตั้งรหัสใหม่ตัวเดียวกันอยู่ข้างใน)
 - `fix-dispatched-at.sql`, `audit-dispatch-dates.sql` — แก้วันที่จ่ายออกของข้อมูลชุดเก่า ซึ่งถูกล้างไปแล้ว (24 ส.ค. และ 29 ก.ย. 2569) ถ้าวันหนึ่งวันที่จ่ายออกเพี้ยนอีก ใช้เป็นแบบได้
 
 ## วิธีใช้

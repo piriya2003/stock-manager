@@ -814,16 +814,20 @@
     <div id="tab-users" class="tab-content">
       <div class="page-header">
         <div class="page-title">จัดการผู้ใช้</div>
-        <input type="text" id="users-q" oninput="renderUserList()" placeholder="🔍 ค้นหาชื่อผู้ใช้ / ตำแหน่ง..." style="width:240px">
+        <div class="flex gap-2 flex-wrap items-center">
+          <input type="text" id="users-q" oninput="renderUserList()" placeholder="🔍 ค้นหาชื่อผู้ใช้ / ตำแหน่ง..." style="width:240px">
+          <button onclick="openCreateUser()" class="btn btn-primary btn-sm" style="white-space:nowrap">➕ เพิ่มผู้ใช้</button>
+        </div>
       </div>
       <div style="max-width:800px">
         <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:12px">
           🔑 พนักงานลืมรหัสผ่าน → กด <b style="color:var(--t1)">ตั้งรหัสใหม่</b> ที่ชื่อเขา แล้วบอกรหัสใหม่ให้เขา<br>
-          จากนั้นให้เขาเข้าระบบ แล้วเปลี่ยนเป็นรหัสของตัวเองที่ปุ่ม 🔑 เปลี่ยนรหัสผ่าน มุมซ้ายล่าง
+          จากนั้นให้เขาเข้าระบบ แล้วเปลี่ยนเป็นรหัสของตัวเองที่ปุ่ม 🔑 เปลี่ยนรหัสผ่าน มุมซ้ายล่าง<br>
+          👤 เปลี่ยนสิทธิ์ได้ที่ช่อง <b style="color:var(--t1)">สิทธิ์</b> — เมนูของเขาจะเปลี่ยนตามเมื่อเขารีเฟรชหน้าเว็บหรือเข้าระบบใหม่
         </div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>ชื่อผู้ใช้</th><th>ตำแหน่ง</th><th>สิทธิ์</th><th style="text-align:center">จัดการ</th></tr></thead>
+          <table style="min-width:0"><!-- ตารางนี้แค่ 3 ช่อง ไม่ต้องกว้าง 650px แบบตารางอื่นบนมือถือ -->
+            <thead><tr><th>ชื่อผู้ใช้ / ตำแหน่ง</th><th>สิทธิ์</th><th style="text-align:center">จัดการ</th></tr></thead>
             <tbody id="users-tbody"></tbody>
           </table>
         </div>
@@ -1130,7 +1134,7 @@
       <div class="form-row"><label class="field-label">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
         <div style="display:flex;gap:8px">
           <input type="text" id="rpw-new" autocomplete="off" style="flex:1;font-family:var(--mono)" onkeypress="if(event.key==='Enter')doAdminResetPassword()">
-          <button onclick="fillRandomPassword()" class="btn btn-ghost btn-sm" style="white-space:nowrap">🎲 สุ่มรหัส</button>
+          <button onclick="fillRandomPassword('rpw-new')" class="btn btn-ghost btn-sm" style="white-space:nowrap">🎲 สุ่มรหัส</button>
         </div>
       </div>
       <div style="font-size:11px;color:var(--t3);line-height:1.6">
@@ -1142,6 +1146,44 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
       <button id="rpw-close" onclick="closeModal('reset-pw-modal')" class="btn btn-ghost">ยกเลิก</button>
       <button id="rpw-save" onclick="doAdminResetPassword()" class="btn btn-primary">ตั้งรหัสใหม่</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="create-user-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">➕ เพิ่มผู้ใช้</span>
+      <button class="modal-close" onclick="closeModal('create-user-modal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-row"><label class="field-label">ชื่อผู้ใช้ (ใช้ตอนเข้าสู่ระบบ)</label>
+        <input type="text" id="cu-name" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="เช่น somchai" style="font-family:var(--mono)">
+      </div>
+      <div class="form-row"><label class="field-label">รหัสผ่าน (อย่างน้อย 6 ตัว)</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="cu-pass" autocomplete="off" style="flex:1;font-family:var(--mono)">
+          <button onclick="fillRandomPassword('cu-pass')" class="btn btn-ghost btn-sm" style="white-space:nowrap">🎲 สุ่มรหัส</button>
+        </div>
+      </div>
+      <div class="form-row"><label class="field-label">ตำแหน่ง (ไม่ใส่ก็ได้)</label>
+        <input type="text" id="cu-position" autocomplete="off" placeholder="เช่น IT Support">
+      </div>
+      <div class="form-row"><label class="field-label">สิทธิ์</label>
+        <select id="cu-role">
+          <option value="staff">พนักงาน</option>
+          <option value="admin">แอดมิน</option>
+        </select>
+      </div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.6">
+        * ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - ไม่มีช่องว่าง (ตัวพิมพ์ใหญ่จะถูกเปลี่ยนเป็นตัวเล็ก)<br>
+        * แอดมินลบประวัติ/เอกสาร และเข้าเมนูประวัติการเคลื่อนไหว/Backup/Import ได้ — พนักงานทั่วไปทำไม่ได้
+      </div>
+      <div id="cu-msg" style="font-size:12px;min-height:16px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button id="cu-close" onclick="closeModal('create-user-modal')" class="btn btn-ghost">ยกเลิก</button>
+      <button id="cu-save" onclick="doCreateUser()" class="btn btn-primary">เพิ่มผู้ใช้</button>
     </div>
   </div>
 </div>
