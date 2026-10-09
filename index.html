@@ -821,9 +821,10 @@
       </div>
       <div style="max-width:800px">
         <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:12px">
-          🔑 พนักงานลืมรหัสผ่าน → กด <b style="color:var(--t1)">ตั้งรหัสใหม่</b> ที่ชื่อเขา แล้วบอกรหัสใหม่ให้เขา<br>
+          🔑 พนักงานลืมรหัสผ่าน → กด <b style="color:var(--t1)">⚙️ จัดการ</b> ที่ชื่อเขา → ตั้งรหัสใหม่ แล้วบอกรหัสใหม่ให้เขา<br>
           จากนั้นให้เขาเข้าระบบ แล้วเปลี่ยนเป็นรหัสของตัวเองที่ปุ่ม 🔑 เปลี่ยนรหัสผ่าน มุมซ้ายล่าง<br>
-          👤 เปลี่ยนสิทธิ์ได้ที่ช่อง <b style="color:var(--t1)">สิทธิ์</b> — เมนูของเขาจะเปลี่ยนตามเมื่อเขารีเฟรชหน้าเว็บหรือเข้าระบบใหม่
+          👤 เปลี่ยนสิทธิ์ได้ที่ช่อง <b style="color:var(--t1)">สิทธิ์</b> — เมนูของเขาจะเปลี่ยนตามเมื่อเขารีเฟรชหน้าเว็บหรือเข้าระบบใหม่<br>
+          ⛔ คนลาออก → กด <b style="color:var(--t1)">⚙️ จัดการ</b> ที่ชื่อเขา → ปิดบัญชี (ประวัติที่เขาทำไว้ยังอยู่ครบ)
         </div>
         <div class="tbl-wrap">
           <table style="min-width:0"><!-- ตารางนี้แค่ 3 ช่อง ไม่ต้องกว้าง 650px แบบตารางอื่นบนมือถือ -->
@@ -1146,6 +1147,33 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
       <button id="rpw-close" onclick="closeModal('reset-pw-modal')" class="btn btn-ghost">ยกเลิก</button>
       <button id="rpw-save" onclick="doAdminResetPassword()" class="btn btn-primary">ตั้งรหัสใหม่</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="account-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ บัญชี <span id="acc-user"></span></span>
+      <button class="modal-close" onclick="closeModal('account-modal')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div id="acc-status" style="font-size:12px"></div>
+      <button id="acc-reset" onclick="accountResetPassword()" class="btn btn-ghost btn-full">🔑 ตั้งรหัสใหม่</button>
+      <div id="acc-danger" style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <button id="acc-disable" onclick="toggleUserDisabled()" class="btn btn-ghost btn-full"></button>
+          <div id="acc-disable-note" style="font-size:11px;color:var(--t3);line-height:1.6;margin-top:6px"></div>
+        </div>
+        <div>
+          <button id="acc-delete" onclick="deleteUserAccount()" class="btn btn-red btn-full">🗑 ลบบัญชี</button>
+          <div style="font-size:11px;color:var(--t3);line-height:1.6;margin-top:6px">ลบได้เฉพาะบัญชีที่ยังไม่เคยทำรายการ เช่น บัญชีทดสอบหรือสร้างผิด — ลบแล้วกู้คืนไม่ได้ ถ้าเคยทำงานในระบบแล้วให้ใช้ปิดบัญชีแทน</div>
+        </div>
+      </div>
+      <div id="acc-msg" style="font-size:12px;min-height:16px"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button onclick="closeModal('account-modal')" class="btn btn-ghost">ปิด</button>
     </div>
   </div>
 </div>

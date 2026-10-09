@@ -10,6 +10,7 @@
 |---|---|
 | [`../stockhq_schema.sql`](../stockhq_schema.sql) | โครงสร้างฐานข้อมูลทั้งหมด — รันซ้ำได้ปลอดภัย ใช้ตอนสร้างใหม่หรือเพิ่มคอลัมน์ |
 | [`add-user-management.sql`](add-user-management.sql) | หน้า "จัดการผู้ใช้" (piriya คนเดียว): ตั้งรหัสใหม่ / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้ — รันครั้งเดียว รันซ้ำได้ (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
+| [`add-disable-delete-user.sql`](add-disable-delete-user.sql) | ปิดบัญชีคนลาออก / ลบบัญชีที่ยังไม่เคยทำรายการ จากหน้า "จัดการผู้ใช้" — รันหลัง `add-user-management.sql` (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
 | [`check-item-by-sn.sql`](check-item-by-sn.sql) | อยากรู้ว่าสินค้าชิ้นหนึ่งมีข้อมูลอะไรอยู่จริง ๆ |
 | [`fix-ulc-item-names.sql`](fix-ulc-item-names.sql) | แบบอย่างการแก้ชื่อสินค้าที่รับเข้าผิดเป็นราย SN (รันไปแล้ว 3 ก.ย. 2569 — เก็บไว้ดูวิธี) |
 | [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ (เก็บต้นแบบสินค้าไว้) — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |

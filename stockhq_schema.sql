@@ -85,6 +85,8 @@ create table if not exists public.users (
 );
 
 alter table public.users add column if not exists position text;
+-- ปิดบัญชีคนลาออก (หน้า จัดการผู้ใช้) — ตัวกันล็อกอินจริงคือ auth.users.banned_until ส่วนนี้ให้หน้าเว็บอ่านได้
+alter table public.users add column if not exists disabled boolean not null default false;
 
 -- สร้างแถวใน public.users อัตโนมัติเมื่อมีคนสมัครผ่าน Supabase Auth
 -- ⚠️ ต้องใส่ set search_path = '' + ระบุ public. ให้ครบ ไม่งั้นจะขึ้น
@@ -113,7 +115,7 @@ create trigger trg_on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- 3.1 จัดการผู้ใช้จากในเว็บ (หน้า "จัดการผู้ใช้") — ใช้ได้คนเดียว: piriya
---     ตั้งรหัสใหม่ / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้ — บัญชีเป็น @stockhq.local รับอีเมลรีเซ็ตไม่ได้ และปิดสมัครเองไว้
+--     ตั้งรหัสใหม่ / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้ / ปิด-ลบบัญชี — บัญชีเป็น @stockhq.local รับอีเมลรีเซ็ตไม่ได้ และปิดสมัครเองไว้
 --     security definer = รันด้วยสิทธิ์ฐานข้อมูล แต่เช็คก่อนทุกครั้งว่าคนกดคือ piriya (is_user_admin_owner)
 -- คนที่กดคือ piriya และเป็นแอดมิน — ที่เดียวในฐานข้อมูลที่ระบุชื่อนี้
 -- ตาราง users ไม่มี update policy ใครก็แก้ชื่อตัวเองเป็น piriya ไม่ได้ และชื่อซ้ำกันไม่ได้ (unique)
@@ -263,6 +265,85 @@ grant execute on function public.is_user_admin_owner() to authenticated;
 grant execute on function public.admin_set_password(uuid, text) to authenticated;
 grant execute on function public.admin_set_role(uuid, text) to authenticated;
 grant execute on function public.admin_create_user(text, text, text, text) to authenticated;
+
+-- ── ปิด / เปิดบัญชี ──
+-- ปิด = ตั้ง banned_until ไปไกลมาก → Supabase ไม่ให้ล็อกอินและไม่ต่ออายุ session
+-- (ใช้ปี 2999 ไม่ใช่ 'infinity' — ตัว Supabase Auth อ่านค่า infinity ไม่ได้ ผู้ใช้คนนั้นจะล็อกอินพังแปลกๆ)
+-- แล้วลบ session ที่ค้างอยู่ทิ้ง — แต่คนที่เปิดหน้าเว็บค้างไว้ยังใช้ต่อได้อีกไม่เกิน 1 ชม. จนกว่า token จะหมดอายุ
+create or replace function public.admin_set_disabled(target_user uuid, make_disabled boolean)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  uname text;
+begin
+  if not public.is_user_admin_owner() then
+    raise exception 'เฉพาะ piriya เท่านั้นที่ปิดบัญชีได้' using errcode = '42501';
+  end if;
+  if target_user = auth.uid() then
+    raise exception 'ปิดบัญชีของตัวเองไม่ได้' using errcode = '22023';
+  end if;
+
+  update auth.users
+     set banned_until = case when make_disabled then '2999-12-31 00:00:00+00'::timestamptz else null end,
+         updated_at = now()
+   where id = target_user;
+  if not found then
+    raise exception 'ไม่พบบัญชีผู้ใช้นี้' using errcode = 'P0002';
+  end if;
+
+  if make_disabled then
+    delete from auth.refresh_tokens where user_id = target_user::text;
+    delete from auth.sessions where user_id = target_user;
+  end if;
+
+  update public.users set disabled = coalesce(make_disabled, false)
+   where id = target_user
+  returning username into uname;
+  return uname;
+end;
+$;
+
+
+-- ── ลบบัญชี (เฉพาะที่ยังไม่มีชื่อในเอกสาร/ประวัติ) ──
+create or replace function public.admin_delete_user(target_user uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  uname text;
+begin
+  if not public.is_user_admin_owner() then
+    raise exception 'เฉพาะ piriya เท่านั้นที่ลบบัญชีได้' using errcode = '42501';
+  end if;
+  if target_user = auth.uid() then
+    raise exception 'ลบบัญชีของตัวเองไม่ได้' using errcode = '22023';
+  end if;
+
+  select username into uname from public.users where id = target_user;
+  begin
+    -- ลบใน auth.users แล้ว public.users / identities / sessions หายตาม (cascade)
+    delete from auth.users where id = target_user;
+    if not found then
+      raise exception 'ไม่พบบัญชีผู้ใช้นี้' using errcode = 'P0002';
+    end if;
+  exception when foreign_key_violation then
+    raise exception 'บัญชี % มีชื่ออยู่ในเอกสาร/ประวัติแล้ว ลบไม่ได้ — ใช้ "ปิดบัญชี" แทน', coalesce(uname, '')
+      using errcode = '23503';
+  end;
+  return uname;
+end;
+$;
+
+
+revoke all on function public.admin_set_disabled(uuid, boolean) from public, anon;
+revoke all on function public.admin_delete_user(uuid) from public, anon;
+grant execute on function public.admin_set_disabled(uuid, boolean) to authenticated;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
 
 
 -- ════════════════════════════════════════════════════════════════════════

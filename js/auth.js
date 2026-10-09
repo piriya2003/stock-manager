@@ -25,7 +25,9 @@ async function doLogin() {
     console.error(err);
     const msg = err.message === 'Invalid login credentials'
       ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
-      : 'เข้าสู่ระบบล้มเหลว: ' + err.message;
+      : (err.code === 'user_banned' || /banned/i.test(err.message))   // ปิดบัญชีจากหน้า จัดการผู้ใช้
+        ? 'บัญชีนี้ถูกปิดแล้ว ติดต่อแอดมิน'
+        : 'เข้าสู่ระบบล้มเหลว: ' + err.message;
     toast(msg, 'error');
   } finally {
     loginBtn.disabled = false;
@@ -51,10 +53,21 @@ async function finishLogin(session) {
 
   // ดึงตำแหน่งงาน (position) แบบ best-effort — ถ้ายังไม่มีคอลัมน์นี้ก็ข้ามไป ไม่ทำให้ login พัง
   currentPosition = null;
+  let isDisabled = false;
   try {
-    const posRes = await supaClient.from('users').select('position').eq('id', currentUserId).single();
+    let posRes = await supaClient.from('users').select('position, disabled').eq('id', currentUserId).single();
+    if (posRes.error) posRes = await supaClient.from('users').select('position').eq('id', currentUserId).single();   // ยังไม่มีคอลัมน์ disabled
     if (!posRes.error && posRes.data && posRes.data.position) currentPosition = posRes.data.position;
+    isDisabled = !!(posRes.data && posRes.data.disabled);
   } catch (e) { /* ยังไม่มีคอลัมน์ position — ใช้ role label แทน */ }
+
+  // บัญชีถูกปิดแล้วแต่ยังมี session ค้าง (เปิดหน้าเว็บค้างไว้แล้วรีเฟรช) — ไล่ออก ไม่ให้เข้าต่อ
+  if (isDisabled) {
+    await supaClient.auth.signOut();
+    currentUser = null; currentRole = null; currentUserId = null;
+    toast('บัญชีนี้ถูกปิดแล้ว ติดต่อแอดมิน', 'error');
+    return;
+  }
 
   const roleLabel = currentRole === 'admin' ? 'Administrator' : 'พนักงานทั่วไป';
   document.getElementById('login-page').style.display = 'none';

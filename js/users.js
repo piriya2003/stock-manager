@@ -1,8 +1,8 @@
 // ══════════════════════════════════════════════════════════════
-//  จัดการผู้ใช้ (piriya คนเดียว) — ตั้งรหัสใหม่ให้คนที่ลืมรหัส / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้
+//  จัดการผู้ใช้ (piriya คนเดียว) — ตั้งรหัสใหม่ให้คนที่ลืมรหัส / เปลี่ยนสิทธิ์ / เพิ่มผู้ใช้ / ปิด-ลบบัญชี
 //  บัญชีเป็น @stockhq.local รับอีเมลรีเซ็ตไม่ได้ และปิดสมัครเองไว้ เลยทำผ่านหน้านี้แทน
 //  งานจริงทำในฐานข้อมูลผ่าน admin_set_password / admin_set_role / admin_create_user
-//  (sql/add-user-management.sql) ซึ่งเช็คซ้ำอีกชั้นว่าคนกดคือ piriya — ซ่อนเมนูอย่างเดียวกันไม่ได้
+//  (sql/add-user-management.sql) และ admin_set_disabled / admin_delete_user (sql/add-disable-delete-user.sql) ซึ่งเช็คซ้ำอีกชั้นว่าคนกดคือ piriya — ซ่อนเมนูอย่างเดียวกันไม่ได้
 // ══════════════════════════════════════════════════════════════
 let userList = [];
 let resetPwTarget = null;   // { id, username }
@@ -16,13 +16,16 @@ async function loadUserList() {
   const tbody = document.getElementById('users-tbody');
   if (!isUserAdminOwner()) { tbody.innerHTML = ''; return; }
   tbody.innerHTML = `<tr><td colspan="3" class="tbl-empty">${t('กำลังโหลด...')}</td></tr>`;
-  let res = await supaClient.from('users').select('id, username, role, position');
-  if (res.error) res = await supaClient.from('users').select('id, username, role');   // ยังไม่มีคอลัมน์ position
+  // ลองจากคอลัมน์ครบก่อน แล้วค่อยถอยถ้ายังไม่ได้รัน SQL ที่เพิ่มคอลัมน์นั้น
+  let res = await supaClient.from('users').select('id, username, role, position, disabled');
+  if (res.error) res = await supaClient.from('users').select('id, username, role, position');
+  if (res.error) res = await supaClient.from('users').select('id, username, role');
   if (res.error) {
     tbody.innerHTML = `<tr><td colspan="3" class="tbl-empty">${t('โหลดรายชื่อผู้ใช้ไม่สำเร็จ')}: ${escapeHtml(res.error.message)}</td></tr>`;
     return;
   }
-  userList = (res.data || []).sort((a, b) => a.username.localeCompare(b.username));
+  // คนที่ปิดบัญชีแล้วไปอยู่ท้ายตาราง
+  userList = (res.data || []).sort((a, b) => (!!a.disabled - !!b.disabled) || a.username.localeCompare(b.username));
   renderUserList();
 }
 
@@ -32,9 +35,9 @@ function renderUserList() {
   const tbody = document.getElementById('users-tbody');
   if (!data.length) { tbody.innerHTML = `<tr><td colspan="3" class="tbl-empty">${t('ไม่พบผู้ใช้')}</td></tr>`; return; }
   tbody.innerHTML = data.map(u => `
-    <tr>
+    <tr${u.disabled ? ' style="opacity:.55"' : ''}>
       <td>
-        <div style="color:var(--t1);font-weight:600">${escapeHtml(u.username)}${u.id === currentUserId ? ` <span style="font-size:11px;color:var(--t3);font-weight:400">(${t('คุณ')})</span>` : ''}</div>
+        <div style="color:var(--t1);font-weight:600">${u.disabled ? `<span class="badge b-red" style="margin-right:4px">${t('ปิดแล้ว')}</span>` : ''}${escapeHtml(u.username)}${u.id === currentUserId ? ` <span style="font-size:11px;color:var(--t3);font-weight:400">(${t('คุณ')})</span>` : ''}</div>
         ${u.position ? `<div style="font-size:11px;color:var(--t3)">${escapeHtml(u.position)}</div>` : ''}
       </td>
       <td style="font-size:12px">${u.id === currentUserId
@@ -43,7 +46,7 @@ function renderUserList() {
              <option value="staff"${u.role === 'staff' ? ' selected' : ''}>${t('พนักงาน')}</option>
              <option value="admin"${u.role === 'admin' ? ' selected' : ''}>${t('แอดมิน')}</option>
            </select>`}</td>
-      <td style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="openAdminResetPassword(${jsArg(u.id)})">🔑 ${t('ตั้งรหัสใหม่')}</button></td>
+      <td style="text-align:center"><button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="openUserAccount(${jsArg(u.id)})">${t('⚙️ จัดการ')}</button></td>
     </tr>`).join('');
 }
 
@@ -189,5 +192,92 @@ async function doCreateUser() {
   } finally {
     btn.disabled = false;
     btn.textContent = t('เพิ่มผู้ใช้');
+  }
+}
+
+// ── หน้าต่างจัดการบัญชีรายคน: ตั้งรหัสใหม่ / ปิด-เปิดบัญชี / ลบบัญชี ──
+let accountTarget = null;   // id
+
+function openUserAccount(id) {
+  const u = userList.find(x => x.id === id);
+  if (!u) return;
+  accountTarget = id;
+  document.getElementById('acc-user').textContent = u.username;
+  document.getElementById('acc-msg').textContent = '';
+  renderUserAccount();
+  document.getElementById('account-modal').classList.add('open');
+}
+
+function renderUserAccount() {
+  const u = userList.find(x => x.id === accountTarget);
+  if (!u) return;
+  const self = u.id === currentUserId;
+  document.getElementById('acc-status').innerHTML = u.disabled
+    ? `<span class="badge b-red">${t('ปิดแล้ว')}</span> <span style="color:var(--t3)">${t('เข้าระบบไม่ได้ — ชื่อในประวัติยังอยู่ครบ')}</span>`
+    : `<span class="badge b-green">${t('ใช้งานอยู่')}</span>`;
+  // ตัวเองปิด/ลบไม่ได้ — ฐานข้อมูลก็กันไว้อีกชั้น
+  document.getElementById('acc-danger').style.display = self ? 'none' : 'flex';
+  document.getElementById('acc-disable').textContent = u.disabled ? t('✅ เปิดใช้บัญชีอีกครั้ง') : t('⛔ ปิดบัญชี (คนลาออก)');
+  document.getElementById('acc-disable-note').textContent = u.disabled
+    ? t('เปิดแล้วเข้าระบบด้วยรหัสเดิมได้ทันที')
+    : t('ปิดแล้วเข้าระบบไม่ได้อีก แต่ชื่อในเอกสาร/ประวัติยังอยู่ครบ เปิดกลับได้ทุกเมื่อ — ถ้าเขาเปิดหน้าเว็บค้างไว้ อาจใช้ต่อได้อีกไม่เกิน 1 ชั่วโมง');
+}
+
+function accountResetPassword() {
+  const id = accountTarget;
+  closeModal('account-modal');
+  openAdminResetPassword(id);
+}
+
+async function toggleUserDisabled() {
+  const u = userList.find(x => x.id === accountTarget);
+  if (!u) return;
+  const makeDisabled = !u.disabled;
+  if (makeDisabled && !confirm(`ปิดบัญชี ${u.username}?\nเขาจะเข้าระบบไม่ได้อีก (เปิดกลับได้ภายหลัง)`)) return;
+
+  const btn = document.getElementById('acc-disable');
+  btn.disabled = true;
+  try {
+    const { error } = await supaClient.rpc('admin_set_disabled', { target_user: u.id, make_disabled: makeDisabled });
+    if (error) {
+      if (error.code === 'PGRST202') throw new Error('ยังไม่ได้รัน sql/add-disable-delete-user.sql ใน Supabase');
+      throw new Error(userAdminRpcError(error) || error.message);
+    }
+    u.disabled = makeDisabled;
+    toast(makeDisabled ? `ปิดบัญชี ${u.username} แล้ว` : `เปิดใช้บัญชี ${u.username} แล้ว`, 'success');
+    renderUserAccount();
+    loadUserList();
+  } catch (err) {
+    console.error(err);
+    inlineMsg('acc-msg', (makeDisabled ? 'ปิดบัญชีไม่สำเร็จ: ' : 'เปิดบัญชีไม่สำเร็จ: ') + err.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteUserAccount() {
+  const u = userList.find(x => x.id === accountTarget);
+  if (!u) return;
+  if (!confirm(`ลบบัญชี ${u.username} ถาวร?\nกู้คืนไม่ได้ — ถ้าแค่ลาออก ให้ใช้ "ปิดบัญชี" แทน`)) return;
+
+  const btn = document.getElementById('acc-delete');
+  btn.disabled = true;
+  try {
+    const { error } = await supaClient.rpc('admin_delete_user', { target_user: u.id });
+    if (error) {
+      if (error.code === 'PGRST202') throw new Error('ยังไม่ได้รัน sql/add-disable-delete-user.sql ใน Supabase');
+      throw new Error(userAdminRpcError(error) || error.message);   // 23503 = เคยทำรายการแล้ว ฐานข้อมูลอธิบายเป็นไทยมาให้
+    }
+    closeModal('account-modal');
+    toast(`ลบบัญชี ${u.username} แล้ว`, 'success');
+    loadUserList();
+  } catch (err) {
+    console.error(err);
+    // ข้อความยาว (ลบไม่ได้เพราะมีประวัติ) — ไม่ใช้ inlineMsg ที่ลบตัวเองใน 3 วินาที
+    const msg = document.getElementById('acc-msg');
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'ลบบัญชีไม่สำเร็จ: ' + err.message;
+  } finally {
+    btn.disabled = false;
   }
 }
