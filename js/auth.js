@@ -66,10 +66,12 @@ async function finishLogin(session) {
 
   const isAdmin = currentRole === 'admin';
   // แดชบอร์ดให้ทุกคนเห็น — ส่วนรายงาน/Backup/Import ยังเฉพาะ admin
-  ['nav-report', 'nav-backup', 'nav-import', 'nav-users'].forEach(id => {
+  ['nav-report', 'nav-backup', 'nav-import'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isAdmin ? 'flex' : 'none';
   });
+  const navUsers = document.getElementById('nav-users');
+  if (navUsers) navUsers.style.display = isUserAdminOwner() ? 'flex' : 'none';
   const navOv = document.getElementById('nav-overview');
   if (navOv) navOv.style.display = 'flex';
   // เปลี่ยนชื่อสินค้าทีเดียวทั้งคลัง — กระทบทุกชิ้นที่ใช้ชื่อนั้น เลยให้เฉพาะ admin

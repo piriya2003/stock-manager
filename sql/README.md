@@ -9,7 +9,7 @@
 | ไฟล์ | ใช้ตอนไหน |
 |---|---|
 | [`../stockhq_schema.sql`](../stockhq_schema.sql) | โครงสร้างฐานข้อมูลทั้งหมด — รันซ้ำได้ปลอดภัย ใช้ตอนสร้างใหม่หรือเพิ่มคอลัมน์ |
-| [`add-admin-reset-password.sql`](add-admin-reset-password.sql) | ให้แอดมินตั้งรหัสใหม่ให้พนักงานที่ลืมรหัส จากหน้า "จัดการผู้ใช้" ในเว็บ — รันครั้งเดียว (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
+| [`add-admin-reset-password.sql`](add-admin-reset-password.sql) | ให้ piriya (คนเดียว) ตั้งรหัสใหม่ให้พนักงานที่ลืมรหัส จากหน้า "จัดการผู้ใช้" ในเว็บ — รันแล้ว 9 ต.ค. 2569 (รวมอยู่ใน `stockhq_schema.sql` แล้วด้วย) |
 | [`check-item-by-sn.sql`](check-item-by-sn.sql) | อยากรู้ว่าสินค้าชิ้นหนึ่งมีข้อมูลอะไรอยู่จริง ๆ |
 | [`fix-ulc-item-names.sql`](fix-ulc-item-names.sql) | แบบอย่างการแก้ชื่อสินค้าที่รับเข้าผิดเป็นราย SN (รันไปแล้ว 3 ก.ย. 2569 — เก็บไว้ดูวิธี) |
 | [`wipe-all-product-data.sql`](wipe-all-product-data.sql) | ⚠️ ล้างสต็อก/ประวัติ/ใบ DO-GRN/งานซ่อมทั้งหมด เพื่อเริ่มนับใหม่ (เก็บต้นแบบสินค้าไว้) — กู้คืนไม่ได้ Export Backup ก่อนเสมอ |

@@ -13,4 +13,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_YfIIsSy9uuIHgOohnGNnMQ_1zvK_Ifa';
 // (ตอนเปลี่ยนชื่อแอปเป็น StockSG จึงคงบรรทัดนี้ไว้เหมือนเดิม — ผู้ใช้ไม่เห็นค่านี้อยู่แล้ว)
 const USERNAME_DOMAIN = '@stockhq.local';
 
+// คนเดียวที่เห็นเมนู "จัดการผู้ใช้" (ตั้งรหัสใหม่ให้คนที่ลืมรหัส) — แอดมินคนอื่นก็ไม่เห็น
+// บรรทัดนี้แค่ซ่อนเมนู ตัวล็อกจริงอยู่ในฐานข้อมูล: admin_set_password() ใน stockhq_schema.sql
+// จะเปลี่ยนคน ต้องแก้ทั้งสองที่ (แล้วรัน SQL ใหม่) ไม่งั้นเห็นเมนูแต่กดแล้วโดนปฏิเสธ
+const USER_ADMIN_OWNER = 'piriya';
+
 const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

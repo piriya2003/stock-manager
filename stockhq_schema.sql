@@ -112,9 +112,9 @@ create trigger trg_on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- 3.1 แอดมินตั้งรหัสผ่านใหม่ให้พนักงานที่ลืมรหัส (หน้า "จัดการผู้ใช้" ในเว็บ)
+-- 3.1 piriya (คนเดียว) ตั้งรหัสผ่านใหม่ให้พนักงานที่ลืมรหัส (หน้า "จัดการผู้ใช้" ในเว็บ)
 --     บัญชีเป็น @stockhq.local รับอีเมลรีเซ็ตไม่ได้ เลยต้องให้แอดมินตั้งให้แทน
---     security definer = รันด้วยสิทธิ์ฐานข้อมูล แต่เช็ค is_admin() ก่อนทุกครั้ง
+--     security definer = รันด้วยสิทธิ์ฐานข้อมูล แต่เช็คก่อนทุกครั้งว่าคนกดคือ piriya
 create or replace function public.admin_set_password(target_user uuid, new_password text)
 returns text
 language plpgsql
@@ -124,8 +124,13 @@ as $$
 declare
   uname text;
 begin
-  if not public.is_admin() then
-    raise exception 'เฉพาะแอดมินเท่านั้นที่ตั้งรหัสให้คนอื่นได้' using errcode = '42501';
+  -- ใช้ได้คนเดียว: piriya (ต้องเป็นแอดมินด้วย) — ตรงกับ USER_ADMIN_OWNER ใน js/config.js
+  -- ตาราง users ไม่มี update policy ใครก็แก้ชื่อตัวเองเป็น piriya ไม่ได้ และชื่อซ้ำกันไม่ได้ (unique)
+  if not exists (
+    select 1 from public.users
+    where id = auth.uid() and role = 'admin' and lower(username) = 'piriya'
+  ) then
+    raise exception 'เฉพาะ piriya เท่านั้นที่ตั้งรหัสให้คนอื่นได้' using errcode = '42501';
   end if;
   if new_password is null or length(new_password) < 6 then
     raise exception 'รหัสผ่านต้องมีอย่างน้อย 6 ตัว' using errcode = '22023';

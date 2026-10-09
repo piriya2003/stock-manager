@@ -7,8 +7,14 @@
 let userList = [];
 let resetPwTarget = null;   // { id, username }
 
+// ต้องเป็นแอดมิน และเป็นคนที่ตั้งไว้ใน USER_ADMIN_OWNER (js/config.js) เท่านั้น
+function isUserAdminOwner() {
+  return currentRole === 'admin' && String(currentUser || '').toLowerCase() === USER_ADMIN_OWNER;
+}
+
 async function loadUserList() {
   const tbody = document.getElementById('users-tbody');
+  if (!isUserAdminOwner()) { tbody.innerHTML = ''; return; }
   tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${t('กำลังโหลด...')}</td></tr>`;
   let res = await supaClient.from('users').select('id, username, role, position');
   if (res.error) res = await supaClient.from('users').select('id, username, role');   // ยังไม่มีคอลัมน์ position
@@ -70,7 +76,7 @@ async function doAdminResetPassword() {
     if (error) {
       // PGRST202 = หาฟังก์ชันไม่เจอ → ยังไม่ได้รัน SQL
       if (error.code === 'PGRST202') return fail('ยังไม่ได้รัน sql/add-admin-reset-password.sql ใน Supabase');
-      if (error.code === '42501') return fail('เฉพาะแอดมินเท่านั้นที่ตั้งรหัสให้คนอื่นได้');
+      if (error.code === '42501') return fail(`เฉพาะ ${USER_ADMIN_OWNER} เท่านั้นที่ตั้งรหัสให้คนอื่นได้`);
       throw error;
     }
     // ค้างหน้าต่างไว้พร้อมรหัสใหม่ ให้แอดมินจดไปบอกได้ — toast หายเองใน 3 วินาที เร็วเกินไป

@@ -1,13 +1,15 @@
 -- ════════════════════════════════════════════════════════════════════════
---  ให้แอดมินตั้งรหัสผ่านใหม่ให้พนักงานที่ลืมรหัส จากหน้า "จัดการผู้ใช้" ในเว็บ
+--  ให้ piriya (คนเดียว) ตั้งรหัสผ่านใหม่ให้พนักงานที่ลืมรหัส จากหน้า "จัดการผู้ใช้" ในเว็บ
 --  (เพิ่ม 9 ต.ค. 2569 — รวมอยู่ใน stockhq_schema.sql หัวข้อ 3.1 ด้วยแล้ว)
+--  รันครั้งแรก 9 ต.ค. ตอนนั้นแอดมินทุกคนใช้ได้ — รันซ้ำวันเดียวกันเพื่อจำกัดเหลือ piriya คนเดียว
 --
 --  วิธีใช้: ก๊อปทั้งไฟล์ไปวางใน Supabase → SQL Editor แล้วกด Run (รันซ้ำได้ ไม่พัง)
---  รันเสร็จ ตารางสุดท้ายต้องขึ้น "พร้อมใช้" 2 แถว
+--  รันเสร็จ ตารางสุดท้ายต้องขึ้น "พร้อมใช้" 3 แถว
 --
 --  ทำไมต้องเป็นฟังก์ชันในฐานข้อมูล: การแก้รหัสคนอื่นต้องใช้สิทธิ์ระดับสูง
 --  ซึ่งห้ามใส่ไว้ในหน้าเว็บ (ใครเปิดดูโค้ดก็เห็น) ฟังก์ชันนี้รันด้วยสิทธิ์ของฐานข้อมูลเอง
---  แต่เช็คก่อนทุกครั้งว่าคนที่กดเป็นแอดมิน — พนักงานทั่วไปเรียกแล้วจะโดนปฏิเสธ
+--  แต่เช็คก่อนทุกครั้งว่าคนที่กดคือ piriya — คนอื่น (แม้เป็นแอดมิน) เรียกแล้วจะโดนปฏิเสธ
+--  จะเปลี่ยนคน: แก้ 'piriya' ในไฟล์นี้ + USER_ADMIN_OWNER ใน js/config.js แล้วรันใหม่
 -- ════════════════════════════════════════════════════════════════════════
 create or replace function public.admin_set_password(target_user uuid, new_password text)
 returns text
@@ -18,8 +20,13 @@ as $$
 declare
   uname text;
 begin
-  if not public.is_admin() then
-    raise exception 'เฉพาะแอดมินเท่านั้นที่ตั้งรหัสให้คนอื่นได้' using errcode = '42501';
+  -- ใช้ได้คนเดียว: piriya (ต้องเป็นแอดมินด้วย) — ตรงกับ USER_ADMIN_OWNER ใน js/config.js
+  -- ตาราง users ไม่มี update policy ใครก็แก้ชื่อตัวเองเป็น piriya ไม่ได้ และชื่อซ้ำกันไม่ได้ (unique)
+  if not exists (
+    select 1 from public.users
+    where id = auth.uid() and role = 'admin' and lower(username) = 'piriya'
+  ) then
+    raise exception 'เฉพาะ piriya เท่านั้นที่ตั้งรหัสให้คนอื่นได้' using errcode = '42501';
   end if;
   if new_password is null or length(new_password) < 6 then
     raise exception 'รหัสผ่านต้องมีอย่างน้อย 6 ตัว' using errcode = '22023';
@@ -49,4 +56,9 @@ select 'ฟังก์ชัน admin_set_password' as รายการ,
 union all
 select 'pgcrypto (ใช้เข้ารหัสรหัสผ่าน)',
        case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                         where p.proname = 'gen_salt' and n.nspname = 'extensions') then 'พร้อมใช้' else '❌ ไม่อยู่ใน schema extensions' end;
+                         where p.proname = 'gen_salt' and n.nspname = 'extensions') then 'พร้อมใช้' else '❌ ไม่อยู่ใน schema extensions' end
+union all
+select 'บัญชี piriya เป็นแอดมิน (คนเดียวที่ใช้เมนูนี้ได้)',
+       case when exists (select 1 from public.users where lower(username) = 'piriya' and role = 'admin') then 'พร้อมใช้'
+            when exists (select 1 from public.users where lower(username) = 'piriya') then '❌ มีบัญชี แต่ยังไม่ใช่แอดมิน'
+            else '❌ ไม่พบบัญชีชื่อ piriya' end;
