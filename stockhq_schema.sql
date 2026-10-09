@@ -112,6 +112,41 @@ create trigger trg_on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- 3.1 แอดมินตั้งรหัสผ่านใหม่ให้พนักงานที่ลืมรหัส (หน้า "จัดการผู้ใช้" ในเว็บ)
+--     บัญชีเป็น @stockhq.local รับอีเมลรีเซ็ตไม่ได้ เลยต้องให้แอดมินตั้งให้แทน
+--     security definer = รันด้วยสิทธิ์ฐานข้อมูล แต่เช็ค is_admin() ก่อนทุกครั้ง
+create or replace function public.admin_set_password(target_user uuid, new_password text)
+returns text
+language plpgsql
+security definer
+set search_path = extensions          -- crypt() / gen_salt() ของ pgcrypto อยู่ใน schema นี้บน Supabase
+as $$
+declare
+  uname text;
+begin
+  if not public.is_admin() then
+    raise exception 'เฉพาะแอดมินเท่านั้นที่ตั้งรหัสให้คนอื่นได้' using errcode = '42501';
+  end if;
+  if new_password is null or length(new_password) < 6 then
+    raise exception 'รหัสผ่านต้องมีอย่างน้อย 6 ตัว' using errcode = '22023';
+  end if;
+
+  update auth.users
+     set encrypted_password = crypt(new_password, gen_salt('bf', 10)),
+         updated_at = now()
+   where id = target_user;
+  if not found then
+    raise exception 'ไม่พบบัญชีผู้ใช้นี้' using errcode = 'P0002';
+  end if;
+
+  select username into uname from public.users where id = target_user;
+  return uname;
+end;
+$$;
+
+revoke all on function public.admin_set_password(uuid, text) from public, anon;
+grant execute on function public.admin_set_password(uuid, text) to authenticated;
+
 
 -- ════════════════════════════════════════════════════════════════════════
 --  4. master_products — ต้นแบบสินค้า

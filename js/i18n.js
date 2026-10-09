@@ -50,6 +50,28 @@ const EN = {
   'แสดงรหัสผ่าน': 'Show passwords',
   'บันทึกรหัสใหม่': 'Save new password',
 
+  // ── จัดการผู้ใช้ (แอดมิน) ──
+  'จัดการผู้ใช้': 'Users',
+  '🔍 ค้นหาชื่อผู้ใช้ / ตำแหน่ง...': '🔍 Search username / position...',
+  '🔑 พนักงานลืมรหัสผ่าน → กด': '🔑 Someone forgot their password → press',
+  'ตั้งรหัสใหม่': 'Set new password',
+  'ที่ชื่อเขา แล้วบอกรหัสใหม่ให้เขา': 'on their row, then tell them the new password',
+  'กำลังโหลด...': 'Loading...',
+  'จากนั้นให้เขาเข้าระบบ แล้วเปลี่ยนเป็นรหัสของตัวเองที่ปุ่ม 🔑 เปลี่ยนรหัสผ่าน มุมซ้ายล่าง': 'Then have them sign in and pick their own password with 🔑 Change password at the bottom left',
+  'ตำแหน่ง': 'Position',
+  'สิทธิ์': 'Role',
+  'แอดมิน': 'Admin',
+  'พนักงาน': 'Staff',
+  'คุณ': 'you',
+  'ไม่พบผู้ใช้': 'No users found',
+  'โหลดรายชื่อผู้ใช้ไม่สำเร็จ': 'Could not load users',
+  '🔑 ตั้งรหัสใหม่ให้': '🔑 Set a new password for',
+  '🎲 สุ่มรหัส': '🎲 Random',
+  '* รหัสเดิมของเขาจะใช้ไม่ได้ทันที — จดรหัสใหม่นี้ไว้บอกเขา': '* Their old password stops working right away — note this one down to give them',
+  '* ให้เขาเปลี่ยนเป็นรหัสของตัวเองหลังเข้าระบบได้แล้ว': '* Have them change it to their own once they are signed in',
+  'ตั้งรหัสใหม่ให้': 'New password set for',
+  'แล้ว — บอกรหัสด้านบนให้เขา': '— give them the password above',
+
   // ── แถบบน ──
   'รับเข้า': 'Receive',
   'โอน/ขาย': 'Transfer/sell',
